@@ -1,0 +1,7 @@
+config OFFS_FS
+	tristate "OFFS for mmc support"
+    default m
+	help
+	  OFFS mmc support
+
+	  If you want to compile it in module, select m.

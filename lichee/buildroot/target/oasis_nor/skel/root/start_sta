@@ -1,0 +1,14 @@
+#!/bin/sh
+
+if lsmod | grep "xradio_wlan" &> /dev/null ; then
+	echo "xradio wifi module already installed"
+else
+	insmod /lib/modules/3.4.39/xradio_wlan.ko
+	[ $? -ne 0 ] && echo "insmod failed" && return 1
+fi
+
+#wpa_supplicant -iwlan0 -Dnl80211 -c/mnt/wpa_supplicant.conf -ddd&
+wpa_supplicant -iwlan0 -Dnl80211 -c/root/wpa_supplicant.conf &
+[ $? -ne 0 ] && echo "error" && return 1
+
+udhcpc -i wlan0

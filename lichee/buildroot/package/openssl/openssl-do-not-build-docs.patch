@@ -1,0 +1,21 @@
+--- a/Configurations/unix-Makefile.tmpl	2017-01-20 15:41:22.000000000 
++++ b/Configurations/unix-Makefile.tmpl	2017-01-20 15:41:51.000000000 
+@@ -257,15 +257,15 @@
+ 	@SRCTOP="$(SRCDIR)" \
+ 	 $(PERL) $(SRCDIR)/test/run_tests.pl list
+ 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
+ 	@echo "Tests are not supported with your chosen Configure options"
+ 	@ : {- output_on() if !$disabled{tests}; "" -}
+ 
+-install: install_sw install_ssldirs install_docs
++install: install_sw install_ssldirs
+ 
+-uninstall: uninstall_docs uninstall_sw
++uninstall: uninstall_sw
+ 
+ libclean:
+ 	@set -e; for s in $(SHLIB_INFO); do \
+ 		s1=`echo "$$s" | cut -f1 -d";"`; \
+ 		s2=`echo "$$s" | cut -f2 -d";"`; \
+ 		echo $(RM) $$s1; \
+

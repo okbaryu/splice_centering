@@ -1,0 +1,21 @@
+#!/bin/sh
+
+# csi module
+insmod /lib/modules/3.4.39/videobuf-core.ko
+insmod /lib/modules/3.4.39/videobuf-dma-contig.ko
+insmod /lib/modules/3.4.39/cci.ko
+insmod /lib/modules/3.4.39/vfe_os.ko
+insmod /lib/modules/3.4.39/vfe_subdev.ko
+insmod /lib/modules/3.4.39/ar0330_mipi.ko
+insmod /lib/modules/3.4.39/tp2825.ko
+insmod /lib/modules/3.4.39/vfe_v4l2.ko
+
+#uvc sensor
+#insmod /lib/modules/3.4.39/videobuf2-core.ko
+#insmod /lib/modules/3.4.39/videobuf2-memops.ko
+#insmod /lib/modules/3.4.39/videobuf2-vmalloc.ko
+#insmod /lib/modules/3.4.39/uvcvideo.ko
+
+#wifi driver
+insmod /lib/modules/3.4.39/xradio_wlan.ko
+

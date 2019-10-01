@@ -1,0 +1,118 @@
+#!/bin/sh
+
+#
+# GPIO
+#
+# PC04: CPU_DC_EN_HOLD1 
+echo 68 > /sys/class/gpio/export 
+echo out > /sys/class/gpio/gpio68/direction 
+echo 1 > /sys/class/gpio/gpio68/value 
+# PC05: CPU_MCU_WATCHDOG
+echo 69 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio69/direction
+echo 0 > /sys/class/gpio/gpio69/value
+# PE04: CPU_REAR_5V_PWR_EN
+echo 132 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio132/direction
+echo 0 > /sys/class/gpio/gpio132/value
+# PE24: CPU_GPS_PWR_ON
+echo 152 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio152/direction
+echo 0 > /sys/class/gpio/gpio152/value
+# PG12: BOARD_REV0
+echo 204 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio204/direction
+
+# PG11: MCU_CPU_INTERRUPT
+echo 203 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio203/direction
+echo 0 > /sys/class/gpio/gpio203/value
+
+# ADB setup
+/usr/bin/android-gadget-setup adb
+
+# IIO
+insmod /lib/modules/3.4.39/industrialio.ko
+insmod /lib/modules/3.4.39/ring_sw.ko
+insmod /lib/modules/3.4.39/iio-trig-sysfs.ko
+
+# LED
+insmod /lib/modules/3.4.39/led-class.ko
+insmod /lib/modules/3.4.39/leds-gpio.ko
+
+# LRADC
+insmod /lib/modules/3.4.39/sunxi-keyboard.ko
+
+# Touch
+insmod /lib/modules/3.4.39/zt2003.ko
+
+# G-sensor
+insmod /lib/modules/3.4.39/bma250.ko
+
+# GPIO key
+insmod /lib/modules/3.4.39/gpio_keys.ko
+
+# Backlight
+insmod /lib/modules/3.4.39/backlight.ko
+
+# rtc
+insmod /lib/modules/3.4.39/rtc-s35390a.ko
+
+# csi module
+insmod /lib/modules/3.4.39/videobuf-core.ko
+insmod /lib/modules/3.4.39/videobuf-dma-contig.ko
+insmod /lib/modules/3.4.39/cci.ko
+insmod /lib/modules/3.4.39/vfe_os.ko
+insmod /lib/modules/3.4.39/vfe_subdev.ko
+insmod /lib/modules/3.4.39/f22_mipi.ko
+insmod /lib/modules/3.4.39/tp2825.ko
+insmod /lib/modules/3.4.39/vfe_v4l2.ko
+
+# uvc sensor
+#insmod /lib/modules/3.4.39/videobuf2-core.ko
+#insmod /lib/modules/3.4.39/videobuf2-memops.ko
+#insmod /lib/modules/3.4.39/videobuf2-vmalloc.ko
+#insmod /lib/modules/3.4.39/uvcvideo.ko
+
+# load platform devices
+insmod /lib/modules/3.4.39/ht_backlight.ko
+insmod /lib/modules/3.4.39/ht_rfkill.ko
+insmod /lib/modules/3.4.39/ht_platdev.ko
+
+# Set system clock
+/sbin/hwclock --hctosys
+
+# Switch to speaker by default
+amixer -q cset numid=17 spk
+
+# wifi driver
+insmod /lib/modules/3.4.39/xradio_wlan.ko
+
+#ap mode
+#/usr/sbin/hostapd -B /root/hostapd.conf &
+#ifconfig wlan0 192.168.100.1 netmask 255.255.255.0
+#dnsmasq --no-daemon --no-resolv --no-poll --dhcp-range=192.168.100.100,192.168.100.200,1h &
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done

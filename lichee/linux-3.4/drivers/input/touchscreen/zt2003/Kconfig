@@ -1,0 +1,10 @@
+#
+#  Touchscreen tu_ts driver configuration
+#
+
+config TOUCHSCREEN_ZT2003
+       tristate  "zt2003 touchscreen driver"
+       default m
+       depends on INPUT && I2C
+       help
+         zt2003 touchscreen driver

@@ -1,0 +1,29 @@
+#!/bin/sh
+
+if [ "$1" != "adb" ] && [ "$1" != "noadb" ]; then
+    exit 0
+fi
+
+#functions="mtp"
+functions="mass_storage"
+if [ "$1" = "adb" ]; then
+    functions="$functions,adb"
+fi
+
+old_functions=`cat /sys/class/android_usb/android0/functions`
+[ "$old_functions" != "$functions" ] || { exit 0; }
+
+manufacturer="HyperionTech"
+model="DSV3STD"
+serial="oasis-1234"
+
+echo -n $serial > /sys/class/android_usb/android0/iSerial
+echo -n $manufacturer > /sys/class/android_usb/android0/iManufacturer
+echo -n $model > /sys/class/android_usb/android0/iProduct
+
+echo -n "0" > /sys/class/android_usb/android0/enable
+echo -n "1f3a" > /sys/class/android_usb/android0/idVendor
+echo -n "1002" > /sys/class/android_usb/android0/idProduct
+echo -n "$functions" > /sys/class/android_usb/android0/functions
+echo -n "1" >  /sys/class/android_usb/android0/enable
+

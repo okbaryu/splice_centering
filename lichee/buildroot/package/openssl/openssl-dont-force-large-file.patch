@@ -1,0 +1,24 @@
+--- a/crypto/bio/bss_file.c	2017-01-20 14:49:05.000000000 
++++ b/crypto/bio/bss_file.c	2017-01-20 14:49:23.000000000 
+@@ -26,15 +26,17 @@
+  * 2GB limit for seeking would require surgery to *our* API. But sequential
+  * access suffices for practical cases when you can run into large files,
+  * such as fingerprinting, so we can let API alone. For reference, the list
+  * of 32-bit platforms which allow for sequential access of large files
+  * without extra "magic" comprise *BSD, Darwin, IRIX...
+  */
+-#  ifndef _FILE_OFFSET_BITS
+-#   define _FILE_OFFSET_BITS 64
+-#  endif
++/*
++#  ifndef _FILE_OFFSET_BITS
++#   define _FILE_OFFSET_BITS 64
++#  endif
++*/
+ # endif
+ 
+ # include <stdio.h>
+ # include <errno.h>
+ # include "bio_lcl.h"
+ # include <openssl/err.h>
+

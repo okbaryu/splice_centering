@@ -1,0 +1,98 @@
+menuconfig HYPERION_HACK
+	tristate "Hyperion Tech Support Driver"
+	default n
+	help
+	  "Enable/disable and config Hyperion Tech Support Driver"
+
+if HYPERION_HACK
+
+config SUNXI_NAND
+	tristate "Allwinner NAND driver module"
+	default n
+	help
+	  Provides Allwinner NAND driver.
+
+config HT_INPUT
+	tristate "Platform spicific input module"
+	depends on INPUT
+	default m
+	help
+	  Provides input device enumeration for Hyperion Tech boards.
+
+config HT_RFKILL
+	tristate "Platform spicific rfkill module"
+	depends on RFKILL
+	default m
+	help
+	  Provides custom rfkill device implementation for Hyperion Tech boards.
+
+config HT_PLATDEV
+	tristate "Platform Device registration module"
+	default m
+	help
+	  Provides customized platform device enumeration.
+
+config HT_GPIO_KEYS
+	bool "Hyperion Tech GPIO key/switch input device"
+	default y if KEYBOARD_GPIO
+	help
+		This enables GPIO key/switch devices for Hyperion Tech boards.
+
+config HT_GPIO_LEDS
+	bool "Hyperion Tech GPIO LED device"
+	default y if LEDS_GPIO
+	help
+		This enables GPIO LED devices for Hyperion Tech boards.
+
+config HT_BACKLIGHT
+	tristate "Backlight support"
+	depends on HT_PLATDEV && BACKLIGHT_CLASS_DEVICE
+	help
+	  Provide platform specific backlight implementation.
+
+config HT_RTC_S35390A
+	bool "Hyperion Tech S35390A RTC device"
+	default n
+	help
+		This enables S35390A RTC platform data for Hyperion Tech boards.
+
+config HT_SENSOR
+	bool "Hyperion Tech sensor devices"
+	default y
+	help
+		This enables sensor devices for Hyperion Tech boards.
+
+config HT_BMA250
+	bool "Hyperion Tech BMA250 device"
+	depends on HT_SENSOR && SENSORS_BMA250
+	default n
+	help
+		This enables BMA250 platform configuration for Hyperion Tech boards.
+
+config HT_INV_MPU9250
+	bool "Hyperion Tech MPU9250 device"
+	depends on HT_SENSOR && INV_MPU_IIO
+	default n
+	help
+		This enables MPU9250 platform configuration for Hyperion Tech boards.
+
+config HT_STMVL6180
+	bool "Hyperion Tech STM VL6180 device"
+	depends on HT_SENSOR && STMVL6180
+	default n
+	help
+		This enables STM VL6180 platform configuration for Hyperion Tech boards.
+
+config HT_MT66XX
+	bool "MetiaTek MT66XX support"
+	depends on HT_PLATDEV && MTK_COMBO_MT66XX
+	help
+	  Provide mt66xx platform device implementation.
+
+config HT_XRADIO
+	bool "XRADIO support"
+	depends on HT_PLATDEV && XRADIO
+	help
+	  Provide XRADIO platform device implementation.
+
+endif

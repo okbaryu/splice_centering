@@ -1,0 +1,12 @@
+diff -u util-linux-2.29.2/configure.ac util-linux-2.29.2-patches/configure.ac
+--- util-linux-2.29.2/configure.ac	2017-02-22 21:06:47.064136287 +0900
++++ util-linux-2.29.2-patched/configure.ac	2017-04-28 12:47:54.900272403 +0900
+@@ -186,7 +186,7 @@
+ AC_HEADER_ASSERT
+ 
+ dnl Don't forget to maintain alternatively allowed versions in autogen.sh!
+-AM_GNU_GETTEXT_VERSION([0.18.3])
++#AM_GNU_GETTEXT_VERSION([0.18.3])
+ AM_GNU_GETTEXT([external])
+ 
+ AS_IF([test -d "$srcdir/po"], [

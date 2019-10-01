@@ -1,0 +1,42 @@
+
+== 부트로더(brandy) 빌드하기
+
+----
+$ cd brandy
+$ ./build.sh -p sun8iw8p1
+$ ./build.sh -p sun8iw8p1_nor
+----
+
+== 빌드하기
+
+NOTE: 최초로 빌드하기 전에 먼저 부트로더를 빌드해야 한다.
+
+.빌드하기 전에 한 번 타겟 플랫폼과 보드를 설정한다.
+----
+$ ./build.sh config
+----
+
+.빌드하기
+----
+$ ./build.sh
+----
+
+.이미지 만들기
+----
+$ ./build.sh pack
+...
+
+# 빌드를 마치면 만들어진 OS 이미지의 경로가 표시된다.
+/home/ubuntu/v3/new/lichee-oasis/tools/pack/sun8iw8p1_linux_mav3_uart0_none.img
+
+pack finish
+----
+
+== 새 타겟 보드 추가하기
+
+.`tools/pack/chips/sun8iw8p1/configs/` 에 타겟 이름의 폴더를 만들고, 기본이 되는 타겟 디렉토리의 것을 그대로 복사한다.
+.`buildroot/scripts/mkrule` 에 타겟을 추가한다.
+.`buildroot/config/sun8i_defconfig` (빌드루트 config 파일) 확인
+.`linux-3.4/arch/arm/configs` 에 해당 파일 확인 (없으면 base에서 복사하고 이름을 `mkrule` 에서 지정한 이름으로 지정)
+.`lichee/build.sh config` 하여 지정함.
+.`buildroot/target/` 에 해당 root fs를 생성한다. 이것도 기본이 되는 타겟 디렉토리의 것을 복사하고 필요에 따라 수정하면 편하다.

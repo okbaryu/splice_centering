@@ -1,0 +1,27 @@
+sun9iw1p1_android		xxx				sun9iw1p1smp_android_defconfig
+sun9iw1p1_dragonboard 		xxx				sun9iw1p1smp_android_defconfig
+sun9iw1p1_linux 		sun9i_defconfig			sun9iw1p1smp_defconfig
+
+sun8iw1p1_android		sun8i_defconfig		sun8iw1p1smp_android_defconfig
+sun8iw3p1_android		sun8i_defconfig		sun8iw3p1smp_android_defconfig
+sun8iw5p1_android		sun8i_defconfig		sun8iw5p1smp_android_defconfig
+sun8iw6p1_android		sun8i_defconfig		sun8iw6p1smp_android_defconfig
+sun8iw7p1_android		sun8i_defconfig		sun8iw7p1smp_android_defconfig
+sun8iw8p1_android		sun8i_defconfig		sun8iw8p1smp_android_defconfig
+sun8iw9p1_android		sun8i_defconfig		sun8iw9p1smp_android_defconfig
+sun8iw1p1_linux			sun8i_defconfig		sun8iw1p1smp_defconfig
+sun8iw3p1_linux			sun8i_defconfig		sun8iw3p1smp_defconfig
+sun8iw5p1_linux			sun8i_defconfig		sun8iw5p1smp_defconfig
+sun8iw6p1_linux			sun8i_defconfig		sun8iw6p1smp_defconfig
+sun8iw7p1_linux			sun8i_defconfig		sun8iw7p1smp_defconfig
+sun8iw8p1_linux			sun8i_defconfig		sun8iw8p1smp_defconfig
+sun8iw9p1_linux			sun8i_defconfig		sun8iw9p1smp_defconfig
+sun8iw8p1_linux_crane-cdr	sun8i_defconfig				sun8iw8p1smp_cdr_defconfig
+sun8iw8p1_linux_oasis_nor	sun8i_oasis_nor_defconfig	sun8iw8p1smp_oasis_nor_defconfig
+sun8iw8p1_linux_oasis_nand	sun8i_oasis_nand_defconfig	sun8iw8p1smp_oasis_nand_defconfig
+sun8iw8p1_linux_babymoon	sun8i_defconfig				sun8iw8p1smp_babymoon_defconfig
+sun8iw8p1_linux_dsv3std		sun8i_defconfig				sun8iw8p1smp_dsv3std_defconfig
+sun8iw8p1_linux_mav3_nand	sun8i_mav3_nand_defconfig	sun8iw8p1smp_mav3_nand_defconfig
+sun8iw8p1_linux_museon		sun8i_defconfig				sun8iw8p1smp_museon_defconfig
+sun8iw8p1_linux_ipu			sun8i_defconfig				sun8iw8p1smp_ipu_defconfig
+sun8iw8p1_linux_uvc			sun8i_oasis_nor_defconfig	sun8iw8p1smp_uvc_defconfig

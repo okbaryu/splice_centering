@@ -1,0 +1,25 @@
+#! /bin/sh
+
+RTLDLIST=/lib/ld-linux-armhf.so.3
+
+case $# in
+1)
+	file=$1
+	;;
+*)
+	echo "USAGE: $0 <file>"
+	exit 1
+	;;
+esac
+
+case $file in
+*/*)	
+	;;
+*)
+	file=./$file
+	;;
+esac
+
+echo $file
+LD_TRACE_LOADED_OBJECTS=1 LD_WARN=yes LD_BIND_NOW=yes LD_VERBOSE=yes $RTLDLIST "$file"
+

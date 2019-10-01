@@ -1,0 +1,131 @@
+--- busybox-1.18.3.org/include/libbb.h	2017-01-17 15:25:17.000000000 
++++ busybox-1.18.3/include/libbb.h	2017-01-17 16:23:16.000000000 
+@@ -42,12 +42,18 @@
+ #ifdef HAVE_MNTENT_H
+ # include <mntent.h>
+ #endif
+ #ifdef HAVE_SYS_STATFS_H
+ # include <sys/statfs.h>
+ #endif
++/* Don't do this here:
++ * #include <sys/sysinfo.h>
++ * Some linux/ includes pull in conflicting definition
++ * of struct sysinfo (only in some toolchanins), which breaks build.
++ * Include sys/sysinfo.h only in those files which need it.
++ */
+ #if ENABLE_SELINUX
+ # include <selinux/selinux.h>
+ # include <selinux/context.h>
+ # include <selinux/flask.h>
+ # include <selinux/av_permissions.h>
+ #endif
+@@ -98,30 +104,11 @@
+ /* This is declared here rather than #including <libgen.h> in order to avoid
+  * confusing the two versions of basename.  See the dirname/basename man page
+  * for details. */
+ #if !defined __FreeBSD__
+ char *dirname(char *path);
+ #endif
+-/* Include our own copy of struct sysinfo to avoid binary compatibility
+- * problems with Linux 2.4, which changed things.  Grumble, grumble. */
+-struct sysinfo {
+-	long uptime;			/* Seconds since boot */
+-	unsigned long loads[3];		/* 1, 5, and 15 minute load averages */
+-	unsigned long totalram;		/* Total usable main memory size */
+-	unsigned long freeram;		/* Available memory size */
+-	unsigned long sharedram;	/* Amount of shared memory */
+-	unsigned long bufferram;	/* Memory used by buffers */
+-	unsigned long totalswap;	/* Total swap space size */
+-	unsigned long freeswap;		/* swap space still available */
+-	unsigned short procs;		/* Number of current processes */
+-	unsigned short pad;			/* Padding needed for m68k */
+-	unsigned long totalhigh;	/* Total high memory size */
+-	unsigned long freehigh;		/* Available high memory size */
+-	unsigned int mem_unit;		/* Memory unit size in bytes */
+-	char _f[20 - 2 * sizeof(long) - sizeof(int)]; /* Padding: libc5 uses this.. */
+-};
+-int sysinfo(struct sysinfo* info);
+ #ifndef PATH_MAX
+ # define PATH_MAX 256
+ #endif
+ #ifndef BUFSIZ
+ # define BUFSIZ 4096
+
+--- busybox-1.18.3.org/init/init.c	2011-02-09 02:24:57.000000000 
++++ busybox-1.18.3/init/init.c	2017-01-17 16:24:07.000000000 
+@@ -110,13 +110,14 @@
+ 
+ #include "libbb.h"
+ #include <syslog.h>
+ #include <paths.h>
+ #include <sys/resource.h>
+ #ifdef __linux__
+-#include <linux/vt.h>
++# include <linux/vt.h>
++# include <sys/sysinfo.h>
+ #endif
+ #if ENABLE_FEATURE_UTMP
+ # include <utmp.h> /* DEAD_PROCESS */
+ #endif
+ #include "reboot.h" /* reboot() constants */
+ 
+--- busybox-1.18.3.org/procps/free.c	2011-02-09 02:24:57.000000000 
++++ busybox-1.18.3/procps/free.c	2017-01-17 16:24:42.000000000 
+@@ -7,12 +7,15 @@
+  * Licensed under GPLv2, see file LICENSE in this source tree.
+  */
+ 
+ /* getopt not needed */
+ 
+ #include "libbb.h"
++#ifdef __linux__
++# include <sys/sysinfo.h>
++#endif
+ 
+ struct globals {
+ 	unsigned mem_unit;
+ #if ENABLE_DESKTOP
+ 	unsigned unit_steps;
+ # define G_unit_steps G.unit_steps
+
+--- busybox-1.18.3.org/procps/ps.c	2011-02-09 02:24:57.000000000 
++++ busybox-1.18.3/procps/ps.c	2017-01-17 16:25:13.000000000 
+@@ -12,13 +12,15 @@
+ #include "libbb.h"
+ 
+ /* Absolute maximum on output line length */
+ enum { MAX_WIDTH = 2*1024 };
+ 
+ #if ENABLE_DESKTOP
+-
++#ifdef __linux__
++# include <sys/sysinfo.h>
++#endif
+ #include <sys/times.h> /* for times() */
+ #ifndef AT_CLKTCK
+ #define AT_CLKTCK 17
+ #endif
+ 
+ --- busybox-1.18.3.org/procps/uptime.c	2011-02-04 22:12:02.000000000 
++++ busybox-1.18.3/procps/uptime.c	2017-01-17 16:25:33.000000000 
+@@ -13,12 +13,15 @@
+  * of CONFIG_FEATURE_UTMP_SUPPORT #define
+  */
+ 
+ /* getopt not needed */
+ 
+ #include "libbb.h"
++#ifdef __linux__
++# include <sys/sysinfo.h>
++#endif
+ 
+ #ifndef FSHIFT
+ # define FSHIFT 16              /* nr of bits of precision */
+ #endif
+ #define FIXED_1         (1<<FSHIFT)     /* 1.0 as fixed-point */
+ #define LOAD_INT(x) ((x) >> FSHIFT)
+
+
+
+
+

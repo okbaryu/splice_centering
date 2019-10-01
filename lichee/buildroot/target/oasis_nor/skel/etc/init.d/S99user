@@ -1,0 +1,21 @@
+#!/bin/sh
+
+LIB_PATH=/root/oasis
+APP_PATH=/data
+APP_NAME=oasis
+
+case "$1" in
+    start)
+        # Start oasis daemon
+        LD_LIBRARY_PATH=$LIB_PATH $APP_PATH/$APP_NAME &
+        echo "done"
+        ;;
+    stop)
+        # Stop oasis daemon
+        killall $APP_NAME
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

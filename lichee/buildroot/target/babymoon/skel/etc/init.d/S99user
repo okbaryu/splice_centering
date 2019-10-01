@@ -1,0 +1,22 @@
+#!/bin/sh
+
+APP_PATH=/data
+APP_NAME=oasis
+
+case "$1" in
+    start)
+        # Start oasis daemon
+        LD_LIBRARY_PATH=$APP_PATH $APP_PATH/$APP_NAME &
+
+        wget "http://server.babymoon.kr:8080/get.php" -O-
+        echo "done"
+        ;;
+    stop)
+        # Stop oasis daemon
+        killall $APP_NAME
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

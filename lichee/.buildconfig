@@ -1,0 +1,4 @@
+export LICHEE_CHIP=sun8iw8p1
+export LICHEE_PLATFORM=linux
+export LICHEE_KERN_VER=linux-3.4
+export LICHEE_BOARD=ipu

@@ -1,0 +1,90 @@
+#!/bin/sh
+
+# PG13: network switch enable
+echo 205 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio205/direction
+echo 1 > /sys/class/gpio/gpio205/value
+
+# PE19: network switch reset ->high
+echo 147 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio147/direction
+echo 1 > /sys/class/gpio/gpio147/value
+
+#sleep 1
+
+# ADB setup
+/usr/bin/android-gadget-setup adb
+
+# LED
+#insmod /lib/modules/3.4.39/led-class.ko
+#insmod /lib/modules/3.4.39/leds-gpio.ko
+
+# ADC key
+insmod /lib/modules/3.4.39/sunxi-keyboard.ko
+
+# GPIO key
+insmod /lib/modules/3.4.39/gpio_keys.ko
+
+# csi module
+#insmod /lib/modules/3.4.39/videobuf-core.ko
+#insmod /lib/modules/3.4.39/videobuf-dma-contig.ko
+#insmod /lib/modules/3.4.39/cci.ko
+#insmod /lib/modules/3.4.39/vfe_os.ko
+#insmod /lib/modules/3.4.39/vfe_subdev.ko
+#insmod /lib/modules/3.4.39/imx291.ko
+#insmod /lib/modules/3.4.39/vfe_v4l2.ko
+
+#uvc sensor
+insmod /lib/modules/3.4.39/videobuf2-core.ko
+insmod /lib/modules/3.4.39/videobuf2-memops.ko
+insmod /lib/modules/3.4.39/videobuf2-vmalloc.ko
+insmod /lib/modules/3.4.39/uvcvideo.ko
+
+# load platform devices
+insmod /lib/modules/3.4.39/ht_rfkill.ko
+insmod /lib/modules/3.4.39/ht_platdev.ko
+
+# I2C driver
+insmod /lib/modules/3.4.39/i2c-dev.ko
+
+#proximity sensor
+#insmod /lib/modules/3.4.39/stmvl53l0.ko
+
+#ap mode
+#/usr/sbin/hostapd -B /root/hostapd.conf &
+#ifconfig wlan0 192.168.100.1 netmask 255.255.255.0
+#dnsmasq --no-daemon --no-resolv --no-poll --dhcp-range=192.168.100.100,192.168.100.200,1h &
+
+#/usr/sbin/wpa_supplicant -iwlan0 -Dnl80211 -c/data/wpa_supplicant.conf &
+
+if [ -f /data/wpa_ipu.conf ] ; then
+    echo "[IPU] WPA SUPPLICANT RUN with /data/wpa_ipu.conf"
+    /usr/sbin/wpa_supplicant -iwlan0 -Dnl80211 -c/data/wpa_ipu.conf &
+fi
+
+#/sbin/udhcpc -i wlan0
+
+
+# Start all init scripts in /etc/init.d
+# executing them in numerical order.
+#
+for i in /etc/init.d/S??* ;do
+
+     # Ignore dangling symlinks (if any).
+     [ ! -f "$i" ] && continue
+
+     case "$i" in
+	*.sh)
+	    # Source shell script for speed.
+	    (
+		trap - INT QUIT TSTP
+		set start
+		. $i
+	    )
+	    ;;
+	*)
+	    # No sh extension, so fork subprocess.
+	    $i start
+	    ;;
+    esac
+done

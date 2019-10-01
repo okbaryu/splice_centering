@@ -1,0 +1,37 @@
+#!/bin/sh
+
+#if [ -f /data/ipu/ipumgr ] ; then
+#	/data/ipu/ipumgr /dev/ttyS2 38400 &
+#fi
+
+if [ -f /data/ipu/ipu.tgz ] ; then
+	cp /data/ipu/ipu.tgz /tmp
+	cd /tmp
+	gunzip -c ipu.tgz | tar xvf -
+	rm /tmp/ipu.tgz
+fi
+
+#if [ -f /tmp/ipu/start-ipu.sh ] ; then
+#	/tmp/ipu/start-ipu.sh &
+#fi
+
+exit 1
+
+APP_PATH=/data
+APP_NAME=oasis-ipu
+
+case "$1" in
+    start)
+        # Start oasis daemon
+        LD_LIBRARY_PATH=$APP_PATH $APP_PATH/$APP_NAME &
+        echo "done"
+        ;;
+    stop)
+        # Stop oasis daemon
+        killall $APP_NAME
+        ;;
+    *)
+        echo "Usage: $0 {start|stop}"
+        exit 1
+        ;;
+esac

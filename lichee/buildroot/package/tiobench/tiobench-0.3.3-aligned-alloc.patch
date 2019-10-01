@@ -1,0 +1,59 @@
+--- tiobench.org/tiotest.c	2017-01-17 14:28:07.000000000 
++++ tiobench/tiotest.c	2017-01-17 14:45:03.000000000 
+@@ -28,23 +28,23 @@
+ /* 
+    This is global for easier usage. If you put changing data
+    in here from threads, be sure to protect it with mutexes.
+ */
+ ArgumentOptions args;
+ 
+-static void * aligned_alloc(ssize_t size)
++static void * __aligned_alloc(ssize_t size)
+ {
+ 	caddr_t a;
+ 	a = mmap((caddr_t )0, size, 
+ 	         PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
+ 	if (a == MAP_FAILED)
+ 		return NULL;
+ 	return a;
+ }
+ 
+-static int aligned_free(caddr_t a, ssize_t size)
++static int __aligned_free(caddr_t a, ssize_t size)
+ {
+ 	return munmap(a, size);
+ }
+ 
+ int main(int argc, char *argv[])
+ {
+@@ -278,13 +278,13 @@
+ 
+ 		pthread_attr_init( &(d->threads[i].thread_attr) );
+ 
+ 		pthread_attr_setscope(&(d->threads[i].thread_attr),
+ 				      PTHREAD_SCOPE_SYSTEM);
+ 
+-		d->threads[i].buffer = aligned_alloc( d->threads[i].blockSize );
++		d->threads[i].buffer = __aligned_alloc( d->threads[i].blockSize );
+ 		if( d->threads[i].buffer == NULL )
+ 		{
+ 			perror("Error allocating memory");
+ 			exit(-1);
+ 		}
+ 
+@@ -380,13 +380,13 @@
+ 	int i;
+ 
+ 	for(i = 0; i < d->numThreads; i++)
+ 	{
+ 		if (!args.rawDrives)
+ 		unlink(d->threads[i].fileName);
+-		aligned_free( d->threads[i].buffer, d->threads[i].blockSize );
++		__aligned_free( d->threads[i].buffer, d->threads[i].blockSize );
+ 		d->threads[i].buffer = 0;
+ 	
+ 		pthread_attr_destroy( &(d->threads[i].thread_attr) );
+ 	}
+ 
+ 	free(d->threads);
+

@@ -1,0 +1,37 @@
+
+
+
+#include <linux/kernel.h>
+#include <mach/gpio.h>
+
+//==============#define PINCTRL_PIN(a, b) { .number = a, .name = b }
+//#define AXP_PINCTRL_GPIO0	PINCTRL_PIN(0, "GPIO0")     /* axp22x GPIO0 */
+//#define AXP_PINCTRL_GPIO1	PINCTRL_PIN(1, "GPIO1")     /* axp22x GPIO1 */
+//#define AXP_PINCTRL_GPIO2	PINCTRL_PIN(2, "GPIO2")     /* axp22x DC1SW : power supply for LCD   OUTPUT */
+//#define AXP_PINCTRL_GPIO3	PINCTRL_PIN(3, "GPIO3")     /* axp22x CHGLED : power supply for moto OUTPUT */
+#define AXP_PINCTRL_GPIO0	PINCTRL_PIN(0, "power0")     /* axp22x GPIO0 */
+#define AXP_PINCTRL_GPIO1	PINCTRL_PIN(1, "power1")     /* axp22x GPIO1 */
+#define AXP_PINCTRL_GPIO2	PINCTRL_PIN(2, "power2")     /* axp22x DC1SW : power supply for LCD   OUTPUT */
+#define AXP_PINCTRL_GPIO3	PINCTRL_PIN(3, "power3")     /* axp22x CHGLED : power supply for moto OUTPUT */
+//#define AXP_PINCTRL_GPIO4	PINCTRL_PIN(4, "GPIO4")     /* axp22x N_VBUSEN : OUTPUT */
+//#define AXP_PINCTRL_GPIO5	PINCTRL_PIN(5, "GPIO5")     /* axp15x WAKEUP PIN*/
+//#define AXP_PINCTRL_GPIO6	PINCTRL_PIN(6, "GPIO6")     /*  */
+//#define AXP_PINCTRL_GPIO7	PINCTRL_PIN(7, "GPIO7")     /*  */
+
+
+
+
+#define AXP20_GPIO0_CTL		0x90
+#define AXP20_GPIO1_CTL		0x92
+#define AXP20_GPIO2_CTL		0x93
+#define AXP20_GPIO3_CTL		0x95
+
+#define AXP_GPIO012_STA		0x94
+
+
+
+#define AXP_GPIO0_CFG                   (AXP20_GPIO0_CTL)//0x90
+#define AXP_GPIO1_CFG                   (AXP20_GPIO1_CTL)//0x92
+
+#define AXP_GPIO2_CFG                   (AXP20_GPIO0_CTL)//0x93
+#define AXP_GPIO3_CFG                   (AXP20_GPIO1_CTL)//0x95

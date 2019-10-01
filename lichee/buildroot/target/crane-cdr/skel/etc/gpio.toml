@@ -1,0 +1,30 @@
+# The main configuration consists of zero or more pins, each of which may have
+# the following keys:
+#
+# - `num`: 필수.  GPIO 번호. gpio.adoc을 참조할 것.
+# - `names`: 필수.  GPIO에 하나 이상의 이름을 지정할 수 있음.
+# - `direction`: 기본값: `"in"`.  "in" 또는 "out"을 설정.
+# - `active_low`: 기본값: `false`.  true로 설정하면 핀의 극성을 반대로 바꾼다.
+# - `export`: 기본값: `true`.  true이면 GPIO를 자동으로 export한다.
+#    `gpio export-all`을 실행하면 export한다. (e.g. by an init script).
+#
+
+[[pins]]
+num = 44
+names = ["flash", "PB12"]
+direction = "out"
+
+[[pins]]
+num = 45
+names = ["led_r", "PB13"]
+direction = "out"
+
+[[pins]]
+num = 204
+names = ["led_b", "PG12"]
+direction = "out"
+
+[[pins]]
+num = 205
+names = ["led_g", "PG13"]
+direction = "out"
