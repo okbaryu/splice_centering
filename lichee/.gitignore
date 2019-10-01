@@ -1,0 +1,8 @@
+*.a
+*.bin
+*.swp
+*.zip
+out
+.config
+cfg.fex
+.vscode
