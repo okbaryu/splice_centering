@@ -1,13 +1,13 @@
-# fi-splice-ipu-lichee
-repository of fi-splice-ipu-lichee
+# fi-splice-centering-con
+repository of fi-splice-centering-con
 
 1. the way of getting source
 
-git clone git@github.com:hssysco/fi-splice-ipu-lichee.git folder_name
+git clone git@github.com:hssysco/fi-splice-centering-con.git folder_name
 
-ex) git clone git@github.com:hssysco/fi-splice-ipu-lichee.git ipu
+ex) git clone git@github.com:hssysco/fi-splice-centering-con.git ipu
 
-ex) git clone git@github.com:hssysco/fi-splice-ipu-lichee.git splice
+ex) git clone git@github.com:hssysco/fi-splice-centering-con.git splice
 
 2. the way of compiling bootloader
 
