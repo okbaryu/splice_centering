@@ -4,6 +4,8 @@ repository of fi-splice-centering-con
 1. the way of getting source
 
 git clone git@github.com:hssysco/fi-splice-centering-con.git folder_name
+또는
+git clone https://github.com/hssysco/fi-splice-centering-con folder_name
 
 ex) git clone git@github.com:hssysco/fi-splice-centering-con.git ipu
 
