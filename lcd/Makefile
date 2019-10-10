@@ -1,4 +1,4 @@
-TOPDIR=../..
+TOPDIR=../
 TOOL_PATH=$(TOPDIR)/lichee/out/sun8iw8p1/linux/ipu/buildroot/external-toolchain/bin
 CROSS_COMPILE=arm-linux-gnueabihf-
 CC=$(TOOL_PATH)/$(CROSS_COMPILE)gcc

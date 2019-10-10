@@ -394,29 +394,32 @@ cooler3 =  "648000 4 4294967295 0"
 ;lcd0_hue              (LCD hue, 0~100)
 ;----------------------------------------------------------------------------------
 [disp_init]
-disp_init_enable         = 0
+disp_init_enable         = 1
 disp_mode                = 0
 
 screen0_output_type      = 1
-screen0_output_mode      = 4
+screen0_output_mode      = 7
 
-screen1_output_type      = 3
-screen1_output_mode      = 4
+screen1_output_type      = 1 
+screen1_output_mode      = 7
 
+fb0_framebuffer_num      = 0
 fb0_format               = 0
 fb0_pixel_sequence       = 0
 fb0_scaler_mode_enable   = 0
+
 fb0_width                = 0
 fb0_height               = 0
 
+fb1_framebuffer_num      = 0
 fb1_format               = 0
 fb1_pixel_sequence       = 0
 fb1_scaler_mode_enable   = 0
+
 fb1_width                = 0
 fb1_height               = 0
 
 lcd0_backlight           = 140
-;lcd0_backlight_SC1520    = 200
 lcd1_backlight           = 50
 
 lcd0_bright              = 50
@@ -474,22 +477,22 @@ lcd_used            = 1
 
 lcd_driver_name     = "default_lcd"
 lcd_if              = 0
-lcd_x               = 480
-lcd_y               = 272
-lcd_width           = 108
-lcd_height          = 64
-lcd_dclk_freq       = 9
+lcd_x               = 800
+lcd_y               = 480
+lcd_width           = 154
+lcd_height          = 86
+lcd_dclk_freq       = 33
 lcd_pwm_used        = 1
 lcd_pwm_ch          = 0
-lcd_pwm_freq        = 50000
+lcd_pwm_freq        = 1000
 lcd_pwm_pol         = 1
 lcd_pwm_max_limit   = 255
-lcd_hbp             = 43
-lcd_ht              = 531
-lcd_hspw            = 1
-lcd_vbp             = 12
-lcd_vt              = 288
-lcd_vspw            = 1
+lcd_hbp             = 16
+lcd_ht              = 1056
+lcd_hspw            = 30
+lcd_vbp             = 10
+lcd_vt              = 1050
+lcd_vspw            = 13
 lcd_frm             = 0
 lcd_hv_clk_phase    = 0
 lcd_hv_sync_polarity = 0
@@ -503,11 +506,9 @@ lcd_rb_swap			= 0
 
 lcdgamma4iep        = 22
 
-lcd_bl_en           = port:PE24<1><0><default><1>
-;lcd_power           = port:PB12<1><0><default><0>
-
-
-lcd_gpio_3          = port:PE23<1><0><default><0>
+lcd_power           = port:PE20<1><0><default><0>
+lcd_bl_en           = port:PE21<1><0><default><1>
+lcd_pwm             = port:PB04<2><default><default><default>
 
 lcdd2               = port:PD0<2><0><default><default>
 lcdd3               = port:PD1<2><0><default><default>
@@ -515,18 +516,21 @@ lcdd4               = port:PD2<2><0><default><default>
 lcdd5               = port:PD3<2><0><default><default>
 lcdd6               = port:PD4<2><0><default><default>
 lcdd7               = port:PD5<2><0><default><default>
+
 lcdd10              = port:PD6<2><0><default><default>
 lcdd11              = port:PD7<2><0><default><default>
 lcdd12              = port:PD8<2><0><default><default>
 lcdd13              = port:PD9<2><0><default><default>
 lcdd14              = port:PD10<2><0><default><default>
 lcdd15              = port:PD11<2><0><default><default>
+
 lcdd18              = port:PD12<2><0><default><default>
 lcdd19              = port:PD13<2><0><default><default>
 lcdd20              = port:PD14<2><0><default><default>
 lcdd21              = port:PD15<2><0><default><default>
 lcdd22              = port:PD16<2><0><default><default>
 lcdd23              = port:PD17<2><0><default><default>
+
 lcdclk              = port:PD18<2><0><3><default>
 lcdde               = port:PD19<2><0><3><default>
 lcdhsync            = port:PD20<2><0><3><default>
@@ -1421,99 +1425,3 @@ gmac_mode = "MII"
 ;gmac_power4 = ":"
 ;gmac_power5 = ":"
 
-;----------------------------------------------------------------------------------
-;  lcd param
-;----------------------------------------------------------------------------------
-[lcd0_para]
-lcd_used = 1
-lcd_x = 800
-lcd_y = 480
-lcd_dclk_freq = 33
-lcd_pwm_freq = 1000
-lcd_pwm_pol = 0
-lcd_swap = 0
-lcd_if = 0
-lcd_hbp = 215
-lcd_ht = 1055
-lcd_vbp = 34
-lcd_vt = 1050
-lcd_hv_if = 0
-lcd_hv_smode = 0
-lcd_hv_s888_if = 0
-lcd_hv_syuv_if = 0
-lcd_hv_vspw = 0
-lcd_hv_hspw = 0
-lcd_hv_lde_used = 0
-lcd_hv_lde_iovalue = 0
-lcd_lvds_ch = 0
-lcd_lvds_mode = 0
-lcd_lvds_bitwidth = 0
-lcd_lvds_io_cross = 0
-lcd_cpu_if = 0
-lcd_cpu_da = 0
-lcd_frm = 0
-lcd_io_cfg0 = 0x10000000
-lcd_io_cfg1 = 0
-lcd_io_strength = 0
-lcd_bl_en_used = 1
-lcd_bl_en = port:PE21<1><1><default><1>
-lcd_power_used = 1
-lcd_power = port:PE20<1><1><default><1>
-;lcd_pwm_used = 0
-;lcd_pwm = port:PB02<2><default><default><default>
-;lcd_gpio_0 =
-;lcd_gpio_1 =
-;lcd_gpio_2 =
-;lcd_gpio_3 =
-;lcdd0 =
-;lcdd1 =
-lcdd2 = port:PD00<2><default><default><default>
-lcdd3 = port:PD01<2><default><default><default>
-lcdd4 = port:PD02<2><default><default><default>
-lcdd5 = port:PD03<2><default><default><default>
-lcdd6 = port:PD04<2><default><default><default>
-lcdd7 = port:PD05<2><default><default><default>
-;lcdd8 = 
-;lcdd9 = 
-lcdd10 = port:PD06<2><default><default><default>
-lcdd11 = port:PD07<2><default><default><default>
-lcdd12 = port:PD08<2><default><default><default>
-lcdd13 = port:PD09<2><default><default><default>
-lcdd14 = port:PD10<2><default><default><default>
-lcdd15 = port:PD11<2><default><default><default>
-;lcdd16 =
-;lcdd17 =
-lcdd18 = port:PD12<2><default><default><default>
-lcdd19 = port:PD13<2><default><default><default>
-lcdd20 = port:PD14<2><default><default><default>
-lcdd21 = port:PD15<2><default><default><default>
-lcdd22 = port:PD16<2><default><default><default>
-lcdd23 = port:PD17<2><default><default><default>
-
-lcdclk = port:PD18<2><default><default><default>
-lcdde = port:PD19<2><default><default><default>
-lcdhsync = port:PD20<2><default><default><default>
-lcdvsync = port:PD21<2><default><default><default>
-
-;----------------------------------------------------------------------------------
-;  display ?  param
-;----------------------------------------------------------------------------------
-[disp_init]
-disp_init_enable = 1
-disp_mode = 0
- 
-screen0_output_type = 1
-screen0_output_mode = 6
- 
-screen1_output_type = 1
-screen1_output_mode = 6
- 
-fb0_framebuffer_num = 2
-fb0_format = 10
-fb0_pixel_sequence = 0
-fb0_scaler_mode_enable = 0
- 
-fb1_framebuffer_num = 2
-fb1_format = 10
-fb1_pixel_sequence = 0
-fb1_scaler_mode_enable = 0
