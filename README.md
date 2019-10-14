@@ -50,16 +50,29 @@ cd ipu/lichee/linux-3.4
 make distclean
 
 8. Application Compilation
+
 cd ipu/lcd
+
 make
+
 cp lcd ../lichee/out/sun8iw8p1/linux/ipu/buildroot/target/root/
+
 cd ipu/lichee
+
 ./build.sh
+
 ./build.sh pack
 
+
 9. run application
+
 login target board through the debugging port(baudrate: 115200)
+
 id: root/ pw: password
+
 ./lcd ttyS2
+
+(ttyS2 : left side port , ttyS0: right side port)
+
 
 
