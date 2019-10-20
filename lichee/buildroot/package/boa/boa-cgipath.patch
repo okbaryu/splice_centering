@@ -1,0 +1,75 @@
+diff -ru boa-0.94.14rc21.orig/src/cgi.c boa-0.94.14rc21/src/cgi.c
+--- boa-0.94.14rc21.orig/src/cgi.c	2005-02-22 06:11:29.000000000 -0800
++++ boa-0.94.14rc21/src/cgi.c	2014-05-15 15:36:51.541803280 -0700
+@@ -70,6 +70,12 @@
+                                          ((cgi_path !=
+                                            NULL) ? cgi_path :
+                                           DEFAULT_PATH), 0);
++    common_cgi_env[common_cgi_env_count++] = env_gen_extra("LD_LIBRARY_PATH",
++                                         ((cgi_ld_lib_path !=
++                                           NULL) ? cgi_ld_lib_path :
++                                          DEFAULT_LD_LIBRARY_PATH), 0);
++    /*common_cgi_env[common_cgi_env_count++] = env_gen_extra("LD_LIBRARY_PATH",
++                                          DEFAULT_LD_LIBRARY_PATH, 0);*/
+     common_cgi_env[common_cgi_env_count++] =
+         env_gen_extra("SERVER_SOFTWARE", SERVER_VERSION, 0);
+     common_cgi_env[common_cgi_env_count++] = env_gen_extra("SERVER_NAME", server_name, 0);
+diff -ru boa-0.94.14rc21.orig/src/config.c boa-0.94.14rc21/src/config.c
+--- boa-0.94.14rc21.orig/src/config.c	2005-02-22 06:11:29.000000000 -0800
++++ boa-0.94.14rc21/src/config.c	2014-05-15 15:37:09.115221284 -0700
+@@ -53,6 +53,7 @@
+ 
+ char *pid_file;
+ char *cgi_path;
++char *cgi_ld_lib_path;
+ int single_post_limit = SINGLE_POST_LIMIT_DEFAULT;
+ int conceal_server_identity = 0;
+ 
+@@ -154,6 +155,7 @@
+     {"Alias", S2A, c_add_alias, &alias_number},
+     {"SinglePostLimit", S1A, c_set_int, &single_post_limit},
+     {"CGIPath", S1A, c_set_string, &cgi_path},
++    {"CGILDLibPath", S1A, c_set_string, &cgi_ld_lib_path},
+     {"CGIumask", S1A, c_set_int, &cgi_umask},
+     {"MaxConnections", S1A, c_set_int, &max_connections},
+     {"ConcealServerIdentity", S0A, c_set_unity, &conceal_server_identity},
+Only in boa-0.94.14rc21/src: config.h
+diff -ru boa-0.94.14rc21.orig/src/defines.h boa-0.94.14rc21/src/defines.h
+--- boa-0.94.14rc21.orig/src/defines.h	2005-02-22 06:11:29.000000000 -0800
++++ boa-0.94.14rc21/src/defines.h	2014-05-15 15:37:26.707639777 -0700
+@@ -40,6 +40,10 @@
+ /***** Change this via the CGIPath configuration value in boa.conf *****/
+ #define DEFAULT_PATH     "/bin:/usr/bin:/usr/local/bin"
+ 
++/***** Change this via the CGILDLibPath configuration value in boa.conf *****/
++#define DEFAULT_LD_LIBRARY_PATH "."
++
++
+ /***** Change this via the DefaultVHost configuration directive in boa.conf *****/
+ #define DEFAULT_VHOST "default"
+ #define DEFAULT_CONFIG_FILE "boa.conf" /* locate me in the server root */
+@@ -83,9 +87,11 @@
+ #define CGI_VERSION				"CGI/1.1"
+ 
+ #ifdef USE_NCSA_CGI_ENV
+-#define COMMON_CGI_COUNT 8
++/*#define COMMON_CGI_COUNT 8*/
++#define COMMON_CGI_COUNT 9
+ #else
+-#define COMMON_CGI_COUNT 6
++/*#define COMMON_CGI_COUNT 6*/
++#define COMMON_CGI_COUNT 7
+ #endif
+ 
+ #define CGI_ENV_MAX     100
+diff -ru boa-0.94.14rc21.orig/src/globals.h boa-0.94.14rc21/src/globals.h
+--- boa-0.94.14rc21.orig/src/globals.h	2005-02-22 06:11:29.000000000 -0800
++++ boa-0.94.14rc21/src/globals.h	2014-05-15 15:37:34.160817084 -0700
+@@ -250,6 +250,7 @@
+ extern const char *tempdir;
+ 
+ extern char *cgi_path;
++extern char *cgi_ld_lib_path;
+ extern short common_cgi_env_count;
+ extern int single_post_limit;
+ extern int conceal_server_identity;
