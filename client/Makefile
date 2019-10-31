@@ -8,11 +8,11 @@ CFLAGS_X1=-pipe -Os -mtune=cortex-a7 -march=armv7-a -mabi=aapcs-linux -mhard-flo
 CFLAGS= --sysroot=$(TOPDIR)/lichee/out/sun8iw8p1/linux/ipu/buildroot/staging $(CFLAGS_X) $(CFLAGS_X1) -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -I$(TOPDIR)/lichee/out/sun8iw8p1/linux/ipu/buildroot/staging/usr/include -I./include -I$(TOOL_PATH)/include/json-c
 CFLAGS+= -D__OS_LINUX
 LOCAL_LIB_PATH=./linux_lib/
-LIBS=-lpthread -lVE -lvencoder -lMemAdapter -ljson-c -L$(TOOL_PATH)/lib -L$(LOCAL_LIB_PATH) 
+LIBS=-lpthread -lVE -lvencoder -lMemAdapter -ljson-c -L$(TOOL_PATH) -L$(LOCAL_LIB_PATH)
 
-SRCCS = main.c serial.c
+SRCCS = main.c 
 OBJ      := $(SRCCS:%.c=%.o)
-TARGET=lcd
+TARGET=client
 
 $(TARGET): $(OBJ)
 	$(CPP) $(CFLAGS) $(LIBS) -o $@ $^

@@ -15,6 +15,9 @@ fi
 #	/tmp/ipu/start-ipu.sh &
 #fi
 
+echo "(i) app start"
+/root/lcd &
+
 exit 1
 
 APP_PATH=/data

@@ -22,53 +22,515 @@
 #include <sys/time.h>
 #include <termios.h>
 #include <stdint.h>
+#include <json.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+#include <pthread.h>
 
 #define BUF_SIZE        4096
 #define WIDTH_SCREEN    800
 #define HEIGHT_SCREEN   480
 #define WIDTH_IMAGE     1920
 
+#define DEV_CAM_0	"/dev/ttyS0"
+#define DEV_CAM_1	"/dev/ttyS2"
 
 extern int uart_open(char *devname, int baud);
 extern void  uart_close( int fd );
 
-void render(char * framebuffer, char * buf, int size)
-{
-    int x=0, y=0;
-    for(x=0; x<WIDTH_SCREEN; x++)
-    {
-        for(y=0; y<HEIGHT_SCREEN; y++)
-        {
-            // resizing
-            int index = (int)(x*2.4);
-            char value1 = buf[index];
-            char value2 = buf[index+1];
-            char average = (value1+value2)/2;
+#define MODE_RUNNING 		0
+#define MODE_CALIBRATION 	1
+#define STR_RUN_MODE		"0"
+#define STR_CAL_MODE		"1"
 
-            // rendering
-            int offset = (WIDTH_SCREEN * y + x)*4;
-            framebuffer[offset]  =average;//B  
-            framebuffer[offset+1]=average;//G  
-            framebuffer[offset+2]=average;//R  
-            framebuffer[offset+3]=255;//A  
-        }
-    }
+char * gFb = NULL;
+int gMode = MODE_RUNNING;
+char gVf0[BUF_SIZE] = "";
+char gVf1[BUF_SIZE] = "";
+
+char g_frame0[4096];
+int g_index0 = 0;
+
+char g_frame1[4096];
+int g_index1 = 0;
+
+int gUartPort0=0;
+int gUartPort1=0;
+
+char gThreshold0 = 128;
+char gThreshold1 = 128;
+
+int gLeftTrim0 = 0;
+int gRightTrim0 = 1919;
+
+int gLeftTrim1 = 0;
+int gRightTrim1 = 1919;
+
+pthread_mutex_t gMutex0;
+pthread_mutex_t gMutex1;
+
+#define SET_CAM_ALL	0
+#define SET_CAM_0	1
+#define SET_CAM_1	2
+
+#define STR_SET_MODE	"setMode"
+#define STR_RUNNING	"running"
+#define STR_CALI	"calibration"
+
+#define STR_SET_CAMERA	"setCamera"
+#define STR_CAM_ALL	"all"
+#define STR_CAM_0	"cam0"
+#define STR_CAM_1	"cam1"
+
+#define STR_SET_THRESHOLD		"setThreshold"
+#define STR_SET_LEFT_TRIM		"setLeftTrim"
+#define STR_SET_RIGHT_TRIM		"setRightTrim"
+#define STR_SAVE_CALIBRATION_DATA	"saveCalibrationData"
+#define STR_GET_CALIBRATION_DATA	"getCalibrationData"
+#define STR_ERASE_CALIBRATION_DATA	"eraseCalibrationData"
+
+#define FILE_PATH		"/mnt/extsd/calibration_data.json"
+#define KEY_CAM0_CENTER 	"cam0Center"
+#define KEY_CAM1_CENTER  	"cam1Center"
+#define KEY_CAM0_LEFT_TRIM  	"cam0LeftTrim"
+#define KEY_CAM0_RIGHT_TRIM  	"cam0RightTrim"
+#define KEY_CAM1_LEFT_TRIM  	"cam1LeftTrim"
+#define KEY_CAM1_RIGHT_TRIM  	"cam1RightTrim"
+#define KEY_CAM0_THRESHOLD  	"cam0Threshold"
+#define KEY_CAM1_THRESHOLD  	"cam1Threshold"
+#define KEY_PIXEL_LEN	 	"pixelLen"
+
+int gSetCam = SET_CAM_ALL;
+int gStartStream = 0;
+
+#define BUF_CAM_SIZE	1920
+char bufCamAll[BUF_CAM_SIZE] = {0};
+char bufCam0[BUF_CAM_SIZE] = {0};
+char bufCam1[BUF_CAM_SIZE] = {0};
+
+typedef struct {
+	unsigned char startCode;
+	int cam0Center;
+	int cam1Center;
+	int cam0LeftTrim;
+	int cam0RightTrim;
+	int cam1LeftTrim;
+	int cam1RightTrim;
+	unsigned char cam0Threshold;
+	unsigned char cam1Threshold;
+	double pixelLen[1920];
+	unsigned char errCheck;
+} CalibrationData;	
+	
+CalibrationData gCalibrationData;
+
+struct {
+	int flag;
+	const char *flag_str;
+} json_flags[] = {
+	{ JSON_C_TO_STRING_PLAIN, "JSON_C_TO_STRING_PLAIN" },
+	{ JSON_C_TO_STRING_SPACED, "JSON_C_TO_STRING_SPACED" },
+	{ JSON_C_TO_STRING_PRETTY, "JSON_C_TO_STRING_PRETTY" },
+	{ JSON_C_TO_STRING_NOZERO, "JSON_C_TO_STRING_NOZERO" },
+	{ JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY, 
+		"JSON_C_TO_STRING_SPACED | JSON_C_TO_STRING_PRETTY" },
+	{ -1, NULL }
+}; // Create an anonymous struct, instanciate an array and fill it
+
+void setMode(int uartPort, int mode);
+
+void clearScreen()
+{
+	memset(gFb, 0, 800*480*4);// clear screen
 }
 
-char g_frame[4096];
-int g_index = 0;
+long long GetNowUs() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
 
-void drawFrame(char * framebuffer, const char * buf, int size)
+    return (long long)tv.tv_sec * 1000000ll + tv.tv_usec;
+}
+
+void fetchFrameCalibration(char * vf, const char * buf, int size)
+{
+	memcpy(vf, buf, size);
+}
+
+void putPixelRGB(char * framebuffer, int x, int y, char r, char g, char b)
+{
+	int offset = (WIDTH_SCREEN * y + x)*4;
+	framebuffer[offset]  =b;//B
+	framebuffer[offset+1]=g;//G
+	framebuffer[offset+2]=r;//R
+	framebuffer[offset+3]=255;//A
+}
+
+void drawVLine(char * framebuffer, int x, char r, char g , char b )
+{
+	int i=0;
+	for(i=0; i<480; i++)
+	{
+		putPixelRGB(framebuffer, x, i, r, g, b);
+	}
+}
+
+void putPixel(char * framebuffer, int x, int y, char grey)
+{
+	int offset = (WIDTH_SCREEN * y + x)*4;
+	framebuffer[offset]  =grey;//B
+	framebuffer[offset+1]=grey;//G
+	framebuffer[offset+2]=grey;//R
+	framebuffer[offset+3]=255;//A
+}
+
+char temp[1920];
+void dilation(char * bin, int size)
+{
+	memcpy(temp, bin, size);
+	memset(bin, 0, size);
+
+	int i=0;
+	for(i=0; i<size; i++)
+	{
+		char src = temp[i];
+		if(src==1)
+		{
+			if(i-1>=0) bin[i-1] = 1;
+			bin[i] = 1;
+			if(i+1<size) bin[i+1] = 1;
+		}
+	}
+}
+
+void erosion(char * bin, int size)
+{
+	memcpy(temp, bin, size);
+	memset(bin, 0, size);
+
+	int i=0;
+	for(i=0; i<size; i++)
+	{
+		char left=0, center=0, right=0;
+		if(i-1>=0) left = temp[i-1];
+		center = temp[i];
+		if(i+1<size) right = temp[i+1];
+
+		if(left==1 && center==1 && right==1)
+			bin[i] = 1;
+	}
+}
+
+char bin[1920];
+int getGridSize(const char* buf, int size, int threshold)
+{
+	int i = 0, j=0;
+	for(i=0; i<1920; i++)
+		if(buf[i]>threshold) bin[i] = 1;
+		else bin[i] = 0;
+
+	// dilation
+	dilation(bin, 1920);
+
+	// erosion
+	erosion(bin, 1920);
+
+	// erosion
+	erosion(bin, 1920);
+
+	// dilation
+	dilation(bin, 1920);
+	
+
+	char arr[10];
+	int index = 0;
+	memset(arr,0,10);
+
+	int center = 1920/2;
+
+	int current = center;
+	
+	// move to left start
+	while(bin[current]==bin[current-1])
+		current--;
+	current--;
+
+	for(i=0; i<5; i++)
+	{
+		int combo=1;
+		while(bin[current]==bin[current-1]) 
+		{
+			combo++;
+			current--;
+		}
+
+		arr[index++]= combo;
+		current--;
+	}
+
+
+	current = center;
+	
+	// move to right start
+	while(bin[current]==bin[current+1])
+		current++;
+	current++;
+
+	for(i=0; i<5; i++)
+	{
+		int combo=1;
+		while(bin[current]==bin[current+1]) 
+		{
+			combo++;
+			current++;
+		}
+
+		arr[index++]= combo;
+		current++;
+	}
+
+
+	// sort
+	for(i=0; i<10; i++)
+		for(j=i+1; j<10; j++)
+			if(arr[j]>arr[i]) 
+			{
+				char temp = arr[i];
+				arr[i] = arr[j];
+				arr[j] = temp;
+			}
+	
+/*	printf("(i) arr=");
+	for(i=0; i<10; i++) printf("%d ", arr[i]);
+	printf("\n");
+*/
+
+	int sum = 0;
+	for(i=0; i<4; i++)
+		sum+=arr[i];
+	
+	return sum/4;
+}
+
+int getCenter(int gridSize, char threshold)
+{
+	int i=0;
+	int combo = 0;
+	int minDiff = 128;
+	int minIndex = 0;
+	int centerWidth = 0;
+
+	int leftTrim = 0;
+	int rightTrim = 0;
+
+	if(gSetCam==SET_CAM_0)
+	{
+		leftTrim = gLeftTrim0;
+		rightTrim = gRightTrim0;
+	}
+	else if(gSetCam==SET_CAM_1)
+	{
+		leftTrim = gLeftTrim1;
+		rightTrim = gRightTrim1;
+	}
+	else {}
+
+	//printf("(i) Trim left=%d, right=%d\n", leftTrim, rightTrim);
+	
+	for(i=leftTrim; i<rightTrim; i++)
+	{
+		char value = bin[i];
+		if(value==1)
+		{
+			combo++;
+		}
+		else
+		{
+			int difference = abs(gridSize*2 - combo);
+			if(difference<minDiff)
+			{
+				minDiff = difference;
+				minIndex = i;
+				centerWidth = combo;
+			}
+			combo=0;
+		}
+	}
+
+//	int min =0; 
+//	for(i=0; i<1920; i++)
+//		if(difference[i]<difference[min]) min = i;
+
+	return minIndex-centerWidth/2;
+}
+
+int comboTable[1920]; 
+void generateComboTable()
+{
+	int i = 0;
+	int combo = 1;
+	memset(comboTable,0,1920*sizeof(int));
+	while(i<1920)
+	{
+		char color = bin[i];
+		if(color==bin[i+1])
+		{
+			combo++;
+		}
+		else
+		{
+			comboTable[i] = combo;
+			combo=1;
+		}
+		i++;
+	}
+}
+
+
+void render(char * framebuffer, const char * buf, int size)
+{
+	int baseLine = 368;
+	if(gMode==MODE_RUNNING) baseLine = 280;
+
+	int gridSize = 0;
+	int center = 0;
+	if(gMode==MODE_CALIBRATION)
+	{
+		clearScreen();
+		int threshold = gThreshold0;
+		if(gSetCam == SET_CAM_1) threshold = gThreshold1;
+
+		gridSize = getGridSize(buf, size, threshold);
+		//printf("(i) grid size = %d\n", gridSize);
+	
+		center = getCenter(gridSize, threshold);
+		//printf("(i) center = %d\n", center);
+	}
+
+	int x, y;
+	for(x=0; x<WIDTH_SCREEN; x++)
+	{
+		int index = (int)(x*2.4);
+		if(index+1>=size) break;
+
+		char value1 = buf[index];
+		char value2 = buf[index+1];
+		char average = (value1+value2)/2;
+
+		if(gMode==MODE_CALIBRATION)
+		{
+			for(y=baseLine; y>baseLine-average; y--)
+				putPixel(framebuffer, x, y, 0xFF);
+
+			if(gSetCam==SET_CAM_0)
+				putPixelRGB(framebuffer, x, baseLine-gThreshold0, 255, 255, 0);
+			else if(gSetCam==SET_CAM_1)
+				putPixelRGB(framebuffer, x, baseLine-gThreshold1, 170, 170, 0);
+			else {
+				putPixelRGB(framebuffer, x, baseLine-gThreshold0, 255, 255, 0);
+				putPixelRGB(framebuffer, x, baseLine-gThreshold1, 170, 170, 0);
+			}
+		}
+		else
+		{
+			if(average>128)
+			{
+				for(y=baseLine; y>baseLine-80; y--)
+					putPixel(framebuffer, x, y, 0xFF);
+			}
+			else
+			{
+				for(y=baseLine; y>baseLine-80; y--)
+					putPixel(framebuffer, x, y, 0x00);
+			}
+
+		}
+	}
+
+	if(gMode==MODE_CALIBRATION)
+	{
+	    if(gSetCam==SET_CAM_0)
+	    {
+		x = (int)(gLeftTrim0/2.4);
+		drawVLine(framebuffer, x, 0, 0, 255);
+
+		x = (int)(gRightTrim0/2.4);
+		drawVLine(framebuffer, x, 0, 0, 255);
+
+		gCalibrationData.cam0Center = center;
+		gCalibrationData.cam0LeftTrim = gLeftTrim0;
+		gCalibrationData.cam0RightTrim = gRightTrim0;
+		gCalibrationData.cam0Threshold = gThreshold0;
+
+		// generate combo table
+		generateComboTable();
+
+		// right side of merged image.
+		int from = center;
+		int to = 1919;
+		int combo = 0;
+		int i=0;
+		for(i=to; i>=from; i--)
+		{
+			if(comboTable[i]>0) combo = comboTable[i];
+			if(combo>0)
+			{
+				gCalibrationData.pixelLen[i]=5.0/combo; // 1cell = 5mm
+			}
+		}
+				
+	    }
+	    else if(gSetCam==SET_CAM_1)
+	    {
+		x = (int)(gLeftTrim1/2.4);
+		drawVLine(framebuffer, x, 0, 0, 255);
+
+		x = (int)(gRightTrim1/2.4);
+		drawVLine(framebuffer, x, 0, 0, 255);
+
+		gCalibrationData.cam1Center = center;
+		gCalibrationData.cam1LeftTrim = gLeftTrim1;
+		gCalibrationData.cam1RightTrim = gRightTrim1;
+		gCalibrationData.cam1Threshold = gThreshold1;
+
+		// generate combo table
+		generateComboTable();
+
+		// right side of merged image.
+		int from = center; 
+		int to = 0; 
+		int combo = 0;
+		int i=0;
+		for(i=from; i>=to; i--)
+		{
+			if(comboTable[i]>0) combo = comboTable[i];
+			if(combo>0)
+			{
+				gCalibrationData.pixelLen[i]=5.0/combo; // 1cell = 5mm
+			}
+		}
+	    }
+	    else 
+	    {
+		drawVLine(framebuffer, 400, 255, 0, 0);
+	    }
+
+	    x = (int)(center/2.4);
+	    drawVLine(framebuffer, x, 255, 0, 0);
+	}
+}
+
+
+void fetchFrameRunning(char * vf, const char * buf, int size, int *pIndex, char* frame)
 {
     char startOfFrame = buf[0];
     char colorData = buf[1];
     int count = ( (buf[2] & 0x7F)<<8) | buf[3]; // MSB not used. 15bit values max
 
-    if(g_index>0 && startOfFrame==0x02)
+    if(*pIndex>0 && startOfFrame==0x02)
     {
         //printf("(i) frame will be rendered\n");
-        render(framebuffer, g_frame, 1920);
-        g_index=0;
+        memcpy(vf, frame, 1920);
+        *pIndex=0;
         return;
     }
 
@@ -76,108 +538,731 @@ void drawFrame(char * framebuffer, const char * buf, int size)
     int i=0;
     for(i=0; i<count; i++)
     {
-        if(g_index>1920) break;
-//            printf("(i) g_index=%d, count=%d, buf[2]=%02X, buf[3]=%02X\n" , 
-//                    g_index, count, buf[2], buf[3]);
-
-        else g_frame[g_index++] = colorData;
+        if(*pIndex>1920) break;
+        else frame[(*pIndex)++] = colorData;
     }
-/*
-//    printf("(i) drawFrame function called:size=%d\n, bf=%p, buf=%p\n", size, framebuffer, buf);
-    int i=0, j=0;
-    for(i=0; i<size; i++)
-    {
-        for(j=0; j<HEIGHT_SCREEN; j++)
-        {
-            int x = i%WIDTH_IMAGE;
-            int y = j;
-            if(x>=WIDTH_SCREEN) 
-            {
-//                printf("(i) drawFrame continue next pixel: x=%d, y=%d, w_i=%d, w_s=%d, h_s=%d\n", 
-//                        x, y, WIDTH_IMAGE, WIDTH_SCREEN, HEIGHT_SCREEN);
-                continue;
-            }
-            if(y>=HEIGHT_SCREEN) 
-            {
-//                printf("(i) drawFrame break loop: x=%d, y=%d, w_i=%d, w_s=%d, h_s=%d\n", 
-//                        x, y, WIDTH_IMAGE, WIDTH_SCREEN, HEIGHT_SCREEN);
-                break;
-            }
-            int index = (int)(i*2.4);
-            char value1 = buf[index];
-            char value2 = buf[index+1];
-            char average = (value1+value2)/2;
-
-            int offset = (WIDTH_SCREEN * y + x)*4;
-            framebuffer[offset]  =average;//B  
-            framebuffer[offset+1]=average;//G  
-            framebuffer[offset+2]=average;//R  
-            framebuffer[offset+3]=255;//A  
-        }
-    }
-    printf("(i) drawFrame function will be returned\n");
-    */
 }
 
-void receiveFrame(char* fb, char * strCom)
+void * thread_function_uart0(void* arg)
 {
     int i = 0;
     int index = 0;
-    int fd = uart_open(strCom, 115200);
-    if(fd<0) {
-        fprintf(stderr, "Fail to open serial port\n");
+
+    gUartPort0 = uart_open(DEV_CAM_0, 115200);
+    if(gUartPort0<0) {
+        fprintf(stderr, "Fail to open serial port0\n");
         exit(1);
     }
-    printf("Serial Port open success!:%s\n", strCom);
+    printf("Serial Port0 open success!\n");
+
+    setMode(gUartPort0, gMode);
 
     char buf[BUF_SIZE] = "";
     char temp[BUF_SIZE] = "";
     memset(buf,0,BUF_SIZE);
     memset(temp,0,BUF_SIZE);
 
+    memset(gVf0,0,BUF_SIZE);
+
     while(1)
     {
-        ssize_t len = read(fd, temp, BUF_SIZE);
+        ssize_t len = read(gUartPort0, temp, BUF_SIZE);
         if(len==-1) {
-            fprintf(stderr,"Fail to read serial port\n");
+            fprintf(stderr,"Fail to read serial port0\n");
             break;
         }
-//        printf("(i) serial read success(%d):\n", len);
 
         for(i=0; i<len; i++)
         {
-//            printf("%02X", temp[i]);
             if(temp[i]==0) // new packet 
             {
-//                printf("\n(i) new packet(%d):", index);
-                drawFrame(fb, buf, index);
+		pthread_mutex_lock(&gMutex0);
+
+		if(gMode==MODE_RUNNING) 
+			fetchFrameRunning(gVf0, buf, index, &g_index0, g_frame0);
+		else fetchFrameCalibration(gVf0, buf, index);
+
+		pthread_mutex_unlock(&gMutex0);
+
                 index = 0;
                 continue;
             }
 
             buf[index++] = temp[i];
         }
-
-
     }
 
-    uart_close(fd);
-    printf("(i) UART Port closed\n");
+    uart_close(gUartPort0);
+    printf("(i) UART Port0 closed\n");
+
+    return 0;
 }
 
-    
+void * thread_function_uart1(void* arg)
+{
+    int i = 0;
+    int index = 0;
+
+    gUartPort1 = uart_open(DEV_CAM_1, 115200);
+    if(gUartPort1<0) {
+        fprintf(stderr, "Fail to open serial port1\n");
+        exit(1);
+    }
+    printf("Serial Port1 open success!\n");
+
+    setMode(gUartPort1, gMode);
+
+    char buf[BUF_SIZE] = "";
+    char temp[BUF_SIZE] = "";
+    memset(buf,0,BUF_SIZE);
+    memset(temp,0,BUF_SIZE);
+
+    memset(gVf1,0,BUF_SIZE);
+
+    while(1)
+    {
+        ssize_t len = read(gUartPort1, temp, BUF_SIZE);
+        if(len==-1) {
+            fprintf(stderr,"Fail to read serial port1\n");
+            break;
+        }
+
+        for(i=0; i<len; i++)
+        {
+            if(temp[i]==0) // new packet 
+            {
+		pthread_mutex_lock(&gMutex1);
+
+		if(gMode==MODE_RUNNING) 
+			fetchFrameRunning(gVf1, buf, index, &g_index1, g_frame1);
+		else fetchFrameCalibration(gVf1, buf, index);
+
+		pthread_mutex_unlock(&gMutex1);
+
+                index = 0;
+                continue;
+            }
+
+            buf[index++] = temp[i];
+        }
+    }
+
+    uart_close(gUartPort1);
+    printf("(i) UART Port1 closed\n");
+
+    return 0;
+}
+
+void receiveFrame(char* fb)
+{
+
+    unsigned long current = GetNowUs();
+    unsigned long prev = current;
+    unsigned long elapsedTime = 0;	
+
+    // Create Mutex for shared image buffer
+    pthread_t t_id0, t_id1;
+    pthread_mutex_init(&gMutex0, NULL);
+    pthread_mutex_init(&gMutex1, NULL);
+
+    // start a thread works on UART 0
+    pthread_create(&t_id0, NULL, thread_function_uart0, NULL);
+    pthread_detach(t_id0);
+
+    // start a thread works on UART 1
+    pthread_create(&t_id1, NULL, thread_function_uart1, NULL);
+    pthread_detach(t_id1);
+
+    char vf0[1920];
+    char vf1[1920];
+    char vfCombined[1920];
+
+    memset(vf0, 0, 1920);
+    memset(vf1, 0, 1920);
+    memset(vfCombined, 0 ,1920);
+
+
+
+    while(1)
+    {
+	current = GetNowUs();
+	elapsedTime = current - prev;
+	if( (gMode==MODE_RUNNING && elapsedTime>16667) ||
+		(gMode==MODE_CALIBRATION && elapsedTime>1000000) )
+	{
+		prev = current;
+
+		if( gSetCam == SET_CAM_0 )
+		{
+			pthread_mutex_lock(&gMutex0);
+			memcpy(vf0, gVf0, 1920);
+			pthread_mutex_unlock(&gMutex0);
+
+			render(fb, vf0, 1920);
+		}
+		else if( gSetCam == SET_CAM_1 )
+		{
+			pthread_mutex_lock(&gMutex1);
+			memcpy(vf1, gVf1, 1920);
+			pthread_mutex_unlock(&gMutex1);
+
+			render(fb, gVf1, 1920);
+		}
+		else
+		{
+			pthread_mutex_lock(&gMutex0);
+			memcpy(vf0, gVf0, 1920);
+			pthread_mutex_unlock(&gMutex0);
+
+			pthread_mutex_lock(&gMutex1);
+			memcpy(vf1, gVf1, 1920);
+			pthread_mutex_unlock(&gMutex1);
+
+			// generate combined image from vf0 and vf1
+
+			// copy cam1 left side image
+			int i=0;
+			int center = gCalibrationData.cam1Center;
+			for(i=0; i<1920/2; i++)
+			{
+				if(center-i<0) break;
+				vfCombined[1920/2-i] = vf1[center-i];
+			}
+
+			// copy cam0 right side image
+			center = gCalibrationData.cam0Center;
+			for(i=0; i<1920/2; i++)
+			{
+				if(center+i>=1920) break;
+				vfCombined[1920/2+i] = vf0[center+i];
+			}
+
+			render(fb, vfCombined, 1920);
+		}
+	}
+    }
+
+    pthread_mutex_destroy(&gMutex0);
+    pthread_mutex_destroy(&gMutex1);
+
+    return;
+}
+
+void setMode(int uartPort, int mode)
+{
+	memset(gFb, 0, 800*480*4);// clear screen
+
+	printf("(i) setMode function called(%d).\n", mode);
+	int len = 0;
+	char buf[100];
+
+	int threshold = gThreshold0;
+	if(gSetCam==SET_CAM_1) threshold = gThreshold1;
+
+	if(mode==MODE_RUNNING)
+	{
+		sprintf(buf,"$0,%d", threshold);
+		len = write(uartPort,buf,strlen(buf)); // RUN MODE "0"
+	}
+	else
+	{
+		sprintf(buf,"$1,%d", threshold);
+		len = write(uartPort,buf,strlen(buf)); // CAL MODE "1"
+	}
+
+	if(len<=0) 
+	{
+		printf("(!) send control on uart(%d) failed(%d).\n", uartPort, len);
+	}
+	else 
+	{
+		gMode = mode;
+		printf("(i) send control on user(%d) success(%d).\n", uartPort, len);
+	}
+}
+
+int getMode()
+{
+	return gMode;
+}
+
+void saveCalibrationData()
+{
+	json_object * json = json_object_new_object();
+	json_object * temp = NULL;
+	
+	temp = json_object_new_int(gCalibrationData.cam0Center);
+	json_object_object_add(json,KEY_CAM0_CENTER, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam1Center);
+	json_object_object_add(json,KEY_CAM1_CENTER, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam0LeftTrim);
+	json_object_object_add(json,KEY_CAM0_LEFT_TRIM, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam0RightTrim);
+	json_object_object_add(json,KEY_CAM0_RIGHT_TRIM, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam1LeftTrim);
+	json_object_object_add(json,KEY_CAM1_LEFT_TRIM, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam1RightTrim);
+	json_object_object_add(json,KEY_CAM1_RIGHT_TRIM, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam0Threshold);
+	json_object_object_add(json,KEY_CAM0_THRESHOLD, temp); 
+
+	temp = json_object_new_int(gCalibrationData.cam1Threshold);
+	json_object_object_add(json,KEY_CAM1_THRESHOLD, temp); 
+
+	json_object * array = json_object_new_array();
+ 	int i=0;	
+	for(i=0; i<1920; i++)
+	{
+		temp = json_object_new_double(gCalibrationData.pixelLen[i]);
+		json_object_array_add(array, temp);
+	}
+	json_object_object_add(json,KEY_PIXEL_LEN, array);
+
+	FILE * fp = fopen(FILE_PATH, "w+");
+	if(fp!=NULL)
+	{
+		fprintf(fp, "%s", json_object_to_json_string(json));
+		fclose(fp);
+	}
+		
+	json_object_put(json); // delete the new object.
+}
+
+
+void responseUserRequest(int sock, char * msg, int len)
+{
+	msg[len] = 0;
+
+	// parse JSON packet
+	json_object *rootObj;
+	json_object *dval;
+
+	/* JSON type의 데이터를 읽는다. */
+	rootObj = json_tokener_parse(msg);
+
+
+	// execute user's request	
+
+	// key existance test
+	int exists = 0;
+	char buf[BUF_SIZE];
+	json_object *response = json_object_new_object();
+
+	// 1. setMode
+	exists=json_object_object_get_ex(rootObj,STR_SET_MODE,0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, STR_SET_MODE);
+		strcpy(buf,json_object_get_string(dval));
+		printf("%s : %s\n", STR_SET_MODE, buf);
+		
+		if(strcmp(buf,STR_RUNNING)==0)
+		{
+			setMode(gUartPort0, MODE_RUNNING);
+			setMode(gUartPort1, MODE_RUNNING);
+		}
+		else if(strcmp(buf,STR_CALI)==0)
+		{
+			setMode(gUartPort0, MODE_CALIBRATION);
+			setMode(gUartPort1, MODE_CALIBRATION);
+		}
+		else
+			printf("(!) setMode value is wrong!\n");
+		
+		if(getMode()==MODE_RUNNING)	
+			json_object_object_add(response,
+				STR_SET_MODE, json_object_new_string(STR_RUNNING) );
+		else 
+			json_object_object_add(response,
+				STR_SET_MODE, json_object_new_string(STR_CALI) );
+	}
+
+	// 2. getMode
+	exists=json_object_object_get_ex(rootObj,"getMode",0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, "getMode");
+		printf("getMode : %s\n", json_object_get_string(dval));
+	}
+
+	// 3. getCalibrationData
+	exists=json_object_object_get_ex(rootObj,STR_GET_CALIBRATION_DATA,0);
+	if(exists!=0) {
+		printf("%s\n", STR_GET_CALIBRATION_DATA);
+		
+		FILE * fp = fopen(FILE_PATH, "r");
+		if(fp!=NULL)
+		{
+			fclose(fp);
+			json_object_object_add(response,
+				STR_GET_CALIBRATION_DATA, json_object_new_string(FILE_PATH));
+		}
+		else
+		{
+			json_object_object_add(response,
+				STR_GET_CALIBRATION_DATA, json_object_new_string("no file"));
+		}
+	}
+
+	// 4. saveCalibrationData
+	exists=json_object_object_get_ex(rootObj,STR_SAVE_CALIBRATION_DATA,0);
+	if(exists!=0) {
+		// parse value.
+		printf("%s\n", STR_SAVE_CALIBRATION_DATA);
+		
+		if(getMode()==MODE_CALIBRATION)	
+		{
+			saveCalibrationData();
+
+			json_object_object_add(response,
+				STR_SAVE_CALIBRATION_DATA, json_object_new_string("saved"));
+		}
+	}
+
+	// 5. eraseCalibrationData
+	exists=json_object_object_get_ex(rootObj,STR_ERASE_CALIBRATION_DATA,0);
+	if(exists!=0) {
+		// parse value.
+		printf("%s\n", STR_ERASE_CALIBRATION_DATA);
+		
+		remove(FILE_PATH);
+
+		json_object_object_add(response,
+			STR_ERASE_CALIBRATION_DATA, json_object_new_string("erased"));
+	}
+
+	// 6. getImage
+	exists=json_object_object_get_ex(rootObj,"getImage",0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, "getImage");
+		printf("getImage : %s\n", json_object_get_string(dval));
+	}
+
+	// 7. setStreaming
+	exists=json_object_object_get_ex(rootObj,"setStreaming",0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, "setStreaming");
+		printf("setStreaming : %s\n", json_object_get_string(dval));
+	}
+
+	// 8. setCamera
+	exists=json_object_object_get_ex(rootObj,"setCamera",0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, STR_SET_CAMERA);
+		strcpy(buf, json_object_get_string(dval));
+
+		printf("%s : %s\n", STR_SET_CAMERA, buf);
+
+		if(strcmp(buf, STR_CAM_ALL) == 0)
+			gSetCam = SET_CAM_ALL;
+		else if( strcmp(buf, STR_CAM_0) == 0 )
+			gSetCam = SET_CAM_0;
+		else if(strcmp(buf,STR_CAM_1) == 0)
+			gSetCam = SET_CAM_1;
+		else 
+			printf("(!) setCamera value is wrong!\n");
+
+		if(gSetCam==SET_CAM_ALL)	
+			json_object_object_add(response,
+			    STR_SET_CAMERA, json_object_new_string(STR_CAM_ALL) );
+		else if(gSetCam==SET_CAM_0)	
+			json_object_object_add(response,
+			    STR_SET_CAMERA, json_object_new_string(STR_CAM_0) );
+		else 
+			json_object_object_add(response,
+			    STR_SET_CAMERA, json_object_new_string(STR_CAM_1) );
+	
+	}
+
+	// 9. setThreashold
+	exists=json_object_object_get_ex(rootObj,"setThreshold",0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, STR_SET_THRESHOLD);
+		strcpy(buf, json_object_get_string(dval));
+
+		printf("%s : %s\n", STR_SET_THRESHOLD, buf);
+
+		int threshold = atoi(buf);
+		if(threshold>=0 && threshold<=255)
+		{
+			if(gSetCam == SET_CAM_0)
+				gThreshold0 = threshold;
+			else
+				gThreshold1 = threshold;
+		}
+		else printf("(!) setThreshold value is wrong!\n");
+
+		if(gSetCam == SET_CAM_0)
+			sprintf(buf, "%d", gThreshold0);
+		else
+			sprintf(buf, "%d", gThreshold1);
+
+		json_object_object_add(response,
+			STR_SET_THRESHOLD, json_object_new_string(buf) );	
+	}
+
+	// 10. setLeftTrim
+	exists=json_object_object_get_ex(rootObj,STR_SET_LEFT_TRIM,0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, STR_SET_LEFT_TRIM);
+		strcpy(buf, json_object_get_string(dval));
+
+		printf("%s : %s\n", STR_SET_LEFT_TRIM, buf);
+
+		int leftTrim = atoi(buf);
+		if(leftTrim>=0 && leftTrim<1920)
+		{
+			if(gSetCam == SET_CAM_0)
+				gLeftTrim0 = leftTrim;
+			else
+				gLeftTrim1 = leftTrim;
+		}
+		else printf("(!) setLeftTrim value is wrong!\n");
+
+		if(gSetCam == SET_CAM_0)
+			sprintf(buf, "%d", gLeftTrim0);
+		else
+			sprintf(buf, "%d", gLeftTrim1);
+
+		json_object_object_add(response,
+			STR_SET_LEFT_TRIM, json_object_new_string(buf) );	
+	}
+
+	// 11. setRightTrim
+	exists=json_object_object_get_ex(rootObj,STR_SET_RIGHT_TRIM,0);
+	if(exists!=0) {
+		// parse value.
+		dval = json_object_object_get(rootObj, STR_SET_RIGHT_TRIM);
+		strcpy(buf, json_object_get_string(dval));
+
+		printf("%s : %s\n", STR_SET_RIGHT_TRIM, buf);
+
+		int rightTrim = atoi(buf);
+		if(rightTrim>=0 && rightTrim<1920)
+		{
+			if(gSetCam == SET_CAM_0)
+				gRightTrim0 = rightTrim;
+			else
+				gRightTrim1 = rightTrim;
+		}
+		else printf("(!) setRightTrim value is wrong!\n");
+
+		if(gSetCam == SET_CAM_0)
+			sprintf(buf, "%d", gRightTrim0);
+		else
+			sprintf(buf, "%d", gRightTrim1);
+
+		json_object_object_add(response,
+			STR_SET_RIGHT_TRIM, json_object_new_string(buf) );	
+	}
+
+	strcpy(buf, json_object_to_json_string_ext(response, json_flags[0].flag) );
+	len = write(sock,buf,strlen(buf));
+	if(len>0) printf("(i) server: send response success(%d). %s\n", len, buf);
+	else printf("(!) server: send response failed(%d). %s\n", len, buf);
+
+	json_object_put(response); // delete the new object.
+
+	return;
+}
+
+int sendImage(int sock, int cam)
+{
+	int len = 0;
+
+	if(cam==SET_CAM_ALL)
+		len = write(sock, bufCamAll, BUF_CAM_SIZE);
+	else if(cam==SET_CAM_0)
+		len = write(sock, bufCam0, BUF_CAM_SIZE);
+	else if(cam==SET_CAM_1)
+		len = write(sock, bufCam1, BUF_CAM_SIZE);
+	else
+		fprintf(stderr,"(!) cam number is wrong.\n");
+	return len;
+}
+
+void* thread_function_client(void* arg)
+{
+	fprintf(stderr,"(i) client  thread started.\n");
+
+	int sock = *((int*)arg);
+	int str_len = 0;
+	char msg[BUF_SIZE];
+	memset(msg,0,BUF_SIZE);
+
+	while( (str_len=read(sock, msg, BUF_SIZE))!=0)
+	{
+		fprintf(stderr,"(i)read(%d):%s\n", sock, msg);
+		responseUserRequest(sock,  msg, str_len);
+	}
+	close(sock);
+	
+	return 0;
+}
+
+void* thread_function_streaming(void* arg)
+{
+	fprintf(stderr,"(i) streaming thread started.\n");
+
+	int sock = *((int*)arg);
+
+	while(1)
+	{
+		sleep(1);
+		if(gStartStream==0) continue;
+
+		sendImage(sock, gSetCam);
+	}
+
+	return 0;
+}
+
+void* thread_function_server(void * arg)
+{
+	fprintf(stderr,"(i) server thread started.\n");
+
+	int serv_sock, clnt_sock;
+	struct sockaddr_in serv_adr, clnt_adr;
+	int clnt_adr_sz;
+	pthread_t t_id1, t_id2;
+
+	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
+	memset(&serv_adr, 0, sizeof(serv_adr));
+	serv_adr.sin_family=AF_INET;
+	serv_adr.sin_addr.s_addr = htonl(INADDR_ANY);
+	serv_adr.sin_port = htons(7076);
+	
+	if(bind(serv_sock, (struct sockaddr*) &serv_adr,
+		sizeof(serv_adr)) == -1)
+	{
+		fprintf(stderr,"(!) bind error!\n");
+		return 0;
+	}
+
+	if(listen(serv_sock, 5) ==-1) 
+	{
+		fprintf(stderr,"(!) listen error!\n");
+		return 0;
+	}
+
+	while(1)
+	{
+		clnt_adr_sz = sizeof(clnt_adr);
+		clnt_sock=accept(serv_sock, 
+			(struct sockaddr*)&clnt_adr, (void*)&clnt_adr_sz);
+
+		fprintf(stderr,"(i) accepted.\n");
+		
+		pthread_create(&t_id1, NULL,
+			thread_function_client, (void*)&clnt_sock);
+		pthread_detach(t_id1);
+
+		pthread_create(&t_id2, NULL,
+			thread_function_streaming, (void*)&clnt_sock);
+		pthread_detach(t_id2);
+	}
+
+	return 0;
+}
+
+void startServerThread() // start TCP Server on a thread.	
+{
+	pthread_t t_id;
+
+	// make a thread and run
+	pthread_create(&t_id, NULL, thread_function_server, NULL);
+
+	// detach the thread
+	pthread_detach(t_id);
+}
+
+int loadCalibrationData()
+{
+	FILE * fp = fopen(FILE_PATH, "r+");
+	if(fp==NULL) return -1;
+
+	char buf[100000];
+
+	fread(buf, 100000, 1, fp);	
+
+	json_object * json = json_tokener_parse(buf);
+	json_object * temp = NULL;
+	
+	temp= json_object_object_get(json,KEY_CAM0_CENTER); 
+	gCalibrationData.cam0Center = json_object_get_int(temp);
+
+	temp= json_object_object_get(json,KEY_CAM1_CENTER); 
+	gCalibrationData.cam1Center = json_object_get_int(temp);
+
+	temp= json_object_object_get(json,KEY_CAM0_LEFT_TRIM); 
+	gCalibrationData.cam0LeftTrim = json_object_get_int(temp);
+	gLeftTrim0 = gCalibrationData.cam0LeftTrim;
+
+	temp= json_object_object_get(json,KEY_CAM0_RIGHT_TRIM); 
+	gCalibrationData.cam0RightTrim = json_object_get_int(temp);
+	gRightTrim0 = gCalibrationData.cam0RightTrim;
+
+	temp= json_object_object_get(json,KEY_CAM1_LEFT_TRIM); 
+	gCalibrationData.cam1LeftTrim = json_object_get_int(temp);
+	gLeftTrim1 = gCalibrationData.cam1LeftTrim;
+
+	temp= json_object_object_get(json,KEY_CAM1_RIGHT_TRIM); 
+	gCalibrationData.cam1RightTrim = json_object_get_int(temp);
+	gRightTrim1 = gCalibrationData.cam1RightTrim;
+
+	temp= json_object_object_get(json,KEY_CAM0_THRESHOLD); 
+	gCalibrationData.cam0Threshold = json_object_get_int(temp);
+	gThreshold0 = gCalibrationData.cam0Threshold;
+
+	temp= json_object_object_get(json,KEY_CAM1_THRESHOLD); 
+	gCalibrationData.cam1Threshold = json_object_get_int(temp);
+	gThreshold1 = gCalibrationData.cam1Threshold;
+
+	temp = json_object_object_get(json, KEY_PIXEL_LEN);
+	int len = json_object_array_length(temp);
+
+ 	int i=0;	
+	for(i=0; i<len; i++)
+	{
+		json_object * element = json_object_array_get_idx(temp, i);
+		gCalibrationData.pixelLen[i] = json_object_get_double(element);
+	}
+
+	fclose(fp);
+	return 0;
+}
+
 int main( int argc, char* argv[] )  
 {  
+/*
     if(argc!=2) {
         perror("Useage: lcd <Serial Port path>\n");
         perror("Example: lcd /dev/ttyS2\n");
         exit(1);
     }
+*/
+
+    memset(&gCalibrationData, 0, sizeof(CalibrationData));
+
+    if(loadCalibrationData()<0)
+    {
+	gMode = MODE_CALIBRATION;
+	gSetCam = SET_CAM_1;
+    }
+
 
     char strFb[255]="/dev/fb0";
-    char strCom[255] = "";
-    strcpy(strCom, argv[1]);
-    printf("Serial Port path: %s\n", strCom);
 
     int framebuffer_fd = 0;  
     struct fb_var_screeninfo framebuffer_variable_screeninfo;  
@@ -236,8 +1321,6 @@ int main( int argc, char* argv[] )
     printf( " width:%d , height: %d , bpp: %d, xoffset: %d, yoffset:%d \n",
             width, height, bpp, xoffset, yoffset);
 
-//    write(framebuffer_fd, "000", 3);
-                                                                       
     long int screensize = width*height*bpp;  
                                                                             
     char *framebuffer_pointer = (char*)mmap( 0, screensize,  
@@ -248,40 +1331,13 @@ int main( int argc, char* argv[] )
         perror( "Error : mmap\n" );  
         exit(1);  
     }  
-    
     else  
     {  
-        receiveFrame(framebuffer_pointer, strCom);
-        // draw a frame on FB
-        /*
-        int x,y;  
-        for ( y=0; y<height; y++)  
-        for ( x=0; x<width; x++)  
-        {  
-            unsigned int pixel_offset = 
-                (y+yoffset)*framebuffer_fixed_screeninfo.line_length +(x+xoffset)*bpp;  
-            if (bpp==4){  
-                if ( x<=width*1/3){    
-                    framebuffer_pointer[pixel_offset]=255;//B  
-                    framebuffer_pointer[pixel_offset+1]=0;//G  
-                    framebuffer_pointer[pixel_offset+2]=0;//R  
-                    framebuffer_pointer[pixel_offset+3]=255;//A  
-                }  
-                if ( x>width*1/3 && x<=width*2/3){      
-                    framebuffer_pointer[pixel_offset]=0;//B  
-                    framebuffer_pointer[pixel_offset+1]=255;//G  
-                    framebuffer_pointer[pixel_offset+2]=0;//R  
-                    framebuffer_pointer[pixel_offset+3]=255;//A  
-                }  
-                if ( x>width*2/3){     
-                    framebuffer_pointer[pixel_offset]=0;//B  
-                    framebuffer_pointer[pixel_offset+1]=0;//G  
-                    framebuffer_pointer[pixel_offset+2]=255;//R  
-                    framebuffer_pointer[pixel_offset+3]=255;//A  
-                }  
-            }  
-        }  
-        */
+	gFb = framebuffer_pointer;
+	clearScreen();
+
+	startServerThread(); // start TCP Server on a thread.	
+        receiveFrame(framebuffer_pointer); // infinite loop
     }   
     munmap( framebuffer_pointer, screensize );   
 
