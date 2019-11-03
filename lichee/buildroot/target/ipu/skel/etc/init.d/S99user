@@ -4,13 +4,6 @@
 #	/data/ipu/ipumgr /dev/ttyS2 38400 &
 #fi
 
-if [ -f /data/ipu/ipu.tgz ] ; then
-	cp /data/ipu/ipu.tgz /tmp
-	cd /tmp
-	gunzip -c ipu.tgz | tar xvf -
-	rm /tmp/ipu.tgz
-fi
-
 #if [ -f /tmp/ipu/start-ipu.sh ] ; then
 #	/tmp/ipu/start-ipu.sh &
 #fi
