@@ -42,6 +42,7 @@ splice_web : $(SPLICE_WEB_DIR)/.configured ${SPLICE_WEB_DIR}/splice.cgi ${SPLICE
 	install -D -m 644 package/splice_web/splice.html $(TARGET_DIR)/var/splice_web
 	install -D -m 644 package/splice_web/splice.js $(TARGET_DIR)/var/splice_web
 	install -D -m 644 package/splice_web/svgvml3d.js $(TARGET_DIR)/var/splice_web
+	ln -s   /usr/bin/php-cgi $(TARGET_DIR)/var/splice_web/php
 
 
 ##############################################################
