@@ -38,8 +38,8 @@ int main( int argc, char* argv[] )
 {  
 	printf("(i) Test Client Program Started.\n");
 
-	if(argc!=3) {
-		printf("Usage: %s <send file name> <new file name>\n", argv[0]);
+	if(argc!=2) {
+		printf("Usage: %s <send JSON file name>\n", argv[0]);
 		exit(1);
 	}
 
@@ -81,23 +81,18 @@ int main( int argc, char* argv[] )
 
 
 	// receive JSON packet
-
-	fp = fopen(argv[2], "wb");
-
 	while(1)
 	{
 		read_cnt=read(sock, buf, BUF_SIZE);
 		if(read_cnt<=0) break; 
 		printf("(i) client: read(%d)%s\n", read_cnt, buf);
 
-		fwrite( (void*)buf, 1, read_cnt, fp);
-
 		buf[read_cnt] = 0;
+		printf("%s", buf);
 		if(strchr(buf,'}')!=NULL) break; // end of the packet
 		
 	}
 
-	fclose(fp);
 	close(sock);
 
 	return 0;

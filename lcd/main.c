@@ -66,6 +66,14 @@ int gRightTrim0 = 1919;
 int gLeftTrim1 = 0;
 int gRightTrim1 = 1919;
 
+#define FONT_WIDTH	16
+#define FONT_HEIGHT	21
+#define FONT_COUNT	10
+unsigned char gFont[FONT_COUNT][FONT_HEIGHT][FONT_WIDTH];
+
+int gCount0 = 12;
+int gCount1 = 13;
+
 pthread_mutex_t gMutex0;
 pthread_mutex_t gMutex1;
 
@@ -137,7 +145,7 @@ struct {
 	{ -1, NULL }
 }; // Create an anonymous struct, instanciate an array and fill it
 
-void setMode(int uartPort, int mode);
+void setMode(int uartPort, int mode, int threshold);
 
 void clearScreen()
 {
@@ -221,6 +229,22 @@ void erosion(char * bin, int size)
 }
 
 char bin[1920];
+
+void removeNoise(char * bin, int size)
+{
+	// dilation
+	dilation(bin, size);
+
+	// erosion
+	erosion(bin, size);
+
+	// erosion
+	erosion(bin, size);
+
+	// dilation
+	dilation(bin, size );
+}
+	
 int getGridSize(const char* buf, int size, int threshold)
 {
 	int i = 0, j=0;
@@ -228,18 +252,7 @@ int getGridSize(const char* buf, int size, int threshold)
 		if(buf[i]>threshold) bin[i] = 1;
 		else bin[i] = 0;
 
-	// dilation
-	dilation(bin, 1920);
-
-	// erosion
-	erosion(bin, 1920);
-
-	// erosion
-	erosion(bin, 1920);
-
-	// dilation
-	dilation(bin, 1920);
-	
+	removeNoise(bin, 1920);
 
 	char arr[10];
 	int index = 0;
@@ -385,6 +398,27 @@ void generateComboTable()
 	}
 }
 
+void printNumber1(int baseX, int baseY, int n, char * fb)
+{
+	int x=0, y=0;
+	for(y=0; y<FONT_HEIGHT; y++)
+	{
+		for(x=0; x<FONT_WIDTH; x++)
+		{
+			putPixel(fb, baseX+x, baseY+y, gFont[n][y][x]);
+		}
+	}
+}
+
+void printNumber(int x, int y, int n, char * fb)
+{
+	int n1 = n%10;
+	int n10 = (int)(((n%100) - n1)/10);	
+
+	printNumber1(x, y, n10, fb);
+	printNumber1(x+16, y, n1, fb);
+}
+
 
 void render(char * framebuffer, const char * buf, int size)
 {
@@ -432,6 +466,10 @@ void render(char * framebuffer, const char * buf, int size)
 		}
 		else
 		{
+			for(y=baseLine; y>baseLine-80; y--)
+				putPixel(framebuffer, x, y, average);
+
+			/*
 			if(average>128)
 			{
 				for(y=baseLine; y>baseLine-80; y--)
@@ -442,7 +480,7 @@ void render(char * framebuffer, const char * buf, int size)
 				for(y=baseLine; y>baseLine-80; y--)
 					putPixel(framebuffer, x, y, 0x00);
 			}
-
+			*/
 		}
 	}
 
@@ -517,10 +555,20 @@ void render(char * framebuffer, const char * buf, int size)
 	    x = (int)(center/2.4);
 	    drawVLine(framebuffer, x, 255, 0, 0);
 	}
+
+	if(gMode==MODE_CALIBRATION)
+	{
+		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_0)
+			printNumber(800-20-16*2, baseLine+20, gCount0, framebuffer);
+
+		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_1)
+			printNumber(20, baseLine+20, gCount1, framebuffer);
+	}
 }
 
 
-void fetchFrameRunning(char * vf, const char * buf, int size, int *pIndex, char* frame)
+void fetchFrameRunning(char * vf, 
+	const char * buf, int size, int *pIndex, char* frame, char threshold)
 {
     char startOfFrame = buf[0];
     char colorData = buf[1];
@@ -531,6 +579,9 @@ void fetchFrameRunning(char * vf, const char * buf, int size, int *pIndex, char*
         //printf("(i) frame will be rendered\n");
         memcpy(vf, frame, 1920);
         *pIndex=0;
+	//int i=0;
+	//for(i=0; i<1920; i++) printf("%X ", vf[i]);
+	//printf("\n");
         return;
     }
 
@@ -539,7 +590,13 @@ void fetchFrameRunning(char * vf, const char * buf, int size, int *pIndex, char*
     for(i=0; i<count; i++)
     {
         if(*pIndex>1920) break;
-        else frame[(*pIndex)++] = colorData;
+        else 
+	{
+		if(colorData> threshold)
+			frame[(*pIndex)++] = 0xFF;
+		else
+			frame[(*pIndex)++] = 0x00;
+	}
     }
 }
 
@@ -555,7 +612,7 @@ void * thread_function_uart0(void* arg)
     }
     printf("Serial Port0 open success!\n");
 
-    setMode(gUartPort0, gMode);
+    setMode(gUartPort0, gMode, gThreshold0);
 
     char buf[BUF_SIZE] = "";
     char temp[BUF_SIZE] = "";
@@ -579,7 +636,8 @@ void * thread_function_uart0(void* arg)
 		pthread_mutex_lock(&gMutex0);
 
 		if(gMode==MODE_RUNNING) 
-			fetchFrameRunning(gVf0, buf, index, &g_index0, g_frame0);
+			fetchFrameRunning(gVf0, 
+				buf, index, &g_index0, g_frame0, gThreshold0);
 		else fetchFrameCalibration(gVf0, buf, index);
 
 		pthread_mutex_unlock(&gMutex0);
@@ -610,7 +668,7 @@ void * thread_function_uart1(void* arg)
     }
     printf("Serial Port1 open success!\n");
 
-    setMode(gUartPort1, gMode);
+    setMode(gUartPort1, gMode, gThreshold1);
 
     char buf[BUF_SIZE] = "";
     char temp[BUF_SIZE] = "";
@@ -634,7 +692,8 @@ void * thread_function_uart1(void* arg)
 		pthread_mutex_lock(&gMutex1);
 
 		if(gMode==MODE_RUNNING) 
-			fetchFrameRunning(gVf1, buf, index, &g_index1, g_frame1);
+			fetchFrameRunning(gVf1, buf, 
+				index, &g_index1, g_frame1, gThreshold1);
 		else fetchFrameCalibration(gVf1, buf, index);
 
 		pthread_mutex_unlock(&gMutex1);
@@ -651,6 +710,84 @@ void * thread_function_uart1(void* arg)
     printf("(i) UART Port1 closed\n");
 
     return 0;
+}
+
+int countBar(char * buf, int from, int to, unsigned threshold)
+{
+	int count = 0;
+	int i = 0;
+
+	int rised = 0;
+
+	for(i=from; i<to; i++)
+	{
+		if(buf[i]<threshold && buf[i+1]>=threshold && rised==0) rised=1;
+
+		if(buf[i]>=threshold && buf[i+1]<threshold && rised==1) 
+		{
+			rised = 0;
+			count++;
+		}
+	}
+
+	return count;
+}
+
+void dilationGrey(char * vf, int size)
+{
+	char tempBuf[size];
+	memcpy(tempBuf, vf, size);
+	memset(vf, 0, size);
+
+	int i=0;
+	for(i=0; i<size; i++)
+	{
+		char src = tempBuf[i];
+		if(src>vf[i]) vf[i] = src;
+
+		if(i-1>=0)
+			if(src>vf[i-1])
+				vf[i-1] = src;
+		
+		if(i+1<size)
+			if(src>vf[i+1])
+				vf[i+1] = src;
+	}
+}
+
+int getMin(int a, int b, int c)
+{
+	int min = a<b?a:b;
+	return min<c?min:c;
+}
+
+void erosionGrey(char * vf, int size)
+{
+	char tempBuf[1920];
+	memcpy(tempBuf, vf, size);
+	memset(vf, 0, size);
+
+	int i=0;
+	for(i=0; i<size; i++)
+	{
+		char left=0, center=0, right=0;
+		if(i-1>=0) left = tempBuf[i-1];
+		center = tempBuf[i];
+		if(i+1<size) right = tempBuf[i+1];
+
+		vf[i] = getMin(left,center,right);
+	}
+}
+
+void filterNoise(char * vf, int size)
+{
+	dilationGrey(vf, size);
+	
+	erosionGrey(vf, size);
+
+	erosionGrey(vf, size);
+	
+	dilationGrey(vf, size);
 }
 
 void receiveFrame(char* fb)
@@ -698,6 +835,9 @@ void receiveFrame(char* fb)
 			memcpy(vf0, gVf0, 1920);
 			pthread_mutex_unlock(&gMutex0);
 
+			filterNoise(vf0, 1920);
+			gCount0 = countBar(vf0, 0, 1919, gThreshold0);
+		
 			render(fb, vf0, 1920);
 		}
 		else if( gSetCam == SET_CAM_1 )
@@ -705,6 +845,9 @@ void receiveFrame(char* fb)
 			pthread_mutex_lock(&gMutex1);
 			memcpy(vf1, gVf1, 1920);
 			pthread_mutex_unlock(&gMutex1);
+
+			filterNoise(vf1, 1920);
+			gCount1 = countBar(vf1, 0, 1919, gThreshold1);
 
 			render(fb, gVf1, 1920);
 		}
@@ -725,17 +868,21 @@ void receiveFrame(char* fb)
 			int center = gCalibrationData.cam1Center;
 			for(i=0; i<1920/2; i++)
 			{
-				if(center-i<0) break;
-				vfCombined[1920/2-i] = vf1[center-i];
+				if(center-i*2-1<0) break;
+				vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
 			}
 
 			// copy cam0 right side image
 			center = gCalibrationData.cam0Center;
 			for(i=0; i<1920/2; i++)
 			{
-				if(center+i>=1920) break;
-				vfCombined[1920/2+i] = vf0[center+i];
+				if(center+i*2+1>=1920) break;
+				vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
 			}
+
+			filterNoise(vfCombined, 1920);
+			gCount0 = countBar(vfCombined, 1920/2, 1919, gThreshold0);
+			gCount1 = countBar(vfCombined, 0, 1920/2-1, gThreshold1);
 
 			render(fb, vfCombined, 1920);
 		}
@@ -748,7 +895,7 @@ void receiveFrame(char* fb)
     return;
 }
 
-void setMode(int uartPort, int mode)
+void setMode(int uartPort, int mode, int threshold)
 {
 	memset(gFb, 0, 800*480*4);// clear screen
 
@@ -756,19 +903,22 @@ void setMode(int uartPort, int mode)
 	int len = 0;
 	char buf[100];
 
-	int threshold = gThreshold0;
-	if(gSetCam==SET_CAM_1) threshold = gThreshold1;
+	buf[0] = 0; // start byte
 
 	if(mode==MODE_RUNNING)
 	{
-		sprintf(buf,"$0,%d", threshold);
-		len = write(uartPort,buf,strlen(buf)); // RUN MODE "0"
+		buf[1] = 1; // run mode
+	
 	}
 	else
 	{
-		sprintf(buf,"$1,%d", threshold);
-		len = write(uartPort,buf,strlen(buf)); // CAL MODE "1"
+		buf[1] = 2; // cal mode
 	}
+
+	if(threshold==0) buf[2] = 1; // do not use the start byte
+	else buf[2] = threshold;
+
+	len = write(uartPort,buf,3); // send 
 
 	if(len<=0) 
 	{
@@ -864,13 +1014,13 @@ void responseUserRequest(int sock, char * msg, int len)
 		
 		if(strcmp(buf,STR_RUNNING)==0)
 		{
-			setMode(gUartPort0, MODE_RUNNING);
-			setMode(gUartPort1, MODE_RUNNING);
+			setMode(gUartPort0, MODE_RUNNING, gThreshold0);
+			setMode(gUartPort1, MODE_RUNNING, gThreshold1);
 		}
 		else if(strcmp(buf,STR_CALI)==0)
 		{
-			setMode(gUartPort0, MODE_CALIBRATION);
-			setMode(gUartPort1, MODE_CALIBRATION);
+			setMode(gUartPort0, MODE_CALIBRATION, gThreshold0);
+			setMode(gUartPort1, MODE_CALIBRATION, gThreshold1);
 		}
 		else
 			printf("(!) setMode value is wrong!\n");
@@ -1243,6 +1393,34 @@ int loadCalibrationData()
 	return 0;
 }
 
+void loadFont()
+{
+	memset(gFont, 0, FONT_COUNT*FONT_HEIGHT*FONT_WIDTH);
+
+	int n, x, y;
+	for(n=0; n<FONT_COUNT; n++)
+	{
+		char strPath[255];
+		sprintf(strPath, "./font/%d.dat", n);
+		FILE* fp = fopen(strPath, "r+");
+		if(fp==NULL)
+		{
+			printf("(!) font file not found!\n");
+			return;
+		}
+
+		for(y=0; y<FONT_HEIGHT; y++)
+		{
+			for(x=0; x<FONT_WIDTH; x++)
+			{
+				unsigned char ch = fgetc(fp);
+				gFont[n][y][x] = ch;
+			}
+		}
+		fclose(fp);
+	}
+}
+
 int main( int argc, char* argv[] )  
 {  
 /*
@@ -1252,6 +1430,9 @@ int main( int argc, char* argv[] )
         exit(1);
     }
 */
+
+    loadFont();
+
 
     memset(&gCalibrationData, 0, sizeof(CalibrationData));
 
