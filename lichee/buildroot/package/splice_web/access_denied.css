@@ -1,0 +1,85 @@
+div#container
+{
+   width: 970px;
+   position: relative;
+   margin: 0 auto 0 auto;
+   text-align: left;
+}
+body
+{
+   background-color: #FFFFFF;
+   color: #000000;
+   font-family: Arial;
+   font-weight: normal;
+   font-size: 13px;
+   line-height: 1.1875;
+   margin: 0;
+   text-align: center;
+}
+#Banner1
+{
+   margin: 0;
+   -webkit-animation: animate-box-shadow 1000ms linear 0ms infinite normal both;
+   -moz-animation: animate-box-shadow 1000ms linear 0ms infinite normal both;
+   animation: animate-box-shadow 1000ms linear 0ms infinite normal both;
+}
+#wb_FontAwesomeIcon1
+{
+   background-color: transparent;
+   background-image: none;
+   border: 0px solid #245580;
+   text-align: center;
+   margin: 0;
+   padding: 0;
+   -webkit-animation: animate-flash 1000ms linear 0ms infinite normal both;
+   -moz-animation: animate-flash 1000ms linear 0ms infinite normal both;
+   animation: animate-flash 1000ms linear 0ms infinite normal both;
+   vertical-align: top;
+}
+#wb_FontAwesomeIcon1:hover
+{
+   background-color: transparent;
+   background-image: none;
+   border: 0px solid #245580;
+}
+#FontAwesomeIcon1
+{
+   height: 82px;
+   width: 239px;
+}
+#FontAwesomeIcon1 i
+{
+   color: #A9A9A9;
+   display: inline-block;
+   font-size: 82px;
+   line-height: 82px;
+   vertical-align: middle;
+   width: 69px;
+}
+#wb_FontAwesomeIcon1:hover i
+{
+   color: #337AB7;
+}
+#wb_Heading1
+{
+   background-color: transparent;
+   background-image: none;
+   border: 0px solid #000000;
+   margin: 0;
+   padding: 0;
+   text-align: center;
+}
+#Heading1
+{
+   color: #000000;
+   font-family: Arial;
+   font-weight: bold;
+   font-size: 32px;
+   margin: 0;
+   text-align: center;
+}
+#Heading1 a
+{
+   color: #000000;
+   text-decoration: none;
+}
