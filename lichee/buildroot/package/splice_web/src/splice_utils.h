@@ -22,6 +22,10 @@ typedef enum
     SPLICE_CMD_STOP_SATA_USB = 0x004,
     SPLICE_CMD_QUIT = 0x008,
     SPLICE_CMD_GET_CPU_IRQ_INFO = 0x010,
+	SPLICE_CMD_GET_ACTUATOR_STATUS = 0x020,
+	SPLICE_CMD_SET_ACTUATOR_STATUS = 0x040,
+	SPLICE_CMD_GET_ACTUATOR_POSITION = 0x080,
+	SPLICE_CMD_SET_ACTUATOR_POSITION = 0x100,
     SPLICE_CMD_MAX = 0xFFFF
 } splice_cmd;
 
@@ -56,7 +60,7 @@ typedef struct splice_request
 {
     splice_cmd             cmd;
     splice_cmd             cmdSecondary;
-    unsigned long int        cmdSecondaryOption;
+    int        cmdSecondaryOption;
     int                      boxmode;
     //splice_boxmode_sources source;
     union {
@@ -160,7 +164,7 @@ typedef struct
 
 typedef struct splice_response
 {
-    char                     padding[106]; /* used to make size of struct an even multiple of 256 */
+    char                     data[106]; /* used to make size of struct an even multiple of 256 */
     splice_cmd             cmd;
     int                      profile;
     splice_profile_sources source;
@@ -174,8 +178,13 @@ typedef struct splice_response
 
 typedef struct
 {
-    unsigned char majorVersion; /* changes if structure size changes */
-    unsigned char minorVersion;
+    unsigned char webMjVersion;
+    unsigned char webMnVersion;
+    unsigned char spliceMjVersion;
+    unsigned char spliceMnVersion;
+    unsigned char cameraMjVersion;
+    unsigned char cameraMnVersion;
+    unsigned char kernelVersion;
     unsigned int  sizeOfResponse;
     char          platform[8];
     char          platVersion[4];

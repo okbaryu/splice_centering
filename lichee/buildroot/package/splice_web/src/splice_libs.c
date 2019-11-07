@@ -228,28 +228,6 @@ int scanForStr(
 	return( 0 );
 }                                                          /* scanForStr */
 
-char *getPlatformVersion(
-		void
-		)
-{
-	static char       version[8];
-
-	memset( version, 0, sizeof( version ));
-	sprintf( version, "%d.%d", MAJOR_VERSION, MINOR_VERSION );
-	return( version );
-}
-
-char *getPlatform(
-		void
-		)
-{
-	static char platform[8];
-
-	memset( platform, 0, sizeof( platform ));
-	sprintf( platform, "%s", "V3" );
-	return( platform );
-}
-
 
 /**
   This private function will compute the CPU utilization for each active CPU in the system. The percentage ranges
@@ -812,7 +790,6 @@ int Close(
 }
 
 int send_request_read_response(
-		struct sockaddr_in *server,
 		unsigned char      *request,
 		int                 request_len,
 		unsigned char      *response,
@@ -823,8 +800,22 @@ int send_request_read_response(
 {
 	int                rc = 0;
 	int                sd = 0;
-	struct sockaddr_in from;
 	int                fromlen;
+	struct sockaddr_in from;
+	struct in_addr sin_temp_addr;
+	struct sockaddr_in    server;
+
+	sin_temp_addr.s_addr = get_my_ip4_addr();
+	if ( sin_temp_addr.s_addr == 0 )
+	{
+		PrintHTML( "~FATAL~get_my_ip4_addr() failed to determine IP address.~" );
+		return( -1 );
+	}
+	bcopy( &sin_temp_addr.s_addr, &( server.sin_addr ), sizeof( sin_temp_addr.s_addr ) );
+
+	/* Construct name of socket to send to. */
+	server.sin_family = AF_INET;
+	server.sin_port   = htons( SPLICE_SERVER_PORT );
 
 	PrintInfo( "reqlen %d; reslen %d; server_port %d\n", request_len, response_len, server_port );
 	/*   Create socket on which to send and receive */
@@ -838,7 +829,7 @@ int send_request_read_response(
 
 	/* Connect to server */
 	PrintInfo( "connect(sock %u; port %u)\n", sd, server_port );
-	if (connect( sd, (struct sockaddr *) server, sizeof( *server )) < 0)
+	if (connect( sd, (struct sockaddr *)&server, sizeof( server )) < 0)
 	{
 		Close( sd );
 		PrintError( "ERROR connecting to server\n");
@@ -1041,5 +1032,20 @@ int splice_getCpuUtilization(
 	}
 
 	return( 0 );
+}
+
+/**
+ *  Function: This function will configure the socket so that the address can be re-used without a long timeout.
+ **/
+void reusePort(
+		int s
+		)
+{
+	int one = 1;
+
+	if (setsockopt( s, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof( one )) == -1)
+	{
+		PrintError( "error in setsockopt, SO_REUSEADDR(%d) (%s) \n", SO_REUSEADDR, strerror(errno) );
+	}
 }
 

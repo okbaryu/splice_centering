@@ -1,7 +1,11 @@
 #ifndef __SPLICE_LIBS_H__
 #define __SPLICE_LIBS_H__
-#define MAJOR_VERSION                  0
-#define MINOR_VERSION                  10
+#define WEB_MAJOR_VERSION                  0
+#define WEB_MINOR_VERSION                  60
+#define SPLICE_MAJOR_VERSION			0
+#define SPLICE_MINOR_VERSION			50
+#define CAMERA_MAJOR_VERSION			0
+#define CAMERA_MINOR_VERSION			0
 
 #define SPLICE_MAX_NUM_CLIENT 128
 #define SPLICE_SERVER_PORT  6001
@@ -81,7 +85,6 @@ int Close(
 		);
 
 int send_request_read_response(
-		struct sockaddr_in *server,
 		unsigned char      *request,
 		int                 request_len,
 		unsigned char      *response,
@@ -134,5 +137,5 @@ int output_cpu_frequencies( void );
 int getFileSize( const char *filename);
 int getUpTime(float *uptime);
 int setUpTime(void);
-
+void reusePort(int s);
 #endif

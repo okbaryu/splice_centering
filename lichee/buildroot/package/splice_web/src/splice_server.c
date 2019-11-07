@@ -12,9 +12,11 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "splice_libs.h"
 #include "splice_utils.h"
+#include "actuator.h"
 
 #define MAXHOSTNAME                  80
 #define PERF_FILE_FULL_PATH_LEN      64
@@ -24,7 +26,6 @@
 static unsigned int         g_interval = 1000;             /**g_interval is in msec unit*/
 static splice_cpu_percent g_cpuData;
 static pthread_mutex_t      g_mutex_lock;
-static void reusePort( int sock );
 
 static unsigned char Quit = 0;
 
@@ -831,6 +832,83 @@ static int Splice_ReadRequest(
 					break;
 				}
 
+			case SPLICE_CMD_GET_ACTUATOR_STATUS:
+				{
+					act_status p;
+					pResponse->cmd = pRequest->cmd;
+
+					actuator_get_status(&p);
+
+					pResponse->data[0] = p.act_direction;
+					pResponse->data[1] = p.act_max_stroke;
+					pResponse->data[2] = p.act_speed;
+					pResponse->data[3] = p.act_l_limit;
+					pResponse->data[4] = p.act_r_limit;
+					pResponse->data[5] = p.act_origin_offset_msb;
+					pResponse->data[6] = p.act_origin_offset_lsb;
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_SET_ACTUATOR_STATUS:
+				{
+					act_status p;
+					pResponse->cmd = pRequest->cmd;
+
+					p.act_direction = pRequest->request.strCmdLine[0];
+					p.act_max_stroke = pRequest->request.strCmdLine[1];
+					p.act_speed = pRequest->request.strCmdLine[2];
+					p.act_l_limit = pRequest->request.strCmdLine[3];
+					p.act_r_limit = pRequest->request.strCmdLine[4];
+					p.act_origin_offset_msb = pRequest->request.strCmdLine[5];
+					p.act_origin_offset_lsb = pRequest->request.strCmdLine[6];
+
+					actuator_set_status(&p);
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_SET_ACTUATOR_POSITION:
+				{
+					act_position p;
+					p.act_cur_position_msb = 0;
+					p.act_cur_position_lsb = 0;
+					int val;
+
+					pResponse->cmd = pRequest->cmd;
+					if(pRequest->cmdSecondary == CMD2_ACT_MOVE)
+					{
+						if(pRequest->cmdSecondaryOption < 0)
+						{
+							p.act_cur_position_msb |= 0x80;
+							pRequest->cmdSecondaryOption *= -1;
+						}
+
+						val = pRequest->cmdSecondaryOption * 0x64;
+						p.act_cur_position_lsb |= val & 0xff;
+						p.act_cur_position_msb |= (val >> 8) & 0xff;
+						printf("val=%u, msb=0x%x, lsb=0x%x\n", val, p.act_cur_position_msb, p.act_cur_position_lsb);
+						actuator_set_current_position(&p, CMD2_ACT_MOVE);
+					}
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
 			case SPLICE_CMD_QUIT:
 				{
 					Quit = 1;
@@ -854,21 +932,6 @@ static int Splice_ReadRequest(
 	return( 0 );
 }
 
-
-/**
- *  Function: This function will configure the socket so that the address can be re-used without a long timeout.
- **/
-static void reusePort(
-		int s
-		)
-{
-	int one = 1;
-
-	if (setsockopt( s, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof( one )) == -1)
-	{
-		PrintError( "error in setsockopt, SO_REUSEADDR(%d) (%s) \n", SO_REUSEADDR, strerror(errno) );
-	}
-}
 
 void *dataFetchThread(
 		void *data
@@ -899,6 +962,12 @@ void *dataFetchThread(
 	}
 }
 
+void handler(int signum)
+{
+	printf("signal handler!!! signum=0x%x\n", signum);
+	actuator_init("192.168.29.181");
+}
+
 /**
  *  Function: This function is the main function that controls the logic of the app.
  **/
@@ -918,6 +987,10 @@ int main(
 	Splice_Server_InitMutex( &gSataUsbMutex );
 
 	/*printf( "%s: splice_response size %ld\n", __FUNCTION__, (long int) sizeof( splice_response ));*/
+	//signal(SIGPIPE, SIG_IGN);
+	signal(SIGPIPE, handler);
+	actuator_init("192.168.29.181");
+
 	threadFunc = dataFetchThread;
 	if (pthread_create( &dataGatheringThreadId, NULL, threadFunc, (void *)NULL ))
 	{
