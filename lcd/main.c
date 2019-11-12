@@ -96,6 +96,11 @@ pthread_mutex_t gMutex1;
 #define STR_SAVE_CALIBRATION_DATA	"saveCalibrationData"
 #define STR_GET_CALIBRATION_DATA	"getCalibrationData"
 #define STR_ERASE_CALIBRATION_DATA	"eraseCalibrationData"
+#define STR_GET_IMAGE			"getImage"
+#define STR_SET_STREAMING		"setStreaming"
+#define STR_ON				"on"
+#define STR_OFF				"off"
+
 
 #define FILE_PATH		"/mnt/extsd/calibration_data.json"
 #define KEY_CAM0_CENTER 	"cam0Center"
@@ -109,7 +114,13 @@ pthread_mutex_t gMutex1;
 #define KEY_PIXEL_LEN	 	"pixelLen"
 
 int gSetCam = SET_CAM_ALL;
-int gStartStream = 0;
+
+#define STREAM_MODE_INFINITE	0
+#define STREAM_MODE_ONESHOT	1
+#define STREAM_MODE_STOP	2
+
+int gStreamMode = STREAM_MODE_STOP;
+
 
 #define BUF_CAM_SIZE	1920
 char bufCamAll[BUF_CAM_SIZE] = {0};
@@ -1088,19 +1099,34 @@ void responseUserRequest(int sock, char * msg, int len)
 	}
 
 	// 6. getImage
-	exists=json_object_object_get_ex(rootObj,"getImage",0);
+	exists=json_object_object_get_ex(rootObj,STR_GET_IMAGE,0);
 	if(exists!=0) {
-		// parse value.
-		dval = json_object_object_get(rootObj, "getImage");
-		printf("getImage : %s\n", json_object_get_string(dval));
+		printf("%s\n", STR_GET_IMAGE);
+		gStreamMode = STREAM_MODE_ONESHOT;	
+
+		json_object_put(response); // delete the new object.
+
+		return;
 	}
 
 	// 7. setStreaming
-	exists=json_object_object_get_ex(rootObj,"setStreaming",0);
+	exists=json_object_object_get_ex(rootObj,STR_SET_STREAMING,0);
 	if(exists!=0) {
-		// parse value.
-		dval = json_object_object_get(rootObj, "setStreaming");
-		printf("setStreaming : %s\n", json_object_get_string(dval));
+		dval = json_object_object_get(rootObj, STR_SET_STREAMING);
+		strcpy(buf, json_object_get_string(dval));
+
+		printf("%s : %s\n", STR_SET_STREAMING, buf);
+
+		if(strcmp(buf, STR_ON) == 0)
+			gStreamMode = STREAM_MODE_INFINITE;
+		else if(strcmp(buf, STR_OFF) == 0)
+			gStreamMode = STREAM_MODE_STOP;
+		else 
+			printf("(!) %s value is wrong!\n", STR_SET_STREAMING);
+
+		json_object_put(response); // delete the new object.
+
+		return;
 	}
 
 	// 8. setCamera
@@ -1218,7 +1244,7 @@ void responseUserRequest(int sock, char * msg, int len)
 	}
 
 	strcpy(buf, json_object_to_json_string_ext(response, json_flags[0].flag) );
-	len = write(sock,buf,strlen(buf));
+	len = write(sock,buf,strlen(buf)+1);
 	if(len>0) printf("(i) server: send response success(%d). %s\n", len, buf);
 	else printf("(!) server: send response failed(%d). %s\n", len, buf);
 
@@ -1227,26 +1253,130 @@ void responseUserRequest(int sock, char * msg, int len)
 	return;
 }
 
-int sendImage(int sock, int cam)
+void sendImage(int sock)
 {
-	int len = 0;
+//	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
 
-	if(cam==SET_CAM_ALL)
-		len = write(sock, bufCamAll, BUF_CAM_SIZE);
-	else if(cam==SET_CAM_0)
-		len = write(sock, bufCam0, BUF_CAM_SIZE);
-	else if(cam==SET_CAM_1)
-		len = write(sock, bufCam1, BUF_CAM_SIZE);
+	json_object *response = json_object_new_object();
+	char buf[1920*4];
+
+	char vfb[1920];
+    	memset(vfb, 0 ,1920);
+
+	if( gSetCam == SET_CAM_0 )
+	{
+		pthread_mutex_lock(&gMutex0);
+		memcpy(vfb, gVf0, 1920);
+		pthread_mutex_unlock(&gMutex0);
+
+		filterNoise(vfb, 1920);
+	}
+	else if( gSetCam == SET_CAM_1 )
+	{
+		pthread_mutex_lock(&gMutex1);
+		memcpy(vfb, gVf1, 1920);
+		pthread_mutex_unlock(&gMutex1);
+
+		filterNoise(vfb, 1920);
+	}
 	else
-		fprintf(stderr,"(!) cam number is wrong.\n");
-	return len;
+	{
+		char vf0[1920];
+		char vf1[1920];
+    		memset(vf0, 0 ,1920);
+    		memset(vf1, 0 ,1920);
+
+		pthread_mutex_lock(&gMutex0);
+		memcpy(vf0, gVf0, 1920);
+		pthread_mutex_unlock(&gMutex0);
+
+		pthread_mutex_lock(&gMutex1);
+		memcpy(vf1, gVf1, 1920);
+		pthread_mutex_unlock(&gMutex1);
+
+		// generate combined image from vf0 and vf1
+
+		// copy cam1 left side image
+		int i=0;
+		int center = gCalibrationData.cam1Center;
+		for(i=0; i<1920/2; i++)
+		{
+			if(center-i*2-1<0) break;
+			vfb[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+		}
+
+		// copy cam0 right side image
+		center = gCalibrationData.cam0Center;
+		for(i=0; i<1920/2; i++)
+		{
+			if(center+i*2+1>=1920) break;
+			vfb[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
+		}
+
+		filterNoise(vfb, 1920);
+	}
+
+//	printf("(i) vfb prepared\n");
+
+	json_object * array = json_object_new_array();
+ 	int i=0;	
+	for(i=0; i<1920; i++)
+	{
+		json_object * temp = json_object_new_int(vfb[i]);
+		json_object_array_add(array, temp);
+	}
+	json_object_object_add(response, STR_GET_IMAGE, array);
+
+	sprintf(buf,"%s\n",json_object_to_json_string_ext(response, json_flags[0].flag) );
+	int len = write(sock,buf,strlen(buf)+1);
+
+	json_object_put(response); // delete the new object.
+
+//	if(len>0) printf("(i) server: send response success(%d).n=%d, %s\n", len, strlen(buf), buf);
+	if(len<=0) printf("(!) server: sendImage response failed(%d). n=%d, %s\n", len, strlen(buf), buf);
+
+	return;
 }
+
+void* thread_function_streaming(void* arg)
+{
+	fprintf(stderr,"(i) streaming thread started.\n");
+
+	int sock = *((int*)arg);
+
+	long prev = GetNowUs();
+	while(1)
+	{
+		long current = GetNowUs();
+		long elapsedTime = current - prev;
+		if( (gMode==MODE_RUNNING && elapsedTime>16667) ||
+			(gMode==MODE_CALIBRATION && elapsedTime>1000000) )
+		{
+			prev = current;
+
+			if(gStreamMode==STREAM_MODE_STOP) continue;
+
+			sendImage(sock);
+
+			if(gStreamMode==STREAM_MODE_ONESHOT)
+				gStreamMode = STREAM_MODE_STOP;
+		}
+	}
+
+	return 0;
+}
+
 
 void* thread_function_client(void* arg)
 {
 	fprintf(stderr,"(i) client  thread started.\n");
 
 	int sock = *((int*)arg);
+
+	pthread_t t_id;
+	pthread_create(&t_id, NULL, thread_function_streaming, arg);
+	pthread_detach(t_id);
+
 	int str_len = 0;
 	char msg[BUF_SIZE];
 	memset(msg,0,BUF_SIZE);
@@ -1256,25 +1386,15 @@ void* thread_function_client(void* arg)
 		fprintf(stderr,"(i)read(%d):%s\n", sock, msg);
 		responseUserRequest(sock,  msg, str_len);
 	}
+
+	gStreamMode = STREAM_MODE_STOP;
+
+	fprintf(stderr,"(i) client connection closed.\n");
+	pthread_cancel(t_id);
+
 	close(sock);
+	fprintf(stderr,"(i) client thread will be returned.\n");
 	
-	return 0;
-}
-
-void* thread_function_streaming(void* arg)
-{
-	fprintf(stderr,"(i) streaming thread started.\n");
-
-	int sock = *((int*)arg);
-
-	while(1)
-	{
-		sleep(1);
-		if(gStartStream==0) continue;
-
-		sendImage(sock, gSetCam);
-	}
-
 	return 0;
 }
 
@@ -1285,7 +1405,7 @@ void* thread_function_server(void * arg)
 	int serv_sock, clnt_sock;
 	struct sockaddr_in serv_adr, clnt_adr;
 	int clnt_adr_sz;
-	pthread_t t_id1, t_id2;
+	pthread_t t_id1;
 
 	serv_sock = socket(PF_INET, SOCK_STREAM, 0);
 	memset(&serv_adr, 0, sizeof(serv_adr));
@@ -1318,9 +1438,6 @@ void* thread_function_server(void * arg)
 			thread_function_client, (void*)&clnt_sock);
 		pthread_detach(t_id1);
 
-		pthread_create(&t_id2, NULL,
-			thread_function_streaming, (void*)&clnt_sock);
-		pthread_detach(t_id2);
 	}
 
 	return 0;
@@ -1339,7 +1456,7 @@ void startServerThread() // start TCP Server on a thread.
 
 int loadCalibrationData()
 {
-	FILE * fp = fopen(FILE_PATH, "r+");
+	FILE * fp = fopen(FILE_PATH, "r");
 	if(fp==NULL) return -1;
 
 	char buf[100000];
@@ -1401,8 +1518,8 @@ void loadFont()
 	for(n=0; n<FONT_COUNT; n++)
 	{
 		char strPath[255];
-		sprintf(strPath, "./font/%d.dat", n);
-		FILE* fp = fopen(strPath, "r+");
+		sprintf(strPath, "/root/font/%d.dat", n);
+		FILE* fp = fopen(strPath, "r");
 		if(fp==NULL)
 		{
 			printf("(!) font file not found!\n");
