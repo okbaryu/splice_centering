@@ -393,7 +393,7 @@ void generateComboTable()
 	int i = 0;
 	int combo = 1;
 	memset(comboTable,0,1920*sizeof(int));
-	while(i<1920)
+	while(i<1919)
 	{
 		char color = bin[i];
 		if(color==bin[i+1])
@@ -1253,7 +1253,7 @@ void responseUserRequest(int sock, char * msg, int len)
 	return;
 }
 
-void sendImage(int sock)
+int sendImage(int sock)
 {
 //	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
 
@@ -1333,9 +1333,13 @@ void sendImage(int sock)
 	json_object_put(response); // delete the new object.
 
 //	if(len>0) printf("(i) server: send response success(%d).n=%d, %s\n", len, strlen(buf), buf);
-	if(len<=0) printf("(!) server: sendImage response failed(%d). n=%d, %s\n", len, strlen(buf), buf);
+	if(len<=0) 
+	{
+		printf("(!) server: sendImage response failed(%d).\n", len);
+		return -1;
+	}
 
-	return;
+	return 0;
 }
 
 void* thread_function_streaming(void* arg)
@@ -1356,12 +1360,14 @@ void* thread_function_streaming(void* arg)
 
 			if(gStreamMode==STREAM_MODE_STOP) continue;
 
-			sendImage(sock);
+			if(sendImage(sock) == -1) break;
 
 			if(gStreamMode==STREAM_MODE_ONESHOT)
 				gStreamMode = STREAM_MODE_STOP;
 		}
 	}
+	
+	printf("(i) thread_function_stream will be returned\n");
 
 	return 0;
 }
@@ -1390,7 +1396,6 @@ void* thread_function_client(void* arg)
 	gStreamMode = STREAM_MODE_STOP;
 
 	fprintf(stderr,"(i) client connection closed.\n");
-	pthread_cancel(t_id);
 
 	close(sock);
 	fprintf(stderr,"(i) client thread will be returned.\n");
