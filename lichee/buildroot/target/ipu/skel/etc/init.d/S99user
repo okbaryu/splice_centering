@@ -8,6 +8,40 @@
 #	/tmp/ipu/start-ipu.sh &
 #fi
 
+echo 128 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio128/direction
+echo 129 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio129/direction
+echo 130 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio130/direction
+echo 131 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio131/direction
+echo 132 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio132/direction
+echo 133 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio133/direction
+echo 134 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio134/direction
+echo 135 > /sys/class/gpio/export
+echo in > /sys/class/gpio/gpio135/direction
+
+echo 136 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio136/direction
+echo 137 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio137/direction
+echo 138 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio138/direction
+echo 139 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio139/direction
+echo 140 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio140/direction
+echo 141 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio141/direction
+echo 142 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio142/direction
+echo 143 > /sys/class/gpio/export
+echo out > /sys/class/gpio/gpio143/direction
+
 exit 1
 
 APP_PATH=/data
