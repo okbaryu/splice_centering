@@ -973,8 +973,7 @@ void *dataFetchThread(
 
 void handler(int signum)
 {
-	printf("signal handler!!! signum=0x%x\n", signum);
-	actuator_init("192.168.29.181");
+	printf("broken pipe signal~!~!  0x%x\n", signum);
 }
 
 /**
@@ -996,7 +995,6 @@ int main(
 	Splice_Server_InitMutex( &gSataUsbMutex );
 
 	/*printf( "%s: splice_response size %ld\n", __FUNCTION__, (long int) sizeof( splice_response ));*/
-	//signal(SIGPIPE, SIG_IGN);
 	signal(SIGPIPE, handler);
 	plc_init();
 	actuator_init("192.168.29.181");
