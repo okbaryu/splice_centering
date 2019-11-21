@@ -228,7 +228,7 @@ int plc_init(void)
 	}
 
 	memset(&server, 0, sizeof(server));
-	server.sin_addr.s_addr = inet_addr("192.168.29.6");
+	server.sin_addr.s_addr = inet_addr("192.168.0.100");
 	server.sin_family = AF_INET;
 	server.sin_port = htons(PLC_PORT);
 
@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 	char buf[MAX_BUF_LENGTH] = {0,};
 	int rc;
 
-	printf("plc comm test 0.6\n");
+	printf("plc comm test 0.61\n");
 
 	if(plc_init() != 0)
 	{
