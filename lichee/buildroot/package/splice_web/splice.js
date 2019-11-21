@@ -589,6 +589,15 @@ function SliderCB(event, ui)
 	sendCgiRequestDoItNow(url);
 }
 
+function readCmdPLC()
+{
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&readCmdPLC=" + 1;
+	sendCgiRequestDoItNow(url);
+}
+
 function GetACTStatus()
 {
 	var url = "";
@@ -2997,6 +3006,170 @@ function ProcessResponses ( oResponses )
             var objplatform = document.getElementById("UNAME");
             if (objplatform) {
                 objplatform.innerHTML = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "MWIDTH") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "SWIDTHIN") {
+            var obj = document.getElementById("SWidthIn_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "OFFSETIN") {
+            var obj = document.getElementById("OffsetIn_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "GETSWIDTH") {
+            var obj = document.getElementById("GetSWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOLPOS") {
+            var obj = document.getElementById("TolPos_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOLNEG") {
+            var obj = document.getElementById("TolNeg_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "SWIDTHOUT") {
+            var obj = document.getElementById("SWidthOut_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "OFFSETOUT") {
+            var obj = document.getElementById("OffsetOut_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "POFFSET") {
+            var obj = document.getElementById("P_Offset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "MOFFSET") {
+            var obj = document.getElementById("M_Offset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+/*
+        } else if (entry == "LOENABLE") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOENABLE") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+*/
+        } else if (entry == "LO0") {
+            var obj = document.getElementById("LeadOffset0_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO1") {
+            var obj = document.getElementById("LeadOffset1_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO2") {
+            var obj = document.getElementById("LeadOffset2_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO3") {
+            var obj = document.getElementById("LeadOffset3_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO4") {
+            var obj = document.getElementById("LeadOffset4_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO5") {
+            var obj = document.getElementById("LeadOffset5_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO6") {
+            var obj = document.getElementById("LeadOffset6_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO0") {
+            var obj = document.getElementById("TrailOffset0_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO1") {
+            var obj = document.getElementById("TrailOffset1_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO2") {
+            var obj = document.getElementById("TrailOffset2_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO3") {
+            var obj = document.getElementById("TrailOffset3_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO4") {
+            var obj = document.getElementById("TrailOffset4_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO5") {
+            var obj = document.getElementById("TrailOffset5_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO6") {
+            var obj = document.getElementById("TrailOffset6_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTRESET") {
+            var obj = document.getElementById("ActReset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
             }
             i++;
         } else if (entry == "ACTDIR") {
