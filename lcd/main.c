@@ -178,6 +178,9 @@ void fetchFrameCalibration(char * vf, const char * buf, int size)
 void putPixelRGB(char * framebuffer, int x, int y, char r, char g, char b)
 {
 	int offset = (WIDTH_SCREEN * y + x)*4;
+
+	if(offset<0 || (offset+3)>=800*480*4) return;
+
 	framebuffer[offset]  =b;//B
 	framebuffer[offset+1]=g;//G
 	framebuffer[offset+2]=r;//R
@@ -430,6 +433,91 @@ void printNumber(int x, int y, int n, char * fb)
 	printNumber1(x+16, y, n1, fb);
 }
 
+void printDot(int baseX, int baseY, char * fb)
+{
+	int x=0, y=0;
+	for(y=0; y<FONT_HEIGHT; y++)
+	{
+		for(x=0; x<FONT_WIDTH; x++)
+		{
+			if( (x==7 && y==19) || (x==8 && y==19) 
+				|| (x==7 && y==20) || (x==8 && y==20) )
+				putPixel(fb, baseX+x, baseY+y, 0xFF);
+			else putPixel(fb, baseX+x, baseY+y, 0x00);
+		}
+	}
+}
+
+void printDouble(int x, int y, double d, char * fb)
+{
+	int quotient = ((int)d)%1000;
+	int q1 = quotient%10;
+	int q10 = (int)((quotient%100)/10);
+	int q100 = (int)((quotient%1000)/100);
+
+	int decimal = ((int)(d*1000))%1000;
+	int d1 = decimal%10;
+	int d10 = (int)((decimal%100)/10);
+	int d100 = (int)((decimal%1000)/100);
+
+	//if(q100>0) 
+	printNumber1(x-16*3-8, y, q100, fb);
+	printNumber1(x-16*2-8, y, q10, fb);
+	printNumber1(x-16*1-8, y, q1, fb);
+
+	printDot(x-8, y, fb);
+	
+	printNumber1(x+8, y, d100, fb);
+	printNumber1(x+16*1+8, y, d10, fb);
+	printNumber1(x+16*2+8, y, d1, fb);
+}
+
+void drawLine(char * fb, int x1, int y1, int x2, int y2, char red, char green, char blue)
+{
+	int x = 0;
+	int y = 0;
+	int a = 0;
+	int min = 0;
+	int max = 0;
+
+	if(x1==x2)
+	{
+		if(y1<y2)
+		{
+			min = y1;
+			max = y2;
+		}
+		else
+		{
+			min = y2;
+			max = y1;
+		}
+		for(y=min; y<=max; y++)
+			putPixelRGB(fb, x1, y, red, green, blue);
+	}
+	else
+	{
+		a= (y2-y1)/(x2-x1);
+		int b = y1-a*x1;
+
+		if(x1<x2)
+		{
+			min = x1;
+			max = x2;
+		}
+		else
+		{
+			min = x2;
+			max = x1;
+		}
+		for(x=min; x<=max; x++)
+		{
+			y = a*x+b;
+			putPixelRGB(fb, x, y, red, green, blue);
+		}
+	}
+
+}
 
 void render(char * framebuffer, const char * buf, int size)
 {
@@ -452,6 +540,13 @@ void render(char * framebuffer, const char * buf, int size)
 	}
 
 	int x, y;
+	char prev = 0;
+	int maxHighWidth = 0;
+	int counter = 0;
+	int risingEdge=0;
+	int maxRisingEdge=0;
+	int maxFallingEdge=0;
+
 	for(x=0; x<WIDTH_SCREEN; x++)
 	{
 		int index = (int)(x*2.4);
@@ -475,26 +570,130 @@ void render(char * framebuffer, const char * buf, int size)
 				putPixelRGB(framebuffer, x, baseLine-gThreshold1, 170, 170, 0);
 			}
 		}
-		else
+		else // running mode screen rendering
 		{
-			for(y=baseLine; y>baseLine-80; y--)
-				putPixel(framebuffer, x, y, average);
-
-			/*
-			if(average>128)
+			if(x!=0 && prev != average) // draw an edge line
 			{
 				for(y=baseLine; y>baseLine-80; y--)
 					putPixel(framebuffer, x, y, 0xFF);
+
 			}
-			else
+			else if(average>128) // draw bottom line
 			{
 				for(y=baseLine; y>baseLine-80; y--)
-					putPixel(framebuffer, x, y, 0x00);
+					if(y==baseLine) putPixel(framebuffer, x, y, 0xFF);
+					else putPixel(framebuffer, x, y, 0x0);
 			}
-			*/
+			else	// draw top line
+			{
+				for(y=baseLine; y>baseLine-80; y--)
+					if(y==baseLine-80+1) putPixel(framebuffer, x, y, 0xFF);
+					else putPixel(framebuffer, x, y, 0x0);
+			}
+			
+			if(x==0) {} // do nothing
+			else if(prev>average) // rising(light has to be bottom line)
+			{
+				risingEdge = x; 
+				counter=1;
+			}
+			else if(prev==average)
+				counter++;
+			else // falling edge
+			{
+				if(counter>maxHighWidth) 
+				{
+					maxHighWidth = counter;
+					maxRisingEdge = risingEdge;
+					maxFallingEdge = x;
+				}
+				counter = 0;
+			}
+			prev = average;
 		}
 	}
 
+	// draw running mode screen meta data
+	if(gMode==MODE_RUNNING)
+	{
+		// draw arrow from left rising edge to right falling edge in red color
+		int arrowY = baseLine-25;
+	
+		drawLine(framebuffer, maxRisingEdge, arrowY, maxFallingEdge, arrowY, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, maxRisingEdge, arrowY, maxRisingEdge+5, arrowY-5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, maxRisingEdge, arrowY, maxRisingEdge+5, arrowY+5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, maxFallingEdge, arrowY, maxFallingEdge-5, arrowY-5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, maxFallingEdge, arrowY, maxFallingEdge-5, arrowY+5, 0xFF, 0x00, 0x00);
+
+		// get material size in mm  
+		double widthMaterial = -1;
+		int i=0;
+		int risingEdge1920 = (int)(maxRisingEdge*2.4);
+		int fallingEdge1920 = (int)(maxFallingEdge*2.4);
+
+		for(i=risingEdge1920; i<fallingEdge1920; i++)
+			widthMaterial+=gCalibrationData.pixelLen[i];
+
+		// draw material size in mm  on the arrow line upside center
+		int centerArrow = (maxFallingEdge-maxRisingEdge)/2+maxRisingEdge;
+		printDouble(centerArrow, arrowY-5-21, widthMaterial, framebuffer);
+
+
+		/*
+		int risingEdge1920 = -1;
+		int fallingEdge1920 = -1;
+		int i=0;
+		for(i=1; i<1919; i++)
+		{
+			if(buf[i]>buf[i+1]) // rising(light=low, dark=high)
+			{
+				risingEdge1920 = i;
+				break;
+			}
+		}
+
+		for(i=risingEdge1920+1; i<1919; i++)
+		{
+			if(buf[i]<buf[i+1]) // falling
+			{
+				fallingEdge1920 = i;
+				break;
+			}
+		}
+
+		// convert to 800pixel width
+		int risingEdge = (int)(risingEdge1920/2.4);
+		int fallingEdge = (int)(fallingEdge1920/2.4);
+
+		// draw signal line in white color
+		drawLine(framebuffer,0, baseLine, risingEdge, baseLine, 0xFF, 0xFF, 0xFF);
+		drawLine(framebuffer,risingEdge, baseLine, risingEdge, baseLine-80, 0xFF, 0xFF, 0xFF);
+		drawLine(framebuffer,risingEdge, baseLine-80, fallingEdge, baseLine-80, 0xFF, 0xFF, 0xFF);
+		drawLine(framebuffer,fallingEdge, baseLine-80, fallingEdge, baseLine, 0xFF, 0xFF, 0xFF);
+		drawLine(framebuffer,fallingEdge, baseLine, 799, baseLine, 0xFF, 0xFF, 0xFF);
+
+		// draw arrow from left rising edge to right falling edge in red color
+		int arrowY = baseLine-25;
+	
+		drawLine(framebuffer, risingEdge, arrowY, fallingEdge, arrowY, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, risingEdge, arrowY, risingEdge+5, arrowY-5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, risingEdge, arrowY, risingEdge+5, arrowY+5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, fallingEdge, arrowY, fallingEdge-5, arrowY-5, 0xFF, 0x00, 0x00);
+		drawLine(framebuffer, fallingEdge, arrowY, fallingEdge-5, arrowY+5, 0xFF, 0x00, 0x00);
+
+		// get material size in mm  
+		double widthMaterial = -1;
+		for(i=risingEdge1920; i<fallingEdge1920; i++)
+			widthMaterial+=gCalibrationData.pixelLen[i];
+		//printf("(i) width material = %lf\n", widthMaterial);
+
+		
+		// draw material size in mm  on the arrow line upside center
+		printNumber(800-20-16*2, baseLine+20, gCount0, framebuffer);
+		*/
+	}
+
+	// draw meta line of calibration mode
 	if(gMode==MODE_CALIBRATION)
 	{
 	    if(gSetCam==SET_CAM_0)
@@ -880,7 +1079,8 @@ void receiveFrame(char* fb)
 			for(i=0; i<1920/2; i++)
 			{
 				if(center-i*2-1<0) break;
-				vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+				//vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+				vfCombined[1920/2-i] = vf1[center-i];
 			}
 
 			// copy cam0 right side image
@@ -888,7 +1088,8 @@ void receiveFrame(char* fb)
 			for(i=0; i<1920/2; i++)
 			{
 				if(center+i*2+1>=1920) break;
-				vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
+				//vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
+				vfCombined[1920/2+i] = vf0[center+i];
 			}
 
 			filterNoise(vfCombined, 1920);
