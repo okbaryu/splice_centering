@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <time.h>
 
 #include "splice_libs.h"
 #include "splice_utils.h"
@@ -1048,4 +1049,72 @@ void reusePort(
 		PrintError( "error in setsockopt, SO_REUSEADDR(%d) (%s) \n", SO_REUSEADDR, strerror(errno) );
 	}
 }
+
+int TASK_Sleep(unsigned long ultime)
+{
+	struct timespec delay;
+	struct timespec rem;
+	int rc;
+
+	delay.tv_sec = ultime / 1000;
+	delay.tv_nsec = (ultime % 1000) * 1000000;
+
+	for (;;) {
+		rc = nanosleep(&delay, &rem);
+		if (0 != rc) {
+			if (EINTR == errno) {
+				delay = rem;
+				continue;
+			}
+			return -1;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+void LONG_to_PLC_BIN_ARRAY(long n, unsigned char *str)
+{
+
+	unsigned int High_int, Low_int;
+
+	High_int = (unsigned int) ((n & 0xFFFF0000) >> 16);
+	Low_int = (unsigned int) (n & 0x0000FFFF);
+
+	*str++ = (unsigned char) (Low_int & 0x00FF);
+	*str++ = (unsigned char) ((Low_int & 0xFF00) >> 8);
+	*str++ = (unsigned char) (High_int & 0x00FF);
+	*str++ = (unsigned char) ((High_int & 0xFF00) >> 8);
+
+	*str = 0;
+}
+
+void PLC_BIN_to_LONG( char *SData, long  *DData)
+{
+	long i=0;
+	unsigned int High_int, Low_int;
+
+	Low_int = (unsigned int) SData[1] << 8;
+	Low_int |= (unsigned int) SData[0];
+
+	High_int = (unsigned int) SData[3] << 8;
+	High_int |= (unsigned int) SData[2];
+
+	i = ((long) High_int << 16);
+	i |=  Low_int;
+
+	*DData=i;
+}
+
+void PLC_BIN_to_INT( char *SData, int  *DData)
+{
+	int i=0;
+
+	i =  (unsigned int)SData[1] << 8;
+	i |=  SData[0];
+
+	*DData=i;
+}
+
 

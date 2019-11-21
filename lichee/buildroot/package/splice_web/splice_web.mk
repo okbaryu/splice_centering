@@ -34,7 +34,6 @@ splice_web : $(SPLICE_WEB_DIR)/.configured ${SPLICE_WEB_DIR}/splice.cgi ${SPLICE
 	install -d -m 755 $(TARGET_DIR)/var/splice_web/
 	install -D -m 755 $(SPLICE_WEB_DIR)/splice.cgi $(TARGET_DIR)/var/splice_web/splice.cgi
 	install -D -m 755 $(SPLICE_WEB_DIR)/splice_server $(TARGET_DIR)/var/splice_web/splice_server
-	install -D -m 755 $(SPLICE_WEB_DIR)/lcd $(TARGET_DIR)/var/splice_web/lcd
 	cp -rf package/splice_web/* $(TARGET_DIR)/var/splice_web
 	ln -sf /usr/bin/php-cgi $(TARGET_DIR)/var/splice_web/php
 	ln -sf /data/ipaddr $(TARGET_DIR)/var/splice_web/ipaddr

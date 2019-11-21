@@ -17,6 +17,7 @@
 #include "splice_libs.h"
 #include "splice_utils.h"
 #include "actuator.h"
+#include "plc.h"
 
 #define MAXHOSTNAME                  80
 #define PERF_FILE_FULL_PATH_LEN      64
@@ -755,7 +756,6 @@ static int Splice_ReadRequest(
 {
 	int         rc;
 	static bool bFirstPass = true;
-	int fd=0;
 
 	PrintInfo( "%u Started new thread serving %s\n", ntohs( from.sin_port ), inet_ntoa( from.sin_addr ));
 
@@ -772,12 +772,6 @@ static int Splice_ReadRequest(
 	{
 		PrintInfo( "%u ", ntohs( from.sin_port ));
 		CloseAndExit( psd, "receiving stream  message" );
-	}
-
-	fd = open("tkey.txt", O_RDONLY);
-	if(fd > 0)
-	{
-		pResponse->profile = 0xFFAA;
 	}
 
 	if (rc > 0)
@@ -909,6 +903,21 @@ static int Splice_ReadRequest(
 					break;
 				}
 
+			case SPLICE_CMD_GET_RREGISTER_PLC:
+				{
+					pResponse->cmd = pRequest->cmd;
+					if(sendPlc(EEP_Data_Start_R_Register, pResponse->data, EEP_R_Register_Size, true) != PLC_COMM_ACK)
+					{
+						printf("failed to get R register from PLC\n");
+					}
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+					break;
+				}
+
 			case SPLICE_CMD_QUIT:
 				{
 					Quit = 1;
@@ -989,6 +998,7 @@ int main(
 	/*printf( "%s: splice_response size %ld\n", __FUNCTION__, (long int) sizeof( splice_response ));*/
 	//signal(SIGPIPE, SIG_IGN);
 	signal(SIGPIPE, handler);
+	plc_init();
 	actuator_init("192.168.29.181");
 
 	threadFunc = dataFetchThread;
@@ -1004,14 +1014,11 @@ int main(
 #endif
 
 		startServer();
+	}
 
-		{
-			unsigned int idx = 0;
-			for (idx = 0; idx<5000; idx++) {
-				//PrintInfo( "%s: sleep(1000)\n", argv[0] );
-				sleep( 1000 );
-			}
-		}
+	while(1)
+	{
+		TASK_Sleep(1000);
 	}
 
 	PrintInfo( "%s exiting.\n", argv[0] );

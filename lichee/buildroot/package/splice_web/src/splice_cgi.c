@@ -275,6 +275,7 @@ int main(
 		)
 {
 	int rc=0;
+	long tmp=0;
 	splice_request      request;
 	splice_response     response;
 	splice_version_info versionInfo;
@@ -284,6 +285,7 @@ int main(
 	int   tzOffset         = 0;
 	int   systemInfo       = 0;
 	int   getTime          = 0;
+	int   readCmdPLC       = 0;
 	int   actPos           = 0;
 	int   getActStatus     = 0;
 	int   setActStatus     = 0;
@@ -313,6 +315,7 @@ int main(
 		scanForStr( queryString, "uuid=", sizeof( strUuid ), strUuid );
 		scanForInt( queryString, "systemInfo=", &systemInfo);
 		scanForInt( queryString, "getTime=", &getTime);
+		scanForInt( queryString, "readCmdPLC=", &readCmdPLC);
 		scanForInt( queryString, "actPos=", &actPos);
 		scanForInt( queryString, "getActStatus=", &getActStatus);
 		scanForInt( queryString, "setActStatus=", &setActStatus);
@@ -360,6 +363,66 @@ int main(
 
 		get_netstat_data( &g_netStats[0] );
 		PrintHTML( "~SERVERIP~ %s\n", g_netStats[0].ipAddress);
+	}
+
+	if(readCmdPLC)
+	{
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_RREGISTER_PLC);
+
+		PLC_BIN_to_LONG(&response.data[0], &tmp);
+		PrintHTML("~MWIDTH~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[4], &tmp);
+		PrintHTML("~SWIDTHIN~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[8], &tmp);
+		PrintHTML("~OFFSETIN~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[12], &tmp);
+		PrintHTML("~GETSWIDTH~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[16], &tmp);
+		PrintHTML("~TOLPOS~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[20], &tmp);
+		PrintHTML("~TOLNEG~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[24], &tmp);
+		PrintHTML("~SWIDTHOUT~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[28], &tmp);
+		PrintHTML("~OFFSETOUT~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[32], &tmp);
+		PrintHTML("~POFFSET~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[36], &tmp);
+		PrintHTML("~MOFFSET~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[40], &tmp);
+		PrintHTML("~LOENABLE~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[44], &tmp);
+		PrintHTML("~TOENABLE~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[48], &tmp);
+		PrintHTML("~LO0~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[52], &tmp);
+		PrintHTML("~LO1~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[56], &tmp);
+		PrintHTML("~LO2~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[60], &tmp);
+		PrintHTML("~LO3~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[64], &tmp);
+		PrintHTML("~LO4~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[68], &tmp);
+		PrintHTML("~LO5~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[72], &tmp);
+		PrintHTML("~LO6~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[76], &tmp);
+		PrintHTML("~TO0~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[80], &tmp);
+		PrintHTML("~TO1~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[84], &tmp);
+		PrintHTML("~TO2~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[88], &tmp);
+		PrintHTML("~TO3~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[92], &tmp);
+		PrintHTML("~TO4~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[96], &tmp);
+		PrintHTML("~TO5~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[100], &tmp);
+		PrintHTML("~TO6~%ld~", tmp);
+		PLC_BIN_to_LONG(&response.data[104], &tmp);
+		PrintHTML("~ACTRESET~%ld~", tmp);
 	}
 
 	if(getActStatus)

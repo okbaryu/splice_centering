@@ -138,4 +138,8 @@ int getFileSize( const char *filename);
 int getUpTime(float *uptime);
 int setUpTime(void);
 void reusePort(int s);
+int TASK_Sleep(unsigned long ultime);
+void LONG_to_PLC_BIN_ARRAY(long n, unsigned char *str);
+void PLC_BIN_to_LONG( char *SData, long  *DData);
+void PLC_BIN_to_INT( char *SData, int  *DData);
 #endif

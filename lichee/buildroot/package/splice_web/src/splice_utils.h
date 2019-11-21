@@ -26,6 +26,7 @@ typedef enum
 	SPLICE_CMD_SET_ACTUATOR_STATUS = 0x040,
 	SPLICE_CMD_GET_ACTUATOR_POSITION = 0x080,
 	SPLICE_CMD_SET_ACTUATOR_POSITION = 0x100,
+	SPLICE_CMD_GET_RREGISTER_PLC = 0x200,
     SPLICE_CMD_MAX = 0xFFFF
 } splice_cmd;
 
@@ -164,9 +165,8 @@ typedef struct
 
 typedef struct splice_response
 {
-    char                     data[106]; /* used to make size of struct an even multiple of 256 */
+    char                     data[110]; /* used to make size of struct an even multiple of 256 */
     splice_cmd             cmd;
-    int                      profile;
     splice_profile_sources source;
     unsigned long int        timestamp;
     union {
