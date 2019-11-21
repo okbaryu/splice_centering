@@ -283,6 +283,7 @@ int main(
 	char *queryString      = NULL;
 	int   epochSeconds     = 0;
 	int   tzOffset         = 0;
+	int   isAlive          = 0;
 	int   systemInfo       = 0;
 	int   getTime          = 0;
 	int   readCmdPLC       = 0;
@@ -325,6 +326,7 @@ int main(
 		scanForInt( queryString, "ACTLLIMIT=", &ACTLLIMIT);
 		scanForInt( queryString, "ACTRLIMIT=", &ACTRLIMIT);
 		scanForInt( queryString, "ACTORG=", &ACTORG);
+		scanForInt( queryString, "isAlive=", &isAlive);
 	}
 	else
 	{
@@ -363,6 +365,12 @@ int main(
 
 		get_netstat_data( &g_netStats[0] );
 		PrintHTML( "~SERVERIP~ %s\n", g_netStats[0].ipAddress);
+	}
+
+	if(isAlive)
+	{
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_ACTUATOR_STATUS);
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_RREGISTER_PLC);
 	}
 
 	if(readCmdPLC)

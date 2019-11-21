@@ -7,6 +7,7 @@ var passcount=0;
 var UUID = ""; // used to allow multiple browsers to access the STB
 var previous_height = 0;
 var CgiTimeoutId=0;
+var SpliceTimeoutId=0;
 var CgiRetryTimeoutId=0;
 var CgiCount=0; // number of times the cgi was called
 var SetVariableCount=0; // number of times setVariable() is called
@@ -159,6 +160,19 @@ function OneSecond ()
 	//console.log( "OneSecond: calling setTimeout()");
 	CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
 }
+
+function FiveSecond ()
+{
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&isAlive=" + 1;
+	sendCgiRequestDoItNow(url);
+
+	clearTimeoutFiveSecond();
+	SpliceTimeoutId = setTimeout('FiveSecond()', REFRESH_IN_MILLISECONDS * 10);
+}
+
 function getNumEntries ( arrayname )
 {
 	var num_entries = arrayname.length;
@@ -503,6 +517,7 @@ function MyLoad()
 
 		//console.log( "MyLoad: calling sendCgiRequest()");
 		CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
+		SpliceTimeoutId = setTimeout ('FiveSecond()', REFRESH_IN_MILLISECONDS * 5);
 
 		//alert("pass 0 done");
 	} else {
@@ -3595,6 +3610,14 @@ function clearTimeoutOneSecond( caller ) {
     }
 }
 
+function clearTimeoutFiveSecond()
+{
+	if (SpliceTimeoutId){
+		clearTimeout(SpliceTimeoutId);
+		SpliceTimeoutId = 0;
+	}
+}
+
 // This function runs as an asynchronous response to a previous server request
 function serverHttpResponse ()
 {
@@ -3659,9 +3682,11 @@ function serverHttpResponse ()
                 ResponseCount++;
 
                 clearTimeoutOneSecond( "response 1");
+                clearTimeoutFiveSecond();
 
                 //console.log( "Response: calling setTimeout(OneSecond)");
                 CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS/10 );
+                SpliceimeoutId = setTimeout ('FiveSecond()', REFRESH_IN_MILLISECONDS/2 );
                 AddToDebugOutput ( "calling setTimeout(); ID (" + CgiTimeoutId + ")" + eol );
             } else {
 
@@ -3684,11 +3709,15 @@ function serverHttpResponse ()
                     //console.log( "Response:200 calling OneSecond() manually" );
                     OneSecond();
                 }
+				if ( SpliceTimeoutId == 0) {
+					FiveSecond();
+				}
             }
         } else {
             var msg = "";
 
             clearTimeoutOneSecond( "response 2");
+            clearTimeoutFiveSecond();
 
             //console.log ("TIMEOUT1: urlSentSuccessfully:" + urlSentSuccessfully + "; urlSentRetryCount:" + urlSentRetryCount + "; urlSentRetryCountAfterSuccess:" + urlSentRetryCountAfterSuccess );
             // if we have previously successfully received some responses (used so we do not ignore the very first failure)
