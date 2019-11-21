@@ -55,7 +55,7 @@ cd ipu/lcd
 
 make
 
-cp lcd ../lichee/out/sun8iw8p1/linux/ipu/buildroot/target/root/
+cp lcd ../lichee/buildroot/target/ipu/skel/root/
 
 cd ipu/lichee
 
