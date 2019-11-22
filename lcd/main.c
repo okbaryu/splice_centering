@@ -1096,7 +1096,7 @@ void receiveFrame(char* fb)
 
 			render(fb, vfCombined, 1920);
 
-			#else if 0
+			#elif 0
 			for(i=0; i<1920; i++)
 			{
 			if(center-i-1<0) break;
