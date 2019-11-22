@@ -1486,15 +1486,17 @@ int sendImage(int sock)
 //	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
 
 	json_object *response = json_object_new_object();
-	char buf[1920*4];
+	char buf[1920*8];
+	char vfb[1920*2];
 	int bufsize = 1920;
+
+	memset(vfb, 0 ,1920*2);
 
 
 	if( gSetCam == SET_CAM_0 )
 	{
 		
-		char vfb[1920];
-   		 memset(vfb, 0 ,1920);
+	
 		pthread_mutex_lock(&gMutex0);
 		memcpy(vfb, gVf0, 1920);
 		pthread_mutex_unlock(&gMutex0);
@@ -1504,8 +1506,7 @@ int sendImage(int sock)
 	else if( gSetCam == SET_CAM_1 )
 	{
 		
-	char vfb[1920];
-    memset(vfb, 0 ,1920);
+
 		pthread_mutex_lock(&gMutex1);
 		memcpy(vfb, gVf1, 1920);
 		pthread_mutex_unlock(&gMutex1);
@@ -1516,13 +1517,13 @@ int sendImage(int sock)
 	{
 		bufsize = 1920*2;
 		
-		char vfb[1920*2];
+		
 	    
 		char vf0[1920];
 		char vf1[1920];
     		memset(vf0, 0 ,1920);
     		memset(vf1, 0 ,1920);
-		memset(vfb, 0 ,1920*2);
+		
 
 		pthread_mutex_lock(&gMutex0);
 		memcpy(vf0, gVf0, 1920);
