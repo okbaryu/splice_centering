@@ -1479,18 +1479,22 @@ void responseUserRequest(int sock, char * msg, int len)
 	return;
 }
 
+
+
 int sendImage(int sock)
 {
 //	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
 
 	json_object *response = json_object_new_object();
 	char buf[1920*4];
+	int bufsize = 1920;
 
-	char vfb[1920];
-    	memset(vfb, 0 ,1920);
 
 	if( gSetCam == SET_CAM_0 )
 	{
+		
+		char vfb[1920];
+   		 memset(vfb, 0 ,1920);
 		pthread_mutex_lock(&gMutex0);
 		memcpy(vfb, gVf0, 1920);
 		pthread_mutex_unlock(&gMutex0);
@@ -1499,6 +1503,9 @@ int sendImage(int sock)
 	}
 	else if( gSetCam == SET_CAM_1 )
 	{
+		
+	char vfb[1920];
+    memset(vfb, 0 ,1920);
 		pthread_mutex_lock(&gMutex1);
 		memcpy(vfb, gVf1, 1920);
 		pthread_mutex_unlock(&gMutex1);
@@ -1507,10 +1514,15 @@ int sendImage(int sock)
 	}
 	else
 	{
+		bufsize = 1920*2;
+		
+		char vfb[1920*2];
+	    
 		char vf0[1920];
 		char vf1[1920];
     		memset(vf0, 0 ,1920);
     		memset(vf1, 0 ,1920);
+		memset(vfb, 0 ,1920*2);
 
 		pthread_mutex_lock(&gMutex0);
 		memcpy(vf0, gVf0, 1920);
@@ -1525,6 +1537,23 @@ int sendImage(int sock)
 		// copy cam1 left side image
 		int i=0;
 		int center = gCalibrationData.cam1Center;
+		#if 1
+		for(i=0; i<1920; i++)
+		{
+			if(center-i-1<0) break;
+			vfb[1920-i] = vf1[center-i];
+		}
+
+		// copy cam0 right side image
+		center = gCalibrationData.cam0Center;
+		for(i=0; i<1920; i++)
+		{
+			if(center+i+1>=1920) break;
+			vfb[1920+i] = vf0[center+i];
+		}
+
+		filterNoise(vfb, 1920*2);
+		#else
 		for(i=0; i<1920/2; i++)
 		{
 			if(center-i*2-1<0) break;
@@ -1540,13 +1569,14 @@ int sendImage(int sock)
 		}
 
 		filterNoise(vfb, 1920);
+		#endif
 	}
 
 //	printf("(i) vfb prepared\n");
 
 	json_object * array = json_object_new_array();
  	int i=0;	
-	for(i=0; i<1920; i++)
+	for(i=0; i<bufsize; i++)
 	{
 		json_object * temp = json_object_new_int(vfb[i]);
 		json_object_array_add(array, temp);
