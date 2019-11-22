@@ -1022,12 +1022,13 @@ void receiveFrame(char* fb)
 
     char vf0[1920];
     char vf1[1920];
-    char vfCombined[1920];
+    //tt char vfCombined[1920];
+	char vfCombined[1920*2];
 
     memset(vf0, 0, 1920);
     memset(vf1, 0, 1920);
-    memset(vfCombined, 0 ,1920);
-
+   //tt  memset(vfCombined, 0 ,1920);
+	 memset(vfCombined, 0 ,1920*2);
 
 
     while(1)
@@ -1076,6 +1077,29 @@ void receiveFrame(char* fb)
 			// copy cam1 left side image
 			int i=0;
 			int center = gCalibrationData.cam1Center;
+			#if 1
+			for(i=0; i<1920; i++)
+			{
+			if(center-i-1<0) break;
+			//vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+			vfCombined[1920-i] = vf1[center-i];
+			}
+
+			// copy cam0 right side image
+			center = gCalibrationData.cam0Center;
+			for(i=0; i<1920; i++)
+			{
+				if(center+i+1>=1920) break;
+				//vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
+				vfCombined[1920+i] = vf0[center+i];
+			}
+
+			filterNoise(vfCombined, 1920);
+			gCount0 = countBar(vfCombined, 1920, 1920*2 -1, gThreshold0);
+			gCount1 = countBar(vfCombined, 0, 1920-1, gThreshold1);
+
+			render(fb, vfCombined, 1920*2);
+			#else
 			for(i=0; i<1920/2; i++)
 			{
 				if(center-i*2-1<0) break;
@@ -1097,6 +1121,7 @@ void receiveFrame(char* fb)
 			gCount1 = countBar(vfCombined, 0, 1920/2-1, gThreshold1);
 
 			render(fb, vfCombined, 1920);
+			#endif
 		}
 	}
     }
