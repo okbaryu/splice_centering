@@ -42,6 +42,9 @@ echo out > /sys/class/gpio/gpio142/direction
 echo 143 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio143/direction
 
+echo "(i) app start"
+/var/splice_web/lcd &
+
 exit 1
 
 APP_PATH=/data
