@@ -262,17 +262,17 @@ void removeNoise(char * bin, int size)
 int getGridSize(const char* buf, int size, int threshold)
 {
 	int i = 0, j=0;
-	for(i=0; i<1920; i++)
+	for(i=0; i<size; i++)
 		if(buf[i]>threshold) bin[i] = 1;
 		else bin[i] = 0;
 
-	removeNoise(bin, 1920);
+	removeNoise(bin, size);
 
 	char arr[10];
 	int index = 0;
 	memset(arr,0,10);
 
-	int center = 1920/2;
+	int center = size/2;
 
 	int current = center;
 	
@@ -1022,13 +1022,11 @@ void receiveFrame(char* fb)
 
     char vf0[1920];
     char vf1[1920];
-    //tt char vfCombined[1920];
-	char vfCombined[1920*2];
+	char vfCombined[1920];
 
     memset(vf0, 0, 1920);
     memset(vf1, 0, 1920);
-   //tt  memset(vfCombined, 0 ,1920);
-	 memset(vfCombined, 0 ,1920*2);
+	memset(vfCombined, 0 ,1920);
 
 
     while(1)
@@ -1078,6 +1076,27 @@ void receiveFrame(char* fb)
 			int i=0;
 			int center = gCalibrationData.cam1Center;
 			#if 1
+			for(i=0; i<1920/2; i++)
+			{
+				if(center-i*2-1<0) break;
+				vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+			}
+	
+			// copy cam0 right side image
+			center = gCalibrationData.cam0Center;
+			for(i=0; i<1920/2; i++)
+			{
+				if(center+i*2+1>=1920) break;
+				vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
+			}
+			
+			filterNoise(vfCombined, 1920);
+			gCount0 = countBar(vfCombined, 1920/2, 1919, gThreshold0);
+			gCount1 = countBar(vfCombined, 0, 1920/2-1, gThreshold1);
+
+			render(fb, vfCombined, 1920);
+
+			#else if 0
 			for(i=0; i<1920; i++)
 			{
 			if(center-i-1<0) break;
