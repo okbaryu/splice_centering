@@ -1124,6 +1124,10 @@ void receiveFrame(char* fb)
 			#endif
 		}
 	}
+	else
+	{
+		usleep(2000);
+	}
     }
 
     pthread_mutex_destroy(&gMutex0);
@@ -1621,6 +1625,10 @@ void* thread_function_streaming(void* arg)
 
 			if(gStreamMode==STREAM_MODE_ONESHOT)
 				gStreamMode = STREAM_MODE_STOP;
+		}
+		else
+		{
+			usleep(2000);
 		}
 	}
 	
