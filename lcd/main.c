@@ -1605,7 +1605,7 @@ int sendImage(int sock)
 		json_object *temp = json_object_new_double(lengthmm[i]);
 		json_object_array_add(array, temp);
 	}
-	json_object_object_add(json,STR_GET_IMAGE, array);
+	json_object_object_add(response,STR_GET_IMAGE, array);
 	
 	#else
 
