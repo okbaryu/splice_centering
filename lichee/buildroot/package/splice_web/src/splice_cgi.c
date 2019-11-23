@@ -288,6 +288,8 @@ int main(
 	int   getTime          = 0;
 	int   readCmdPLC       = 0;
 	int   actPos           = 0;
+	int   actPosOrg        = 0;
+	int   getActPos        = 0;
 	int   getActStatus     = 0;
 	int   setActStatus     = 0;
 	int   ACTDIR           = 0;
@@ -318,6 +320,8 @@ int main(
 		scanForInt( queryString, "getTime=", &getTime);
 		scanForInt( queryString, "readCmdPLC=", &readCmdPLC);
 		scanForInt( queryString, "actPos=", &actPos);
+		scanForInt( queryString, "actPosOrg=", &actPosOrg);
+		scanForInt( queryString, "getActPos=", &getActPos);
 		scanForInt( queryString, "getActStatus=", &getActStatus);
 		scanForInt( queryString, "setActStatus=", &setActStatus);
 		scanForInt( queryString, "ACTDIR=", &ACTDIR);
@@ -471,9 +475,41 @@ int main(
 		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_SET_ACTUATOR_STATUS);
 	}
 
+	if(getActPos)
+	{
+		int val;
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_ACTUATOR_POSITION);
+
+		val =  (response.data[0] & 0x7F) << 8 | response.data[1];
+		if(response.data[0] & 0x80) val *= -1;
+		PrintHTML( "~CURVAL~%d~", val);
+		val =  (response.data[2] & 0x7F) << 8 | response.data[3];
+		if(response.data[2] & 0x80) val *= -1;
+		PrintHTML( "~PREVVAL~%d~", val);
+	}
+
 	if(actPos)
 	{
+		int cur,prev, val;
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_ACTUATOR_POSITION);
+		cur =  (response.data[0] & 0x7F) << 8 | response.data[1];
+		if(response.data[0] & 0x80) cur *= -1;
+		prev =  (response.data[2] & 0x7F) << 8 | response.data[3];
+		if(response.data[2] & 0x80) prev *= -1;
+
+		val = (actPos*100 - cur);
+		//printf("getpos, curval = %d, prevval = %d, actPos = %d, val=%d\n",cur, prev, actPos, val);
+
 		request.cmdSecondary = CMD2_ACT_MOVE;
+		request.cmdSecondaryOption = val;
+
+		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_SET_ACTUATOR_POSITION);
+
+	}
+
+	if(actPosOrg)
+	{
+		request.cmdSecondary = CMD2_ACT_MOVE_ORG;
 		request.cmdSecondaryOption = actPos;
 
 		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_SET_ACTUATOR_POSITION);

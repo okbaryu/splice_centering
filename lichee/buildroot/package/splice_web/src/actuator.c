@@ -252,10 +252,10 @@ int actuator_get_current_postion(act_position *p)
 	p->act_prev_position_lsb = ack[ACK_ACT_PREV_POSITION_LSB];
 
 #ifdef STATUS_DUMP
-	printf("ACTUATOR CURRENT POSTION MSB = 0x%x\n",ack[ACK_ACT_CUR_POSITION_MSB]);
-	printf("ACTUATOR CURRENT POSTION LSB = 0x%x\n",ack[ACK_ACT_CUR_POSITION_LSB]);
-	printf("ACTUATOR PREV POSTION MSB = 0x%x\n",ack[ACK_ACT_PREV_POSITION_MSB]);
-	printf("ACTUATOR PREV POSTION LSB = 0x%x\n",ack[ACK_ACT_PREV_POSITION_LSB]);
+	printf("ACTUATOR CURRENT POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_MSB], ack[ACK_ACT_CUR_POSITION_MSB]);
+	printf("ACTUATOR CURRENT POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_LSB], ack[ACK_ACT_CUR_POSITION_LSB]);
+	printf("ACTUATOR PREV POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_MSB], ack[ACK_ACT_PREV_POSITION_MSB]);
+	printf("ACTUATOR PREV POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_LSB], ack[ACK_ACT_PREV_POSITION_LSB]);
 #endif
 
 	return 0;
@@ -306,7 +306,7 @@ int main(int argc , char *argv[])
 	}
 
 	actuator_get_status(&status);
-	actuator_get_current_postion(&pos);
+	//actuator_get_current_postion(&pos);
 
 	status.act_direction = 0;
 	status.act_max_stroke = 50;
@@ -315,8 +315,8 @@ int main(int argc , char *argv[])
 	//actuator_set_status(&status);
 
 	pos.act_cur_position_msb = 0x00;
-	pos.act_cur_position_lsb = 0x64;
-	//actuator_set_current_position(&pos, CMD2_ACT_MOVE);
+	pos.act_cur_position_lsb = 0x00;
+	actuator_set_current_position(&pos, CMD2_ACT_MOVE_ORG);
 
 	close(socket_fd);
 

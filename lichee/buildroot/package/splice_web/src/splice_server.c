@@ -829,8 +829,6 @@ static int Splice_ReadRequest(
 			case SPLICE_CMD_GET_ACTUATOR_STATUS:
 				{
 					act_status p;
-					pResponse->cmd = pRequest->cmd;
-
 					actuator_get_status(&p);
 
 					pResponse->data[0] = p.act_direction;
@@ -852,7 +850,6 @@ static int Splice_ReadRequest(
 			case SPLICE_CMD_SET_ACTUATOR_STATUS:
 				{
 					act_status p;
-					pResponse->cmd = pRequest->cmd;
 
 					p.act_direction = pRequest->request.strCmdLine[0];
 					p.act_max_stroke = pRequest->request.strCmdLine[1];
@@ -872,6 +869,24 @@ static int Splice_ReadRequest(
 					break;
 				}
 
+			case SPLICE_CMD_GET_ACTUATOR_POSITION:
+				{
+					act_position p;
+					actuator_get_current_postion(&p);
+
+					pResponse->data[0] = p.act_cur_position_msb;
+					pResponse->data[1] = p.act_cur_position_lsb;
+					pResponse->data[2] = p.act_prev_position_msb;
+					pResponse->data[3] = p.act_prev_position_lsb;
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
 			case SPLICE_CMD_SET_ACTUATOR_POSITION:
 				{
 					act_position p;
@@ -879,7 +894,7 @@ static int Splice_ReadRequest(
 					p.act_cur_position_lsb = 0;
 					int val;
 
-					pResponse->cmd = pRequest->cmd;
+					pResponse->cmd = pRequest->cmdSecondary;
 					if(pRequest->cmdSecondary == CMD2_ACT_MOVE)
 					{
 						if(pRequest->cmdSecondaryOption < 0)
@@ -888,16 +903,24 @@ static int Splice_ReadRequest(
 							pRequest->cmdSecondaryOption *= -1;
 						}
 
-						val = pRequest->cmdSecondaryOption * 0x64;
+						val = pRequest->cmdSecondaryOption;
 						p.act_cur_position_lsb |= val & 0xff;
 						p.act_cur_position_msb |= (val >> 8) & 0xff;
-						printf("val=%u, msb=0x%x, lsb=0x%x\n", val, p.act_cur_position_msb, p.act_cur_position_lsb);
 						actuator_set_current_position(&p, CMD2_ACT_MOVE);
-					}
 
-					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+						if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+						{
+							CloseAndExit( psd, "sending response cmd" );
+						}
+					}
+					else if(pRequest->cmdSecondary == CMD2_ACT_MOVE_ORG)
 					{
-						CloseAndExit( psd, "sending response cmd" );
+						actuator_set_current_position(&p, CMD2_ACT_MOVE_ORG);
+
+						if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+						{
+							CloseAndExit( psd, "sending response cmd" );
+						}
 					}
 
 					break;

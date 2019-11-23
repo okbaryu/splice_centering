@@ -249,7 +249,7 @@ int main(int argc, char **argv)
 	char buf[MAX_BUF_LENGTH] = {0,};
 	int rc;
 
-	printf("plc comm test 0.61\n");
+	printf("plc comm test 0.6\n");
 
 	if(plc_init() != 0)
 	{

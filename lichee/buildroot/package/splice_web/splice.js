@@ -70,6 +70,8 @@ var GetPerfFlameResults =  {Value: false };
 var GetPerfFlameRecordingSeconds = 0;
 var GetPerfFlamePidCount = 0;
 var ActStatus = {ACTDIR:0, ACTSTROKE:0, ACTSPEED:0, ACTLLIMIT:0, ACTRLIMIT:0, ACTORGMSB:0, ACTORGLSB:0};
+var actCurPos = 0;
+var actPrevPos = 0;
 
 //  GetPerfFlameState needs to match the enum Bsysperf_PerfFlame_State in bsysperf.c
 var GetPerfFlameState = { UNINIT:0, INIT:1, IDLE:2, START:3, RECORDING:4, STOP:5, CREATESCRIPTOUT:6, GETSVG:7, DELETEOUTFILE:8 };
@@ -598,10 +600,14 @@ function AdjustRectangleToTextWidth ( id )
 function SliderCB(event, ui)
 {
 	var url = "";
+	var org_val = document.getElementById("origin_val").value;
 
-	url = "/cgi/splice.cgi?";
-	url += "&actPos=" + ui.value;
-	sendCgiRequestDoItNow(url);
+	if(ui.value != org_val)
+	{
+		url = "/cgi/splice.cgi?";
+		url += "&actPos=" + ui.value;
+		sendCgiRequestDoItNow(url);
+	}
 }
 
 function readCmdPLC()
@@ -679,22 +685,49 @@ function MyClick(event)
 function Act_left_button(event)
 {
 	var value = $( "#Slider1" ).slider( "option", "value" );
-	$( "#Slider1" ).slider( "option", "value", value - 1 );
-	$("#calibar_val").val(value - 1);
+	var llimit = document.getElementById("left_limit_val").value / 100 * -1;
+
+	if(value - 1 < llimit)
+	{
+		alert("Invalid actuator position! " + value);
+		$( "#Slider1" ).slider( "option", "value", llimit );
+		$("#calibar_val").val(llimit);
+	}
+	else
+	{
+		$( "#Slider1" ).slider( "option", "value", value - 1 );
+		$("#calibar_val").val(value - 1);
+	}
 }
 
 function Act_right_button(event)
 {
 	var value = $( "#Slider1" ).slider( "option", "value" );
-	$( "#Slider1" ).slider( "option", "value", value + 1 );
-	$("#calibar_val").val(value + 1);
+	var rlimit = document.getElementById("right_limit_val").value / 100;
+
+	if(value + 1 > rlimit)
+	{
+		alert("Invalid actuator position! " + value);
+		$( "#Slider1" ).slider( "option", "value", rlimit );
+		$("#calibar_val").val(rlimit);
+	}
+	else
+	{
+		$( "#Slider1" ).slider( "option", "value", value + 1 );
+		$("#calibar_val").val(value + 1);
+	}
 }
 
 function Act_origin_button(event)
 {
+	var url = "";
 	var value = document.getElementById("origin_val").value;
 	$( "#Slider1" ).slider( "option", "value", value / 100 );
 	$("#calibar_val").val(value / 100);
+
+	url = "/cgi/splice.cgi?";
+	url += "&actPosOrg=" + 1;
+	sendCgiRequestDoItNow(url);
 }
 
 function DisableCheckboxes ( newValue )
@@ -3229,6 +3262,12 @@ function ProcessResponses ( oResponses )
             if (objplatform) {
                 objplatform.innerHTML = oResponses[i+1]
             }
+            i++;
+        } else if (entry == "CURVAL") {
+            actCurPos = oResponse[i+1];
+            i++;
+        } else if (entry == "PREVVAL") {
+            actPrevPos = oResponses[i+1];
             i++;
         } else if (entry == "BOLTVER") {
             PlaybackBOLTVER = oResponses[i+1];
