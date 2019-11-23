@@ -6,6 +6,18 @@
 #define EEP_Err_Bit_R_Register 8172
 #define EEP_R_Register_Size 54
 
+#define MAX_PLC_IO_NUM 4
+#define PLC_WR_SYSTEM_READY 0
+#define PLC_WR_TIP_DETECT 1
+#define PLC_WR_CENTERING 2
+#define PLC_WR_COMM_ERROR 3
+#define PLC_WR_RESET 4
+
+#define PLC_RD_AUTO_MANUAL 0
+#define PLC_RD_CPC_TO_EPC 1
+#define PLC_RD_SAVE_WIDTH 2
+#define PLC_RD_CHECK_CUTTING 3
+
 enum {
 	PLC_ERR_DUST_DETECT = 0x1,
 	PLC_ERR_WIDTH_ERROR = 0x2,

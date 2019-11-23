@@ -23,8 +23,13 @@
 
 #define TRUE 1
 #define FALSE 0
+#define PLC_TRUE 0 
+#define PLC_FALSE 1
 
 int plc_fd;
+int plc_wr_fd[4];
+int plc_rd_fd[4];
+unsigned char PLCIO;
 
 static int parseBuf(char *src, char *dst, int cnt)
 {
@@ -217,9 +222,96 @@ int sendPlc(unsigned int r_head_address, char *head_data_address, char size, cha
 	return parseBuf(buf, head_data_address, cnt);
 }
 
+void sendPlcIO(int data)
+{
+	plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
+	plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
+
+	char buf[3] = {0, };
+
+	if(data == PLC_WR_TIP_DETECT)
+	{
+		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
+		buf[0] = '0';
+		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
+		close(plc_wr_fd[PLC_WR_TIP_DETECT]);
+	}
+	else if(data == PLC_WR_CENTERING)
+	{
+		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
+		plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
+		buf[0] = '0';
+		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
+		write(plc_wr_fd[PLC_WR_CENTERING], buf, sizeof(buf));
+		close(plc_wr_fd[PLC_WR_TIP_DETECT]);
+		close(plc_wr_fd[PLC_WR_CENTERING]);
+
+	}
+	else if(data == PLC_WR_COMM_ERROR)
+	{
+		plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
+		buf[0] = '0';
+		write(plc_wr_fd[PLC_WR_COMM_ERROR], buf, sizeof(buf));
+		close(plc_wr_fd[PLC_WR_COMM_ERROR]);
+	}
+	else if(data == PLC_WR_RESET)
+	{
+		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
+		plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
+		plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
+		buf[0] = '1';
+		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
+		write(plc_wr_fd[PLC_WR_CENTERING], buf, sizeof(buf));
+		write(plc_wr_fd[PLC_WR_COMM_ERROR], buf, sizeof(buf));
+		close(plc_wr_fd[PLC_WR_TIP_DETECT]);
+		close(plc_wr_fd[PLC_WR_CENTERING]);
+		close(plc_wr_fd[PLC_WR_COMM_ERROR]);
+	}
+	else
+	{
+		printf("Unknown data to send PLC\n");
+	}
+
+}
+
+void *plcIO(void *data)
+{
+	unsigned char prevPLCIO = 0xFF;
+	char buf[3][3];
+	while(1)
+	{
+		plc_rd_fd[PLC_RD_AUTO_MANUAL] = open("/sys/class/gpio/gpio128/value", O_RDONLY);
+		plc_rd_fd[PLC_RD_CPC_TO_EPC] = open("/sys/class/gpio/gpio129/value", O_RDONLY);
+		plc_rd_fd[PLC_RD_SAVE_WIDTH] = open("/sys/class/gpio/gpio130/value", O_RDONLY);
+		plc_rd_fd[PLC_RD_CHECK_CUTTING] = open("/sys/class/gpio/gpio131/value", O_RDONLY);
+
+		read(plc_rd_fd[PLC_RD_AUTO_MANUAL], buf[0], sizeof(buf[0]));
+		read(plc_rd_fd[PLC_RD_CPC_TO_EPC], buf[1], sizeof(buf[1]));
+		read(plc_rd_fd[PLC_RD_SAVE_WIDTH], buf[2], sizeof(buf[2]));
+		read(plc_rd_fd[PLC_RD_CHECK_CUTTING], buf[3], sizeof(buf[3]));
+		PLCIO = (atoi(buf[0]) << 3 | atoi(buf[1]) << 2 | atoi(buf[2]) << 1 | atoi(buf[3])) & 0x0F;
+
+		printf("PLCIO = 0x%x\n", !PLCIO);
+		if(PLCIO != prevPLCIO)
+		{
+			//printf("PLC IO received %d:%d\n", PLCIO, prevPLCIO);
+			prevPLCIO = PLCIO;
+		}
+
+		close(plc_rd_fd[0]);
+		close(plc_rd_fd[1]);
+		close(plc_rd_fd[2]);
+		close(plc_rd_fd[3]);
+
+		TASK_Sleep(50);
+	}
+
+}
+
 int plc_init(void)
 {
 	struct sockaddr_in server;
+	pthread_t plcIOid= 0;
 
 	plc_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (plc_fd == -1)
@@ -238,6 +330,17 @@ int plc_init(void)
 		close(plc_fd);
 		return -1;
 	}
+
+	//plc_wr_fd[PLC_WR_SYSTEM_READY] = open("/sys/class/gpio/gpio136/value",O_RDWR);
+	plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
+	plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
+	plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
+
+	if (pthread_create( &plcIOid, NULL, plcIO, (void *)NULL ))
+	{
+		PrintError( "could not create thread for data gathering; %s\n", strerror( errno ));
+	}
+
 
 	return 0;
 }
@@ -270,6 +373,8 @@ int main(int argc, char **argv)
 	LONG_to_PLC_BIN_ARRAY(2, Send_Data_Array);
 	rc = sendPlc(EEP_Err_Bit_R_Register, Send_Data_Array, 1, FALSE);
 	printf("rc = %d\n",rc);
+
+
 
 
 	while(1)
