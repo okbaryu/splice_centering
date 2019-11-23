@@ -24,10 +24,6 @@
 #define SATA_USB_FILE_FULL_PATH_LEN  64
 #define LINUX_TOP_FILE_FULL_PATH_LEN 64
 
-static unsigned int         g_interval = 1000;             /**g_interval is in msec unit*/
-static splice_cpu_percent g_cpuData;
-static pthread_mutex_t      g_mutex_lock;
-
 static unsigned char Quit = 0;
 
 static bool                    initializationDone = false;
@@ -964,36 +960,6 @@ static int Splice_ReadRequest(
 	return( 0 );
 }
 
-
-void *dataFetchThread(
-		void *data
-		)
-{
-	splice_cpu_percent cpuData;
-
-	UNUSED( data );
-
-	memset( &cpuData, 0, sizeof( cpuData ));
-	memset( &g_cpuData, 0, sizeof( g_cpuData ));
-
-	/** create mutex ***/
-	pthread_mutex_init( &g_mutex_lock, NULL );
-
-	while (1)
-	{
-		setUpTime();
-
-		set_cpu_utilization();
-
-		P_getCpuUtilization();
-
-		fflush( stdout );
-		fflush( stderr );
-
-		usleep(( g_interval*1000 ));
-	}
-}
-
 void handler(int signum)
 {
 	printf("broken pipe signal~!~!  0x%x\n", signum);
@@ -1007,8 +973,6 @@ int main(
 		char *argv[]
 		)
 {
-	pthread_t dataGatheringThreadId = 0;
-	void     *(*threadFunc)( void * );
 
 	UNUSED( argc );
 
@@ -1017,25 +981,16 @@ int main(
 
 	Splice_Server_InitMutex( &gSataUsbMutex );
 
-	/*printf( "%s: splice_response size %ld\n", __FUNCTION__, (long int) sizeof( splice_response ));*/
 	signal(SIGPIPE, handler);
 	plc_init();
 	actuator_init("192.168.29.181");
 
-	threadFunc = dataFetchThread;
-	if (pthread_create( &dataGatheringThreadId, NULL, threadFunc, (void *)NULL ))
-	{
-		PrintError( "could not create thread for data gathering; %s\n", strerror( errno ));
-	}
-	else
-	{
 #if 1
-		PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",
-				sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
+	PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",
+			sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
 #endif
 
-		startServer();
-	}
+	startServer();
 
 	while(1)
 	{
