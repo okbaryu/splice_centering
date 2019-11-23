@@ -84,13 +84,20 @@ int main( int argc, char* argv[] )
 	while(1)
 	{
 		read_cnt=read(sock, buf, BUF_SIZE);
-		if(read_cnt<=0) break; 
+		if(read_cnt<=0)
+		{
+				printf("read count %d \n", read_cnt);
+				break; 
+		}
 		printf("(i) client: read(%d)%s\n", read_cnt, buf);
 
 		buf[read_cnt] = 0;
 		printf("%s", buf);
-		if(strchr(buf,'}')!=NULL) break; // end of the packet
-		
+		if(strchr(buf,'}')!=NULL) 
+		{
+			printf("terminate \n");
+			break; // end of the packet
+		}
 	}
 
 	close(sock);
