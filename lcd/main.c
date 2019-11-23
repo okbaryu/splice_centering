@@ -1587,14 +1587,14 @@ int sendImage(int sock)
 	
 	for(left=0; left < 960; left++)
 	{
-		if(vfb[960 - left] < 128) break;
+		if(vfb[960 - left] > 128) break;
 		lengthmm[0] += gCalibrationData.pixelLen[960 - left];	
 	}
 
 	lengthmm[1] = 0;
 	for(right=0; right < 960; right++)
 	{
-		if(vfb[960 + right] < 128) break;
+		if(vfb[960 + right] > 128) break;
 		lengthmm[1] +=  gCalibrationData.pixelLen[960 + right ];
 	}
 
