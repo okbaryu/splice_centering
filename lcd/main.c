@@ -1602,7 +1602,7 @@ int sendImage(int sock)
  	int i=0;	
 	for(i=0; i<2; i++)
 	{
-		temp = json_object_new_double(lengthmm[i]);
+		json_object *temp = json_object_new_double(lengthmm[i]);
 		json_object_array_add(array, temp);
 	}
 	json_object_object_add(json,STR_GET_IMAGE, array);
