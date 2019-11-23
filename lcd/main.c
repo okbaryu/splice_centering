@@ -1503,7 +1503,7 @@ void responseUserRequest(int sock, char * msg, int len)
 }
 
 
-
+#define __SEND_LENGTH_ONLY__
 int sendImage(int sock)
 {
 //	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
@@ -1513,6 +1513,9 @@ int sendImage(int sock)
 	char vfb[1920];
 	int bufsize = 1920;
 
+	int left, right;
+	double lengthmm[2];
+	
 	memset(vfb, 0 ,1920);
 
 
@@ -1539,8 +1542,6 @@ int sendImage(int sock)
 	else
 	{
 		bufsize = 1920;
-		
-		
 	    
 		char vf0[1920];
 		char vf1[1920];
@@ -1561,23 +1562,7 @@ int sendImage(int sock)
 		// copy cam1 left side image
 		int i=0;
 		int center = gCalibrationData.cam1Center;
-		#if 0
-		for(i=0; i<1920; i++)
-		{
-			if(center-i-1<0) break;
-			vfb[1920-i] = vf1[center-i];
-		}
-
-		// copy cam0 right side image
-		center = gCalibrationData.cam0Center;
-		for(i=0; i<1920; i++)
-		{
-			if(center+i+1>=1920) break;
-			vfb[1920+i] = vf0[center+i];
-		}
-
-		filterNoise(vfb, 1920*2);
-		#else
+		
 		for(i=0; i<1920/2; i++)
 		{
 			if(center-i*2-1<0) break;
@@ -1593,8 +1578,38 @@ int sendImage(int sock)
 		}
 
 		filterNoise(vfb, 1920);
-		#endif
+
 	}
+
+	#ifdef __SEND_LENGTH_ONLY__
+
+	lengthmm[0] = 0;
+	
+	for(left=0; left < 960; left++)
+	{
+		if(vfb[960 - left] < 128) break;
+		lengthmm[0] += gCalibrationData.pixelLen[960 - left];	
+	}
+
+	lengthmm[1] = 0;
+	for(right=0; right < 960; right++)
+	{
+		if(vfb[960 + right] < 128) break;
+		lengthmm[1] +=  gCalibrationData.pixelLen[960 + right ];
+	}
+
+	json_object * array = json_object_new_array();
+ 	int i=0;	
+	for(i=0; i<2; i++)
+	{
+		temp = json_object_new_double(lengthmm[i]);
+		json_object_array_add(array, temp);
+	}
+	json_object_object_add(json,STR_GET_IMAGE, array);
+	
+	#else
+
+	
 
 //	printf("(i) vfb prepared\n");
 
@@ -1606,6 +1621,8 @@ int sendImage(int sock)
 		json_object_array_add(array, temp);
 	}
 	json_object_object_add(response, STR_GET_IMAGE, array);
+
+	#endif
 
 	sprintf(buf,"%s\n",json_object_to_json_string_ext(response, json_flags[0].flag) );
 	int len = write(sock,buf,strlen(buf)+1);
