@@ -1617,7 +1617,7 @@ int sendImage(int sock)
 			}			
 		}
 
-		if(state == 0) //no material on left side, scan right
+		if(state == 0 || lengthmm[2] > 180 ) //no material on left side, scan right
 		{
 			lengthmm[2] = 0;
 			lengthmm[3] = 0;
