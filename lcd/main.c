@@ -1514,7 +1514,7 @@ int sendImage(int sock)
 	int bufsize = 1920;
 
 	int left, right;
-	double lengthmm[2];
+	double lengthmm[4];
 	
 	memset(vfb, 0 ,1920);
 
@@ -1584,28 +1584,97 @@ int sendImage(int sock)
 	#ifdef __SEND_LENGTH_ONLY__
 
 	lengthmm[0] = 0;
-	
-	for(left=0; left < 960; left++)
-	{
-		if(vfb[960 - left] > 128) break;
-		lengthmm[0] += gCalibrationData.pixelLen[960 - left];	
-	}
-
 	lengthmm[1] = 0;
-	for(right=0; right < 960; right++)
+	lengthmm[2] = 0;
+	lengthmm[3] = 0;
+
+	int state = 0;
+
+	bufsize = 4;
+	//cpc가 아닐 때
+	
+	if(vfb[960] > 128)
 	{
-		if(vfb[960 + right] > 128) break;
-		lengthmm[1] +=  gCalibrationData.pixelLen[960 + right ];
+		state = 0;
+
+		//scan left
+		for(left=0; left < 960; left++)
+		{
+			if(state == 0)
+			{
+				if(vfb[960 - left] > 128) 
+					lengthmm[2] += gCalibrationData.pixelLen[960 - left];
+				else
+					state = 1;
+			}
+
+			if (state == 1)
+			{
+				if(vfb[960 - left] < 128) 
+					lengthmm[3] += gCalibrationData.pixelLen[960 - left];
+				else
+					break;
+			}			
+		}
+
+		if(state == 0) //no material on left side, scan right
+		{
+			lengthmm[2] = 0;
+			lengthmm[3] = 0;
+
+			for(right=0; right < 960; right++)
+			{
+				if(state == 0)
+				{
+					if(vfb[960 + right] > 128) 
+						lengthmm[2] += gCalibrationData.pixelLen[960 + right];
+					else
+						state = 1;
+				}
+
+				if (state == 1)
+				{
+					if(vfb[960 + right] < 128) 
+						lengthmm[3] += gCalibrationData.pixelLen[960 + right];
+					else
+						break;
+				}			
+			}
+		}
+			
+	}
+	else // cpc
+	{
+		for(left=0; left < 960; left++)
+		{
+			if(vfb[960 - left] > 128) break;
+			lengthmm[0] += gCalibrationData.pixelLen[960 - left];	
+		}
+
+		
+		for(right=0; right < 960; right++)
+		{
+			if(vfb[960 + right] > 128) break;
+			lengthmm[1] +=  gCalibrationData.pixelLen[960 + right ];
+		}
 	}
 
+	lengthmm[0] *= 2;
+	lengthmm[1] *= 2;
+	lengthmm[2] *= 2;
+	lengthmm[3] *= 2;
+
+	
 	json_object * array = json_object_new_array();
  	int i=0;	
-	for(i=0; i<2; i++)
+	for(i=0; i<bufsize; i++)
 	{
 		json_object *temp = json_object_new_double(lengthmm[i]);
 		json_object_array_add(array, temp);
 	}
 	json_object_object_add(response,STR_GET_IMAGE, array);
+
+
 	
 	#else
 
