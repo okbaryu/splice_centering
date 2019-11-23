@@ -1509,11 +1509,11 @@ int sendImage(int sock)
 //	printf("(i) sendImage called, sock=%d, gSetCam=%d\n", sock, gSetCam);
 
 	json_object *response = json_object_new_object();
-	char buf[1920*8];
-	char vfb[1920*2];
+	char buf[1920*4];
+	char vfb[1920];
 	int bufsize = 1920;
 
-	memset(vfb, 0 ,1920*2);
+	memset(vfb, 0 ,1920);
 
 
 	if( gSetCam == SET_CAM_0 )
@@ -1538,7 +1538,7 @@ int sendImage(int sock)
 	}
 	else
 	{
-		bufsize = 1920*2;
+		bufsize = 1920;
 		
 		
 	    
@@ -1561,7 +1561,7 @@ int sendImage(int sock)
 		// copy cam1 left side image
 		int i=0;
 		int center = gCalibrationData.cam1Center;
-		#if 1
+		#if 0
 		for(i=0; i<1920; i++)
 		{
 			if(center-i-1<0) break;
