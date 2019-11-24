@@ -984,6 +984,8 @@ int main(
 	signal(SIGPIPE, handler);
 	plc_init();
 	actuator_init("192.168.29.181");
+	TASK_Sleep(1000);
+	centering_init();
 
 #if 1
 	PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",

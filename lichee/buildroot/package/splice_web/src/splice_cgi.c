@@ -18,6 +18,7 @@
 #include "splice_libs.h"
 #include "splice_utils.h"
 #include "actuator.h"
+#include "plc.h"
 
 #define MAXHOSTNAME       80
 #define CONTENT_TYPE_HTML "Content-type: text/html\n\n"
@@ -382,57 +383,57 @@ int main(
 		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_RREGISTER_PLC);
 
 		PLC_BIN_to_LONG(&response.data[0], &tmp);
-		PrintHTML("~MWIDTH~%ld~", tmp);
+		PrintHTML("~MWIDTH~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[4], &tmp);
-		PrintHTML("~SWIDTHIN~%ld~", tmp);
+		PrintHTML("~SWIDTHIN~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[8], &tmp);
-		PrintHTML("~OFFSETIN~%ld~", tmp);
+		PrintHTML("~OFFSETIN~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[12], &tmp);
-		PrintHTML("~GETSWIDTH~%ld~", tmp);
+		PrintHTML("~GETSWIDTH~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[16], &tmp);
-		PrintHTML("~TOLPOS~%ld~", tmp);
+		PrintHTML("~TOLPOS~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[20], &tmp);
-		PrintHTML("~TOLNEG~%ld~", tmp);
+		PrintHTML("~TOLNEG~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[24], &tmp);
-		PrintHTML("~SWIDTHOUT~%ld~", tmp);
+		PrintHTML("~SWIDTHOUT~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[28], &tmp);
-		PrintHTML("~OFFSETOUT~%ld~", tmp);
+		PrintHTML("~OFFSETOUT~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[32], &tmp);
-		PrintHTML("~POFFSET~%ld~", tmp);
+		PrintHTML("~POFFSET~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[36], &tmp);
-		PrintHTML("~MOFFSET~%ld~", tmp);
+		PrintHTML("~MOFFSET~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[40], &tmp);
 		PrintHTML("~LOENABLE~%ld~", tmp);
 		PLC_BIN_to_LONG(&response.data[44], &tmp);
 		PrintHTML("~TOENABLE~%ld~", tmp);
 		PLC_BIN_to_LONG(&response.data[48], &tmp);
-		PrintHTML("~LO0~%ld~", tmp);
+		PrintHTML("~LO0~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[52], &tmp);
-		PrintHTML("~LO1~%ld~", tmp);
+		PrintHTML("~LO1~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[56], &tmp);
-		PrintHTML("~LO2~%ld~", tmp);
+		PrintHTML("~LO2~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[60], &tmp);
-		PrintHTML("~LO3~%ld~", tmp);
+		PrintHTML("~LO3~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[64], &tmp);
-		PrintHTML("~LO4~%ld~", tmp);
+		PrintHTML("~LO4~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[68], &tmp);
-		PrintHTML("~LO5~%ld~", tmp);
+		PrintHTML("~LO5~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[72], &tmp);
-		PrintHTML("~LO6~%ld~", tmp);
+		PrintHTML("~LO6~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[76], &tmp);
-		PrintHTML("~TO0~%ld~", tmp);
+		PrintHTML("~TO0~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[80], &tmp);
-		PrintHTML("~TO1~%ld~", tmp);
+		PrintHTML("~TO1~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[84], &tmp);
-		PrintHTML("~TO2~%ld~", tmp);
+		PrintHTML("~TO2~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[88], &tmp);
-		PrintHTML("~TO3~%ld~", tmp);
+		PrintHTML("~TO3~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[92], &tmp);
-		PrintHTML("~TO4~%ld~", tmp);
+		PrintHTML("~TO4~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[96], &tmp);
-		PrintHTML("~TO5~%ld~", tmp);
+		PrintHTML("~TO5~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[100], &tmp);
-		PrintHTML("~TO6~%ld~", tmp);
+		PrintHTML("~TO6~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[104], &tmp);
 		PrintHTML("~ACTRESET~%ld~", tmp);
 	}

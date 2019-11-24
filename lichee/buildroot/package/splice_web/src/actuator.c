@@ -13,8 +13,8 @@
 
 //#define STANDALONE
 //#define RX_DUMP
-#define TX_DUMP
-#define STATUS_DUMP
+//#define TX_DUMP
+//#define STATUS_DUMP
 
 int socket_fd;
 static char ip_addr[MAX_IP_LENGTH];
@@ -281,7 +281,11 @@ int actuator_set_current_position(act_position *p, int cmd)
 
 	buf[CHECKSUM] = make_checksum(buf);
 
-	if(send_receive_packet(buf, ack) != 0) return -1;
+	if(send_receive_packet(buf, ack) != 0)
+	{
+		printf("%s: actuator comm error\n", __FUNCTION__);
+		return -1;
+	}
 
 	return 0;
 }

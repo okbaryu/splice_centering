@@ -43,9 +43,19 @@ echo 143 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio143/direction
 
 echo 0 > /sys/class/gpio/gpio136/value
+echo 1 > /sys/class/gpio/gpio137/value
+echo 1 > /sys/class/gpio/gpio138/value
+echo 1 > /sys/class/gpio/gpio139/value
 
 echo "(i) app start"
 /var/splice_web/lcd &
+
+sleep 10
+
+echo "splice_web start"
+/var/splice_web/splice_server &
+boa
+
 
 exit 1
 

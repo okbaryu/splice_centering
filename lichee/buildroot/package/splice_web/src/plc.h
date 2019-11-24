@@ -5,6 +5,7 @@
 #define EEP_Width_R_Register 8170
 #define EEP_Err_Bit_R_Register 8172
 #define EEP_R_Register_Size 54
+#define EEP_Scale_Num_for_PLC 10
 
 #define MAX_PLC_IO_NUM 4
 #define PLC_WR_SYSTEM_READY 0
@@ -17,6 +18,24 @@
 #define PLC_RD_CPC_TO_EPC 1
 #define PLC_RD_SAVE_WIDTH 2
 #define PLC_RD_CHECK_CUTTING 3
+
+typedef struct{
+	long MWidth;
+	long SWidthIn;
+	long OffsetIn;
+	long GetSWidth;
+	long TolPos;
+	long TolNeg;
+	long SWidthOut;
+	long OffsetOut;
+	long POffset;
+	long MOffset;
+	long LeadingOffsetEnable;
+	long TrailingOffsetEnable;
+	long LeadingOffset[7];
+	long TrailingOffset[7];
+	long ActReset;
+}RRegister;
 
 enum {
 	PLC_ERR_DUST_DETECT = 0x1,

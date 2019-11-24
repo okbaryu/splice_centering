@@ -15,21 +15,24 @@
 #include <signal.h>
 
 #include "splice_libs.h"
+#include "osal_msg.h"
 #include "plc.h"
 
 //#define STANDALONE
-#define RX_DUMP
-#define MAX_BUF_LENGTH 256
+//#define RX_DUMP
 
-#define TRUE 1
-#define FALSE 0
-#define PLC_TRUE 0 
+#define MAX_BUF_LENGTH 256
+#define PLC_MSG_Q_CNT 64
+#define PLC_MSG_NAME "PLCIO"
+
+#define PLC_TRUE 0
 #define PLC_FALSE 1
 
 int plc_fd;
 int plc_wr_fd[4];
 int plc_rd_fd[4];
 unsigned char PLCIO;
+unsigned long plc_msg_id;
 
 static int parseBuf(char *src, char *dst, int cnt)
 {
@@ -56,7 +59,7 @@ static int parseBuf(char *src, char *dst, int cnt)
 					}
 					else
 					{
-						printf("data_length = %d\n", data_length);
+						//printf("data_length = %d\n", data_length);
 					}
 
 					PLC_BIN_to_INT(&src[9], &data_src);
@@ -216,7 +219,6 @@ int sendPlc(unsigned int r_head_address, char *head_data_address, char size, cha
 	}
 
 	cnt = send(plc_fd, Send_data, send_cnt, 0);
-	printf("send plc, length=%d\n", cnt);
 
 	cnt = recv(plc_fd, buf, MAX_BUF_LENGTH, 0);
 	return parseBuf(buf, head_data_address, cnt);
@@ -276,8 +278,9 @@ void sendPlcIO(int data)
 
 void *plcIO(void *data)
 {
-	unsigned char prevPLCIO = 0xFF;
-	char buf[3][3];
+	unsigned char prevPLCIO = 0xAA;
+	char buf[4][3];
+
 	while(1)
 	{
 		plc_rd_fd[PLC_RD_AUTO_MANUAL] = open("/sys/class/gpio/gpio128/value", O_RDONLY);
@@ -291,10 +294,8 @@ void *plcIO(void *data)
 		read(plc_rd_fd[PLC_RD_CHECK_CUTTING], buf[3], sizeof(buf[3]));
 		PLCIO = (atoi(buf[0]) << 3 | atoi(buf[1]) << 2 | atoi(buf[2]) << 1 | atoi(buf[3])) & 0x0F;
 
-		printf("PLCIO = 0x%x\n", !PLCIO);
 		if(PLCIO != prevPLCIO)
 		{
-			//printf("PLC IO received %d:%d\n", PLCIO, prevPLCIO);
 			prevPLCIO = PLCIO;
 		}
 
@@ -336,12 +337,16 @@ int plc_init(void)
 	plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
 	plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
 
+	//if (OSAL_MSG_Create(PLC_MSG_Q_CNT, 1024, PLC_MSG_NAME, &plc_msg_id) < 0)
+	//{
+		//printf("MSG create fail for centering\n");
+		//return -1;
+	//}
+
 	if (pthread_create( &plcIOid, NULL, plcIO, (void *)NULL ))
 	{
 		PrintError( "could not create thread for data gathering; %s\n", strerror( errno ));
 	}
-
-
 	return 0;
 }
 
@@ -373,9 +378,6 @@ int main(int argc, char **argv)
 	LONG_to_PLC_BIN_ARRAY(2, Send_Data_Array);
 	rc = sendPlc(EEP_Err_Bit_R_Register, Send_Data_Array, 1, FALSE);
 	printf("rc = %d\n",rc);
-
-
-
 
 	while(1)
 	{

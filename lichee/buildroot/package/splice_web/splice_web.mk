@@ -1,8 +1,8 @@
 SPLICE_WEB_DIR = $(BUILD_DIR)/splice_web
-LDFLAGS += -lpthread -lm
+LDFLAGS += -lpthread -lm -ljson-c -L${SPLICE_WEB_DIR}/../../../../../../../buildroot/target/ipu/skel/usr/lib/
 MAIN_OBJS = ${SPLICE_WEB_DIR}/splice_cgi.c
-SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c
-EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c ${SPLICE_WEB_DIR}/actuator.c ${SPLICE_WEB_DIR}/plc.c
+SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c ${SPLICE_WEB_DIR}/actuator.c ${SPLICE_WEB_DIR}/plc.c ${SPLICE_WEB_DIR}/centering.c
+EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c ${SPLICE_WEB_DIR}/osal_msg.c
 
 CFLAGS += -I${SPLICE_WEB_DIR}
 CFLAGS += -Wimplicit-function-declaration -Wall -lm

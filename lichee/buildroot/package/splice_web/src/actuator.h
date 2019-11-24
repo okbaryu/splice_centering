@@ -88,6 +88,8 @@ typedef struct act_position_{
 #define DATA_ACT_MOVE_VALUE_MSB			ACT_DATA1
 #define DATA_ACT_MOVE_VALUE_LSB			ACT_DATA2
 
+#define ACT_MOVE_1MM 0x64
+
 #define ACTUATOR_PORT	5000
 
 int actuator_init(const char *ip_addr);
