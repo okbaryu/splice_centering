@@ -29,6 +29,7 @@
 #define STATE_ETC 4
 
 #define BUF_SIZE 256
+#define STREAM_ONOFF_SIZE 32
 
 //#define VIEW_POS
 #define R_DUMP
@@ -40,6 +41,7 @@ static RRegister R;
 static act_status ACT;
 static int actLLimit;
 static int actRLimit;
+static g_onOff;
 
 typedef struct
 {
@@ -47,16 +49,33 @@ typedef struct
 	unsigned int value;
 }centeringMsg;
 
+static void enableReadPos(char onOff)
+{
+	char setStream[STREAM_ONOFF_SIZE];
+
+	if(g_onOff == onOff) return;
+
+	memset(setStream, 0, STREAM_ONOFF_SIZE);
+	if(onOff)
+	{
+		strncpy(setStream, "{\"setStreaming\":\"on\"}", 32);
+	}
+	else
+	{
+		strncpy(setStream, "{\"setStreaming\":\"off\"}", 32);
+	}
+
+	g_onOff = onOff;
+	send(centering_fd, setStream, STREAM_ONOFF_SIZE, 0);
+}
+
 void *readPosTask(void * data)
 {
 	json_object *pos, *pos_val, *cam;
-	char setStreamOn[32], buf[BUF_SIZE];
+	char buf[BUF_SIZE];
 	int i;
 
 	memset(buf, 0, BUF_SIZE);
-	memset(setStreamOn, 0, 32);
-	strncpy(setStreamOn, "{\"setStreaming\":\"on\"}", 32);
-	send(centering_fd, setStreamOn, 32, 0);
 
 	while(1)
 	{
@@ -91,13 +110,27 @@ void *centeringTask(void *data)
 	unsigned char plcIn = 0;
 	act_position act_p, prev_p;
 	int CPCStart = R.GetSWidth * 90 / 100; // if width is 98% of GetSWidth, assume CPC started
-	int i, isCPC = FALSE, state = STATE_INIT, cnt = 1;
+	int i, isCPC = FALSE, cnt = 0;
 	int pos, avgWidth = 0;
 
 	while(1)
 	{
-		//OSAL_Memset(&msg, 0, sizeof(PI_EXTSIG_Message_t));
-		//if (OSAL_MSG_ReceiveTimeout(plc_msg_id, (void *)&plcIn,  sizeof(unsigned char), 10) < 0)
+		if((PLCIO & 0x7) == 0x7) // Mask Input 0,1,2 bit, ignore cutting error check
+		{
+			cnt = 0;
+			avgWidth = 0;
+			isCPC = FALSE;
+			tip_detect = FALSE;
+			enableReadPos(FALSE);
+			sendPlcIO(PLC_WR_RESET);
+			actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
+			TASK_Sleep(500);
+			continue;
+		}
+
+		if(!(PLCIO & 0x1)) enableReadPos(TRUE);
+
+		printf("%f:%f:%f:%f, PLCIO=%d\n", rWidth[0], rWidth[1], rWidth[2], rWidth[3], PLCIO);
 
 		if((rWidth[0] + rWidth[1]) > CPCStart) isCPC = TRUE;
 
@@ -105,6 +138,7 @@ void *centeringTask(void *data)
 		{
 			if(tip_detect == FALSE)
 			{
+				printf("Tip detect~!!\n");
 				sendPlcIO(PLC_WR_TIP_DETECT);
 				TASK_Sleep(500);
 				sendPlcIO(PLC_WR_CENTERING);
@@ -236,22 +270,14 @@ void *centeringTask(void *data)
 				act_p.act_cur_position_lsb = pos;
 				actuator_set_current_position(&act_p, CMD2_ACT_MOVE);
 			}
-
-			if((PLCIO & 0x1))
-			{
-				sendPlcIO(PLC_WR_RESET);
-				tip_detect = FALSE;
-			}
 		}
 
-		if(!(PLCIO & 0x4) && (PLCIO & 0x2)) //PLC_RD_SAVE_WIDTH
+		if((PLCIO & 0x7) == 0x2) //PLC_RD_SAVE_WIDTH
 		{
 			avgWidth += rWidth[1];
-			avgWidth /= cnt;
-			cnt++;
+			if(cnt) avgWidth /= cnt++;
 			printf("avgWidth = %d, cnt = %d\n", avgWidth, cnt);
 		}
-
 #if 0
 		switch(state)
 		{
@@ -406,6 +432,8 @@ int centering_init(void)
 	{
 		printf("Could not create socket");
 	}
+
+	printf("Centering 0.52\n");
 
 	readRRegister();
 	actuator_get_status(&ACT);

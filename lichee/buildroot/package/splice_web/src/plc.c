@@ -292,7 +292,7 @@ void *plcIO(void *data)
 		read(plc_rd_fd[PLC_RD_CPC_TO_EPC], buf[1], sizeof(buf[1]));
 		read(plc_rd_fd[PLC_RD_SAVE_WIDTH], buf[2], sizeof(buf[2]));
 		read(plc_rd_fd[PLC_RD_CHECK_CUTTING], buf[3], sizeof(buf[3]));
-		PLCIO = (atoi(buf[0]) << 3 | atoi(buf[1]) << 2 | atoi(buf[2]) << 1 | atoi(buf[3])) & 0x0F;
+		PLCIO = (atoi(buf[3]) << 3 | atoi(buf[2]) << 2 | atoi(buf[1]) << 1 | atoi(buf[0])) & 0x0F;
 
 		if(PLCIO != prevPLCIO)
 		{
