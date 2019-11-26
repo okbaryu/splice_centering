@@ -117,7 +117,7 @@ void *centeringTask(void *data)
 	{
 		if((PLCIO & 0x7) == 0x7) // Manual mode, Mask Input 0,1,2 bit, ignore cutting error check
 		{
-			cnt = 0;
+			cnt = 1;
 			avgWidth = 0;
 			isCPC = FALSE;
 			tip_detect = FALSE;
