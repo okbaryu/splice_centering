@@ -126,6 +126,7 @@ void *centeringTask(void *data)
 
 			if(act_need_reset_flag == TRUE)
 			{
+				printf("Actuator reset!\n");
 				actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
 				act_need_reset_flag = FALSE;
 			}
@@ -441,7 +442,7 @@ int centering_init(void)
 		printf("Could not create socket");
 	}
 
-	printf("Centering 0.53\n");
+	printf("Centering 0.54\n");
 
 	readRRegister();
 	actuator_get_status(&ACT);
