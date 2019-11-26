@@ -226,9 +226,6 @@ int sendPlc(unsigned int r_head_address, char *head_data_address, char size, cha
 
 void sendPlcIO(int data)
 {
-	plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
-	plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
-
 	char buf[3] = {0, };
 
 	if(data == PLC_WR_TIP_DETECT)
