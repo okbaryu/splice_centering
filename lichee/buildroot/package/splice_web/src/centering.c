@@ -441,7 +441,7 @@ int centering_init(void)
 		printf("Could not create socket");
 	}
 
-	printf("Centering 0.52\n");
+	printf("Centering 0.53\n");
 
 	readRRegister();
 	actuator_get_status(&ACT);
