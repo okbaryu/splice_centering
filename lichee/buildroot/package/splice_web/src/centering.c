@@ -107,7 +107,7 @@ void *readPosTask(void * data)
 void *centeringTask(void *data)
 {
 	double diff;
-	char tip_detect = 0;
+	char tip_detect = 0, act_need_reset_flag = TRUE;
 	act_position act_p;
 	int CPCStart = R.GetSWidth * 90 / 100; // if width is 90% of GetSWidth, assume CPC started
 	int isCPC = FALSE, cnt = 1;
@@ -123,12 +123,23 @@ void *centeringTask(void *data)
 			tip_detect = FALSE;
 			enableReadPos(FALSE);
 			sendPlcIO(PLC_WR_RESET);
-			actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
+
+			if(act_need_reset_flag == TRUE)
+			{
+				actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
+				act_need_reset_flag = FALSE;
+			}
+
 			TASK_Sleep(500);
+
 			continue;
 		}
 
-		if(!(PLCIO & 0x1)) enableReadPos(TRUE);
+		if(!(PLCIO & 0x1))
+		{
+			enableReadPos(TRUE);
+			act_need_reset_flag = TRUE;
+		}
 
 		printf("%f:%f:%f:%f, PLCIO=%d\n", rWidth[0], rWidth[1], rWidth[2], rWidth[3], PLCIO);
 
@@ -436,7 +447,6 @@ int centering_init(void)
 	actuator_get_status(&ACT);
 	actLLimit = ACT.act_l_limit * 1000;
 	actRLimit = ACT.act_r_limit * 1000;
-	actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
 
 	memset(&server, 0, sizeof(server));
 	server.sin_addr.s_addr = inet_addr("127.0.0.1");
