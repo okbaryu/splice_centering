@@ -31,7 +31,7 @@
 int plc_fd;
 int plc_wr_fd[4];
 int plc_rd_fd[4];
-unsigned char PLCIO;
+volatile unsigned char PLCIO;
 unsigned long plc_msg_id;
 
 static int parseBuf(char *src, char *dst, int cnt)

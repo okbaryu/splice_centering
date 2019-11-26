@@ -131,7 +131,7 @@ void *centeringTask(void *data)
 				act_need_reset_flag = FALSE;
 			}
 
-			TASK_Sleep(500);
+			TASK_Sleep(100);
 
 			continue;
 		}
@@ -442,7 +442,7 @@ int centering_init(void)
 		printf("Could not create socket");
 	}
 
-	printf("Centering 0.54\n");
+	printf("Centering 0.55\n");
 
 	readRRegister();
 	actuator_get_status(&ACT);
