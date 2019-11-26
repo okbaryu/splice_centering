@@ -19,6 +19,7 @@
 #include "splice_utils.h"
 #include "actuator.h"
 #include "osal_msg.h"
+#include "centering.h"
 #include "plc.h"
 
 #define CENTERING_PORT 7076
@@ -41,7 +42,7 @@ static RRegister R;
 static act_status ACT;
 static int actLLimit;
 static int actRLimit;
-static g_onOff;
+static int g_onOff;
 
 typedef struct
 {
@@ -105,17 +106,16 @@ void *readPosTask(void * data)
 
 void *centeringTask(void *data)
 {
-	static char tip_detect = 0;
 	double diff;
-	unsigned char plcIn = 0;
-	act_position act_p, prev_p;
-	int CPCStart = R.GetSWidth * 90 / 100; // if width is 98% of GetSWidth, assume CPC started
-	int i, isCPC = FALSE, cnt = 0;
+	char tip_detect = 0;
+	act_position act_p;
+	int CPCStart = R.GetSWidth * 90 / 100; // if width is 90% of GetSWidth, assume CPC started
+	int isCPC = FALSE, cnt = 1;
 	int pos, avgWidth = 0;
 
 	while(1)
 	{
-		if((PLCIO & 0x7) == 0x7) // Mask Input 0,1,2 bit, ignore cutting error check
+		if((PLCIO & 0x7) == 0x7) // Manual mode, Mask Input 0,1,2 bit, ignore cutting error check
 		{
 			cnt = 0;
 			avgWidth = 0;
@@ -155,7 +155,6 @@ void *centeringTask(void *data)
 				pos = ACT_MOVE_1MM / 10;
 			}
 
-			//printf("tip, diff = %f, %f:%f, pos=%d\n", diff, rWidth[2], rWidth[3], pos);
 			if(diff > 0 && pos  > actLLimit)
 			{
 				act_p.act_cur_position_msb = 0x80;
@@ -197,7 +196,6 @@ void *centeringTask(void *data)
 			{
 				pos = ACT_MOVE_1MM / 2;
 			}
-			//printf("cpc, diff = %f, %f:%f, pos=%d, plc=%d\n", diff, rWidth[0], rWidth[1], pos, PLCIO);
 
 			if(diff > 0 && pos > actLLimit)
 			{
@@ -275,7 +273,7 @@ void *centeringTask(void *data)
 		if((PLCIO & 0x7) == 0x2) //PLC_RD_SAVE_WIDTH
 		{
 			avgWidth += rWidth[1];
-			if(cnt) avgWidth /= cnt++;
+			avgWidth /= cnt++;
 			printf("avgWidth = %d, cnt = %d\n", avgWidth, cnt);
 		}
 #if 0
@@ -351,7 +349,6 @@ void readRRegister(void)
 {
 	char plc_buf[108];
 	int i, j;
-	long tmp;
 
 	/* Though R register size is 54byte, plc_buf should bigger twice than EEP_R_Register_Size.
 	 * This is for PLC internal implementation */

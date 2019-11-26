@@ -17,6 +17,7 @@
 #include "splice_libs.h"
 #include "splice_utils.h"
 #include "actuator.h"
+#include "centering.h"
 #include "plc.h"
 
 #define MAXHOSTNAME                  80
