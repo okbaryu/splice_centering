@@ -54,7 +54,8 @@ sleep 10
 
 echo "splice_web start"
 /var/splice_web/splice_server &
-boa
+
+/var/splice_web/lighttpd/sbin/lighttpd -f /var/splice_web/lighttpd/config/lighttpd.conf
 
 
 exit 1
