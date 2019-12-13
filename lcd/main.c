@@ -137,7 +137,7 @@ typedef struct {
 	int cam1RightTrim;
 	unsigned char cam0Threshold;
 	unsigned char cam1Threshold;
-	double pixelLen[1920];
+	double pixelLen[3840];
 	unsigned char errCheck;
 } CalibrationData;	
 	
@@ -391,7 +391,7 @@ int getCenter(int gridSize, char threshold)
 }
 
 int comboTable[1920]; 
-void generateComboTable()
+void generateComboTable(int center)
 {
 	int i = 0;
 	int combo = 1;
@@ -410,6 +410,28 @@ void generateComboTable()
 		}
 		i++;
 	}
+
+	// center bar has double size width on the others. 
+	int centerBarSize = 0;
+	int indexCenterBar = 0;
+	for(i=center; i<1920; i++)
+	{
+		if(comboTable[i]>0) 
+		{
+			centerBarSize=comboTable[i];
+			indexCenterBar = i;
+			break;
+		}
+	}
+	
+	int halfSize = (int)(centerBarSize/2.0);
+	comboTable[center] = halfSize;
+	comboTable[indexCenterBar] = halfSize;
+/*
+	printf("(i)comboTable:");
+	for(i=0; i<1920; i++) printf("%d,", comboTable[i]);
+	printf("\n");
+*/
 }
 
 void printNumber1(int baseX, int baseY, int n, char * fb)
@@ -626,13 +648,25 @@ void render(char * framebuffer, const char * buf, int size)
 		drawLine(framebuffer, maxFallingEdge, arrowY, maxFallingEdge-5, arrowY+5, 0xFF, 0x00, 0x00);
 
 		// get material size in mm  
-		double widthMaterial = -1;
+		double widthMaterial = 0;
 		int i=0;
 		int risingEdge1920 = (int)(maxRisingEdge*2.4);
 		int fallingEdge1920 = (int)(maxFallingEdge*2.4);
 
+//		printf("(i) risingEdge1920:%d, fallingEdge1920:%d\n", risingEdge1920, fallingEdge1920);
+
 		for(i=risingEdge1920; i<fallingEdge1920; i++)
-			widthMaterial+=gCalibrationData.pixelLen[i];
+		{
+			double len=gCalibrationData.pixelLen[i*2];
+			if(len>0) widthMaterial+=len;
+			if(i*2+1<3840)
+			{
+				len = gCalibrationData.pixelLen[i*2+1];
+				if(len>0) widthMaterial+=len;
+			}
+		}
+
+//		printf("(i) widthMaterial:%lf\n", widthMaterial);
 
 		// draw material size in mm  on the arrow line upside center
 		int centerArrow = (maxFallingEdge-maxRisingEdge)/2+maxRisingEdge;
@@ -710,21 +744,23 @@ void render(char * framebuffer, const char * buf, int size)
 		gCalibrationData.cam0Threshold = gThreshold0;
 
 		// generate combo table
-		generateComboTable();
+		generateComboTable(center);
 
 		// right side of merged image.
 		int from = center;
 		int to = 1919;
 		int combo = 0;
 		int i=0;
+		//printf("(i) setcam0 center=%d\n", center);
 		for(i=to; i>=from; i--)
 		{
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[i]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[1920+i-center]=5.0/combo; // 1cell = 5mm
 			}
 		}
+		for(i=0; i<center; i++) gCalibrationData.pixelLen[3839+i-center] = -1;
 				
 	    }
 	    else if(gSetCam==SET_CAM_1)
@@ -741,9 +777,9 @@ void render(char * framebuffer, const char * buf, int size)
 		gCalibrationData.cam1Threshold = gThreshold1;
 
 		// generate combo table
-		generateComboTable();
+		generateComboTable(center);
 
-		// right side of merged image.
+		// left side of merged image.
 		int from = center; 
 		int to = 0; 
 		int combo = 0;
@@ -753,9 +789,10 @@ void render(char * framebuffer, const char * buf, int size)
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[i]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[i+(1920-center)]=5.0/combo; // 1cell = 5mm
 			}
 		}
+		for(i=0; i<1920-center; i++) gCalibrationData.pixelLen[i] = -1;
 	    }
 	    else 
 	    {
@@ -1227,7 +1264,7 @@ void saveCalibrationData()
 
 	json_object * array = json_object_new_array();
  	int i=0;	
-	for(i=0; i<1920; i++)
+	for(i=0; i<1920*2; i++)
 	{
 		temp = json_object_new_double(gCalibrationData.pixelLen[i]);
 		json_object_array_add(array, temp);
