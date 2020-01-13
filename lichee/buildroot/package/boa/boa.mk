@@ -11,7 +11,11 @@ define BOA_INSTALL_TARGET_CMDS
 	install -D -m 755 $(@D)/src/boa $(TARGET_DIR)/usr/sbin/boa
 	install -D -m 755 $(@D)/src/boa_indexer $(TARGET_DIR)/usr/lib/boa/boa_indexer
 	install -D -m 644 package/boa/boa.conf $(TARGET_DIR)/etc/boa/boa.conf
+<<<<<<< HEAD
 	install -D -m 644 package/boa/mime.types $(TARGET_DIR)/etc/mime.types
+=======
+	install -D -m 644 package/boa/mime.types $(TARGET_DIR)/etc/boa/mime.types
+>>>>>>> origin/web
 endef
 
 define BOA_UNINSTALL_STAGING_CMDS

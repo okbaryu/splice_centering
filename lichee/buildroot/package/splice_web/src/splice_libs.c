@@ -20,6 +20,7 @@
 #include <sys/mman.h>
 #include <pthread.h>
 #include <dirent.h>
+#include <time.h>
 
 #include "splice_libs.h"
 #include "splice_utils.h"
@@ -227,28 +228,6 @@ int scanForStr(
 	}
 	return( 0 );
 }                                                          /* scanForStr */
-
-char *getPlatformVersion(
-		void
-		)
-{
-	static char       version[8];
-
-	memset( version, 0, sizeof( version ));
-	sprintf( version, "%d.%d", MAJOR_VERSION, MINOR_VERSION );
-	return( version );
-}
-
-char *getPlatform(
-		void
-		)
-{
-	static char platform[8];
-
-	memset( platform, 0, sizeof( platform ));
-	sprintf( platform, "%s", "V3" );
-	return( platform );
-}
 
 
 /**
@@ -812,7 +791,6 @@ int Close(
 }
 
 int send_request_read_response(
-		struct sockaddr_in *server,
 		unsigned char      *request,
 		int                 request_len,
 		unsigned char      *response,
@@ -823,8 +801,22 @@ int send_request_read_response(
 {
 	int                rc = 0;
 	int                sd = 0;
-	struct sockaddr_in from;
 	int                fromlen;
+	struct sockaddr_in from;
+	struct in_addr sin_temp_addr;
+	struct sockaddr_in    server;
+
+	sin_temp_addr.s_addr = get_my_ip4_addr();
+	if ( sin_temp_addr.s_addr == 0 )
+	{
+		PrintHTML( "~FATAL~get_my_ip4_addr() failed to determine IP address.~" );
+		return( -1 );
+	}
+	bcopy( &sin_temp_addr.s_addr, &( server.sin_addr ), sizeof( sin_temp_addr.s_addr ) );
+
+	/* Construct name of socket to send to. */
+	server.sin_family = AF_INET;
+	server.sin_port   = htons( SPLICE_SERVER_PORT );
 
 	PrintInfo( "reqlen %d; reslen %d; server_port %d\n", request_len, response_len, server_port );
 	/*   Create socket on which to send and receive */
@@ -838,7 +830,7 @@ int send_request_read_response(
 
 	/* Connect to server */
 	PrintInfo( "connect(sock %u; port %u)\n", sd, server_port );
-	if (connect( sd, (struct sockaddr *) server, sizeof( *server )) < 0)
+	if (connect( sd, (struct sockaddr *)&server, sizeof( server )) < 0)
 	{
 		Close( sd );
 		PrintError( "ERROR connecting to server\n");
@@ -1042,4 +1034,87 @@ int splice_getCpuUtilization(
 
 	return( 0 );
 }
+
+/**
+ *  Function: This function will configure the socket so that the address can be re-used without a long timeout.
+ **/
+void reusePort(
+		int s
+		)
+{
+	int one = 1;
+
+	if (setsockopt( s, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof( one )) == -1)
+	{
+		PrintError( "error in setsockopt, SO_REUSEADDR(%d) (%s) \n", SO_REUSEADDR, strerror(errno) );
+	}
+}
+
+int TASK_Sleep(unsigned long ultime)
+{
+	struct timespec delay;
+	struct timespec rem;
+	int rc;
+
+	delay.tv_sec = ultime / 1000;
+	delay.tv_nsec = (ultime % 1000) * 1000000;
+
+	for (;;) {
+		rc = nanosleep(&delay, &rem);
+		if (0 != rc) {
+			if (EINTR == errno) {
+				delay = rem;
+				continue;
+			}
+			return -1;
+		}
+		break;
+	}
+
+	return 0;
+}
+
+void LONG_to_PLC_BIN_ARRAY(long n, unsigned char *str)
+{
+
+	unsigned int High_int, Low_int;
+
+	High_int = (unsigned int) ((n & 0xFFFF0000) >> 16);
+	Low_int = (unsigned int) (n & 0x0000FFFF);
+
+	*str++ = (unsigned char) (Low_int & 0x00FF);
+	*str++ = (unsigned char) ((Low_int & 0xFF00) >> 8);
+	*str++ = (unsigned char) (High_int & 0x00FF);
+	*str++ = (unsigned char) ((High_int & 0xFF00) >> 8);
+
+	*str = 0;
+}
+
+void PLC_BIN_to_LONG( char *SData, long  *DData)
+{
+	long i=0;
+	unsigned int High_int, Low_int;
+
+	Low_int = (unsigned int) SData[1] << 8;
+	Low_int |= (unsigned int) SData[0];
+
+	High_int = (unsigned int) SData[3] << 8;
+	High_int |= (unsigned int) SData[2];
+
+	i = ((long) High_int << 16);
+	i |=  Low_int;
+
+	*DData=i;
+}
+
+void PLC_BIN_to_INT( char *SData, int  *DData)
+{
+	int i=0;
+
+	i =  (unsigned int)SData[1] << 8;
+	i |=  SData[0];
+
+	*DData=i;
+}
+
 

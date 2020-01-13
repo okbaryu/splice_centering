@@ -7,6 +7,7 @@ var passcount=0;
 var UUID = ""; // used to allow multiple browsers to access the STB
 var previous_height = 0;
 var CgiTimeoutId=0;
+var SpliceTimeoutId=0;
 var CgiRetryTimeoutId=0;
 var CgiCount=0; // number of times the cgi was called
 var SetVariableCount=0; // number of times setVariable() is called
@@ -28,10 +29,10 @@ var NetBytesPrev =[[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]
 var NetBytesCummulative =[[0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0], [0,0]]; // up to 10 network interfaces with Rx and Tx for each of the 10
 var NetBytesRx10SecondsCount=[0,0,0,0,0,0,0,0,0,0];
 var NetBytesRx10Seconds =[[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]
-                         ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]];
+,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]];
 var NetBytesTx10SecondsCount=[0,0,0,0,0,0,0,0,0,0];
 var NetBytesTx10Seconds =[[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]
-                         ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]];
+,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0] ,[0,0,0,0,0,0,0,0,0,0]];
 var NetBytesSeconds = 0; // net bytes are accumulated for as long as the browser is on this page; this value is used to compute the average Mbps
 var NetGfxCheckbox=[0,0,0,0,0,0,0,0,0,0]; // up to 10 network interfaces ... indicates whether checkbox_netifgfx is checked or not
 var NetGfxDivisor= [[1,1,1,1,1,1,1,1,1,1], [1,1,1,1,1,1,1,1,1,1]]; // divisor will increase/decrease relative to network bytes received per second
@@ -39,6 +40,8 @@ var NetGfxBytes= [["","","","","","","","","",""], ["","","","","","","","","","
 var RxTxStr = ["rx","tx"];
 var POINTS_PER_GRAPH = 250;
 var GetCpuInfo = {Value: 0};
+var GetSysInfo = {Value: 0};
+var GetTime= {Value: 0};
 var GetMemory = {Value: 0};
 var GetIrqInfo = {Value: 0};
 var GetNetStats =  {Value: 0};
@@ -66,6 +69,9 @@ var GetPerfFlame =  {State:0, Value: 0, Stop:0 };
 var GetPerfFlameResults =  {Value: false };
 var GetPerfFlameRecordingSeconds = 0;
 var GetPerfFlamePidCount = 0;
+var ActStatus = {ACTDIR:0, ACTSTROKE:0, ACTSPEED:0, ACTLLIMIT:0, ACTRLIMIT:0, ACTORGMSB:0, ACTORGLSB:0};
+var actCurPos = 0;
+var actPrevPos = 0;
 
 //  GetPerfFlameState needs to match the enum Bsysperf_PerfFlame_State in bsysperf.c
 var GetPerfFlameState = { UNINIT:0, INIT:1, IDLE:2, START:3, RECORDING:4, STOP:5, CREATESCRIPTOUT:6, GETSVG:7, DELETEOUTFILE:8 };
@@ -132,449 +138,536 @@ var GovernorSettingNow = 0;
 var GovernorSettingPrev = 0;
 
 Number.prototype.padZero= function(len){
-    var s= String(this), c= '0';
-    len= len || 2;
-    while (s.length < len) s= c + s;
-    return s;
+	var s= String(this), c= '0';
+	len= len || 2;
+	while (s.length < len) s= c + s;
+	return s;
 }
 
 function randomFromTo(from, to)
 {
-    return Math.floor(Math.random() * (to - from + 1) + from);
+	return Math.floor(Math.random() * (to - from + 1) + from);
 }
 
 function OneSecond ()
 {
-    var debug=0;
+	var debug=0;
 
-    //alert("OneSecond");
-    MyLoad();
+	//alert("OneSecond");
+	MyLoad();
 
-    // if previous timeout is already pending, cancel it
-    clearTimeoutOneSecond( "OneSecond");
+	// if previous timeout is already pending, cancel it
+	clearTimeoutOneSecond( "OneSecond");
 
-    //console.log( "OneSecond: calling setTimeout()");
-    CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
+	//console.log( "OneSecond: calling setTimeout()");
+	CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
 }
+
+function FiveSecond ()
+{
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&isAlive=" + 1;
+	sendCgiRequestDoItNow(url);
+
+	clearTimeoutFiveSecond();
+	SpliceTimeoutId = setTimeout('FiveSecond()', REFRESH_IN_MILLISECONDS * 10);
+}
+
 function getNumEntries ( arrayname )
 {
-    var num_entries = arrayname.length;
-    if (userAgent.indexOf("MSIE") >= 0 ) {
-        //num_entries++; // for ie9, length is one less than firefox, chrome, safari
-    }
-    //alert("1 array(" + arrayname + "); num points" + num_entries );
+	var num_entries = arrayname.length;
+	if (userAgent.indexOf("MSIE") >= 0 ) {
+		//num_entries++; // for ie9, length is one less than firefox, chrome, safari
+	}
+	//alert("1 array(" + arrayname + "); num points" + num_entries );
 
-    return num_entries;
+	return num_entries;
 }
 
 function hideOrShow ( elementid, trueOrFalse )
 {
-    var obj=document.getElementById(elementid);
+	var obj=document.getElementById(elementid);
 
-    if ( obj ) {
-        if (trueOrFalse) {
-            //if (elementid.indexOf('wifi') ) alert("hideOrShow: " + elementid + "; starting to SHOW");
-            obj.style.display = '';
-            obj.style.visibility = '';
-            //alert("hideOrShow: " + elementid + "; SHOW");
-        } else {
-            //if (elementid.indexOf('wifi') ) alert("hideOrShow: " + elementid + "; starting to HIDE");
-            obj.style.display = 'none';
-            obj.style.visibility = 'hidden';
-            //console.log("hideOrShow: " + elementid + "; HIDE");
-        }
-    }
+	if ( obj ) {
+		if (trueOrFalse) {
+			//if (elementid.indexOf('wifi') ) alert("hideOrShow: " + elementid + "; starting to SHOW");
+			obj.style.display = '';
+			obj.style.visibility = '';
+			//alert("hideOrShow: " + elementid + "; SHOW");
+		} else {
+			//if (elementid.indexOf('wifi') ) alert("hideOrShow: " + elementid + "; starting to HIDE");
+			obj.style.display = 'none';
+			obj.style.visibility = 'hidden';
+			//console.log("hideOrShow: " + elementid + "; HIDE");
+		}
+	}
 
-    return true;
+	return true;
 }
 
 function hideElement ( elementid )
 {
-    elemobj = document.getElementById(elementid);
-    if (elemobj) {
-        //console.log("hiding element " + elementid );
-        elemobj.style.visibility = "hidden";
-    }
+	elemobj = document.getElementById(elementid);
+	if (elemobj) {
+		//console.log("hiding element " + elementid );
+		elemobj.style.visibility = "hidden";
+	}
 }
 
 function showRow ( rownum )
 {
-    var rowid;
-    var rowobj;
+	var rowid;
+	var rowobj;
 
-    rowid = "row0" + rownum + "a";
-    rowobj = document.getElementById(rowid);
-    if (rownum%2 == 1 && rowobj && rownum < gNumCpus ) {
-        var even_number_of_cpus = gNumCpus%2;
-        //alert("rowobj " + rowid + "; obj " + rowobj + "; gNumCpus " + gNumCpus + "even_number " + even_number_of_cpus );
+	rowid = "row0" + rownum + "a";
+	rowobj = document.getElementById(rowid);
+	if (rownum%2 == 1 && rowobj && rownum < gNumCpus ) {
+		var even_number_of_cpus = gNumCpus%2;
+		//alert("rowobj " + rowid + "; obj " + rowobj + "; gNumCpus " + gNumCpus + "even_number " + even_number_of_cpus );
 
-        // if we have an odd number of cpus, hide the right hand column
-        if (even_number_of_cpus == 0) {
-            rowid = "rightcol0" + rownum + "a";
-            hideElement(rowid);
-            rowid = "rightcol0" + rownum + "b";
-            hideElement(rowid);
-            rowid = "rightcol0" + rownum + "c";
-            hideElement(rowid);
-        }
+		// if we have an odd number of cpus, hide the right hand column
+		if (even_number_of_cpus == 0) {
+			rowid = "rightcol0" + rownum + "a";
+			hideElement(rowid);
+			rowid = "rightcol0" + rownum + "b";
+			hideElement(rowid);
+			rowid = "rightcol0" + rownum + "c";
+			hideElement(rowid);
+		}
 
-        rowobj.style.visibility = "";
-        rowid = "row0" + rownum + "b";
-        rowobj = document.getElementById(rowid);
-        rowobj.style.visibility = "";
-        rowid = "row0" + rownum + "c";
-        rowobj = document.getElementById(rowid);
-        rowobj.style.visibility = "";
-    }
-    //alert("showRow done");
+		rowobj.style.visibility = "";
+		rowid = "row0" + rownum + "b";
+		rowobj = document.getElementById(rowid);
+		rowobj.style.visibility = "";
+		rowid = "row0" + rownum + "c";
+		rowobj = document.getElementById(rowid);
+		rowobj.style.visibility = "";
+	}
+	//alert("showRow done");
 }
 
 function setButtonDisabled ( targetId, newState )
 {
-    //console.log("setButtonDisabled  targetId (" + targetId + ") ... newState (" + newState + ")" );
-    var objButton = document.getElementById( targetId );
-    if (objButton) {
-        objButton.disabled = newState;
-    } else {
-        console.log( "could not find element ... " + targetId );
-    }
+	//console.log("setButtonDisabled  targetId (" + targetId + ") ... newState (" + newState + ")" );
+	var objButton = document.getElementById( targetId );
+	if (objButton) {
+		objButton.disabled = newState;
+	} else {
+		console.log( "could not find element ... " + targetId );
+	}
 
-    return true;
+	return true;
 }
 
 function SetCheckboxDisabled ( checkboxName, objStatus )
 {
-    var obj = document.getElementById( checkboxName );
-    if (obj ) {
-        //if (checkboxName =="checkboxPerfCache"  ) { alert("SetCheckboxDisabled ( " + checkboxName + ") = " + objStatus + "; PerfError=" + PerfError ); }
-        if ( (checkboxName =="checkboxPerfTop" || checkboxName == "checkboxPerfDeep" || checkboxName == "checkboxPerfCache" ) && ( PerfError == true ) ) {
-            // do not allow changes to Perf checkboxes if kernel is not compiled to include perf tools
-            obj.disabled = true;
-        } else {
-            obj.disabled = objStatus;
-        }
-        //alert("settings (" + checkboxName + ") status (" + objStatus + ") to value (" + obj.disabled + ")" );
-    }
+	var obj = document.getElementById( checkboxName );
+	if (obj ) {
+		//if (checkboxName =="checkboxPerfCache"  ) { alert("SetCheckboxDisabled ( " + checkboxName + ") = " + objStatus + "; PerfError=" + PerfError ); }
+		if ( (checkboxName =="checkboxPerfTop" || checkboxName == "checkboxPerfDeep" || checkboxName == "checkboxPerfCache" ) && ( PerfError == true ) ) {
+			// do not allow changes to Perf checkboxes if kernel is not compiled to include perf tools
+			obj.disabled = true;
+		} else {
+			obj.disabled = objStatus;
+		}
+		//alert("settings (" + checkboxName + ") status (" + objStatus + ") to value (" + obj.disabled + ")" );
+	}
 }
 
 function GetCheckboxStatus ( checkboxName )
 {
-    var rc = false;
-    var obj = document.getElementById( checkboxName );
-    if (obj ) {
-        rc = obj.checked;
-        //alert("settings (" + checkboxName + ") status (" + objStatus + ") to value (" + objStatus.Value + ")" );
-    }
+	var rc = false;
+	var obj = document.getElementById( checkboxName );
+	if (obj ) {
+		rc = obj.checked;
+		//alert("settings (" + checkboxName + ") status (" + objStatus + ") to value (" + objStatus.Value + ")" );
+	}
 
-    return rc;
+	return rc;
 }
 
 function SetCheckboxStatus ( checkboxName, objStatus )
 {
-    var obj = document.getElementById( checkboxName );
-    if (obj ) {
-        //if (checkboxName =="checkboxPerfCache"  ) { alert("SetCheckboxStatus ( " + checkboxName + ") = " + objStatus.Value + "; PerfError=" + PerfError ); }
-        if ( (checkboxName =="checkboxPerfTop" || checkboxName == "checkboxPerfDeep" || checkboxName == "checkboxPerfCache" ) && ( PerfError == true ) ) {
-            // do not allow changes to Perf checkboxes if kernel is not compiled to include perf tools
-            obj.checked = false;
-        } else {
-            obj.checked = objStatus.Value;
-        }
-        //alert("SetCheckboxStatus (" + checkboxName + ") to value (" + objStatus.Value + ")" );
-    } else {
-        //alert("SetCheckboxStatus (" + checkboxName + ") is unknown" );
-    }
+	var obj = document.getElementById( checkboxName );
+	if (obj ) {
+		//if (checkboxName =="checkboxPerfCache"  ) { alert("SetCheckboxStatus ( " + checkboxName + ") = " + objStatus.Value + "; PerfError=" + PerfError ); }
+		if ( (checkboxName =="checkboxPerfTop" || checkboxName == "checkboxPerfDeep" || checkboxName == "checkboxPerfCache" ) && ( PerfError == true ) ) {
+			// do not allow changes to Perf checkboxes if kernel is not compiled to include perf tools
+			obj.checked = false;
+		} else {
+			obj.checked = objStatus.Value;
+		}
+		//alert("SetCheckboxStatus (" + checkboxName + ") to value (" + objStatus.Value + ")" );
+	} else {
+		//alert("SetCheckboxStatus (" + checkboxName + ") is unknown" );
+	}
 }
 
 function SetInternalCheckboxStatus ( checkboxName, objStatus )
 {
-    var obj = document.getElementById( checkboxName );
-    if (obj ) {
-        objStatus.Value = obj.checked;
-        //alert("SetInternalCheckboxStatus (" + checkboxName + ") to value (" + objStatus.Value + ")" );
-    }
+	var obj = document.getElementById( checkboxName );
+	if (obj ) {
+		objStatus.Value = obj.checked;
+		//alert("SetInternalCheckboxStatus (" + checkboxName + ") to value (" + objStatus.Value + ")" );
+	}
 }
 
 function SvgClickHandler (event)
 {
-    var target = event.target || event.srcElement;
-    var id = target.id;
-    //alert("svgClickHandler: id (" + id + ");" );
-    MyClick(event);
+	var target = event.target || event.srcElement;
+	var id = target.id;
+	//alert("svgClickHandler: id (" + id + ");" );
+	MyClick(event);
 }
 
 /*
  * This function is called to update the CPU utilization graph as well as the Network Interface graphs.
-*/
+ */
 function AddSvgPoints ( svgobj, newValue )
 {
-    var coords = svgobj.getAttribute('points' );
-    var minYcoord = 100;
+	var coords = svgobj.getAttribute('points' );
+	var minYcoord = 100;
 
-    if (coords == null) {
-        coords = "0," + newValue + " ";
-    }
+	if (coords == null) {
+		coords = "0," + newValue + " ";
+	}
 
-    if (coords) {
-        var coords2 = rtrim(coords);
-        var splits = coords2.split(' ');
-        var newcoords = "";
-        var starting_idx = 0;
-        var num_entries = getNumEntries(splits);
+	if (coords) {
+		var coords2 = rtrim(coords);
+		var splits = coords2.split(' ');
+		var newcoords = "";
+		var starting_idx = 0;
+		var num_entries = getNumEntries(splits);
 
-        if ( num_entries < POINTS_PER_GRAPH ) {
-            starting_idx = 0;
-        } else {
-            starting_idx = 1;// skip the first element; it is dropping off the left side
-        }
-        for (idx=starting_idx; idx < num_entries; idx++ ) {
-            var justone = splits[idx].split(',');
-            newcoords += idx*2 + "," + justone[1] + " " ;
-            minYcoord = Math.min ( minYcoord, justone[1] );
-        }
+		if ( num_entries < POINTS_PER_GRAPH ) {
+			starting_idx = 0;
+		} else {
+			starting_idx = 1;// skip the first element; it is dropping off the left side
+		}
+		for (idx=starting_idx; idx < num_entries; idx++ ) {
+			var justone = splits[idx].split(',');
+			newcoords += idx*2 + "," + justone[1] + " " ;
+			minYcoord = Math.min ( minYcoord, justone[1] );
+		}
 
-        // add new last point to the far right
-        newcoords += idx*2 + "," + newValue + " " ;
-        minYcoord = Math.min ( minYcoord, newValue );
+		// add new last point to the far right
+		newcoords += idx*2 + "," + newValue + " " ;
+		minYcoord = Math.min ( minYcoord, newValue );
 
-        svgobj.setAttribute('points', newcoords );
-    }
+		svgobj.setAttribute('points', newcoords );
+	}
 
-    return minYcoord;
+	return minYcoord;
 }
 
 function AppendPolylineXY ( polylinenumber, newValue )
 {
-    var lineid = "polyline0" + polylinenumber;
-    var svgobj = document.getElementById(lineid);
+	var lineid = "polyline0" + polylinenumber;
+	var svgobj = document.getElementById(lineid);
 
-    // alert("polylinenumber " + polylinenumber + "; gNumCpus " + gNumCpus + "; svgobj " + svgobj + "; lineid " + lineid );
-    if (svgobj && gNumCpus && polylinenumber<(gNumCpus+1) ) { // added one for limegreen 5-second average line
-        // coords example: 0,100 2,85 5,95 6,95 (i.e. x,y where the y value is pixels "below" the top of the graph; 100 pixels means 0 percent
-        if (polylinenumber < (gNumCpus+1) ) { // if we are processing the cpu poly lines
-            if ( newValue == 255 ) { // if the cpu is inactive
-            } else {
-                AddSvgPoints ( svgobj, newValue );
-            }
-        }
-    } else {
-        //alert ("lineid " + lineid + " does not exist");
-    }
+	// alert("polylinenumber " + polylinenumber + "; gNumCpus " + gNumCpus + "; svgobj " + svgobj + "; lineid " + lineid );
+	if (svgobj && gNumCpus && polylinenumber<(gNumCpus+1) ) { // added one for limegreen 5-second average line
+		// coords example: 0,100 2,85 5,95 6,95 (i.e. x,y where the y value is pixels "below" the top of the graph; 100 pixels means 0 percent
+		if (polylinenumber < (gNumCpus+1) ) { // if we are processing the cpu poly lines
+			if ( newValue == 255 ) { // if the cpu is inactive
+			} else {
+				AddSvgPoints ( svgobj, newValue );
+			}
+		}
+	} else {
+		//alert ("lineid " + lineid + " does not exist");
+	}
 }
 
 // There is a bug that if the CPU row is not already checked in the HTML file, the blank space for the CPU rows
 // will still be seen. Created this delayed function to hide the CPU row if the checkbox is unchecked.
 function Wifi3DDelayed()
 {
-    var obj = document.getElementById('checkboxcpus');
-    if ( obj && obj.checked == false) {
-        hideOrShow("row_cpus", HIDE );
-    }
-    hideOrShow("row_netgfx_all", HIDE );
+	var obj = document.getElementById('checkboxcpus');
+	if ( obj && obj.checked == false) {
+		hideOrShow("row_cpus", HIDE );
+	}
+	hideOrShow("row_netgfx_all", HIDE );
 }
 
 function uuid()
 {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-  //return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-  return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
+	function s4() {
+		return Math.floor((1 + Math.random()) * 0x10000)
+			.toString(16)
+			.substring(1);
+	}
+	//return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+	return s4() + s4() + s4() + s4() + s4() + s4() + s4() + s4();
 }
 
 function UpdateCpuGraphs()
 {
-    var objCheckboxCpus = document.getElementById("checkboxcpus");
-    if (objCheckboxCpus && objCheckboxCpus.checked ) {
-        for (var polylinenumber=1; polylinenumber<(gNumCpus-1)+1 ; polylinenumber++) { //once for all CPUs
-            AppendPolylineXY ( polylinenumber, gCpuData[polylinenumber-1] );
-        }
-    }
+	var objCheckboxCpus = document.getElementById("checkboxcpus");
+	if (objCheckboxCpus && objCheckboxCpus.checked ) {
+		for (var polylinenumber=1; polylinenumber<(gNumCpus-1)+1 ; polylinenumber++) { //once for all CPUs
+			AppendPolylineXY ( polylinenumber, gCpuData[polylinenumber-1] );
+		}
+	}
 }
 
 function MyLoad()
 {
-    userAgent = navigator.userAgent;
-    //alert("MyLoad: browser (" + userAgent + "); passcount " + passcount);
-    var idx;
-    var transformAttr = "";
-    var polylinenumber;
-    var rowid;
-    var lineid;
-    var rowobj;
-    var svgobj;
+	userAgent = navigator.userAgent;
+	//alert("MyLoad: browser (" + userAgent + "); passcount " + passcount);
+	var idx;
+	var transformAttr = "";
+	var polylinenumber;
+	var rowid;
+	var lineid;
+	var rowobj;
+	var svgobj;
 
-    objdebug = document.getElementById("debugoutputbox");
+	objdebug = document.getElementById("debugoutputbox");
 
-    //alert("passcount==" + passcount + "; gNumCpus " + gNumCpus );
-    if ( passcount == 0 ) {
-        var local = new Date();
+	//alert("passcount==" + passcount + "; gNumCpus " + gNumCpus );
+	if ( passcount == 0 ) {
+		var local = new Date();
 
-        UUID = uuid();
+		UUID = uuid();
 
-        var obj2 = document.getElementById("checkboxwifi");
-        if ( obj2 ) {
-            obj2.checked = false;
-            GetWifiStats.Init = false;
-            hideOrShow("row_wifi_stats", HIDE );
-            hideOrShow("row_wifi_ampdu", HIDE );
-            GetWifiAmpduGraph.Value = 0;
-            setTimeout ('Wifi3DDelayed()', 100 );
-        }
+		var obj2 = document.getElementById("checkboxwifi");
+		if ( obj2 ) {
+			obj2.checked = false;
+			GetWifiStats.Init = false;
+			hideOrShow("row_wifi_stats", HIDE );
+			hideOrShow("row_wifi_ampdu", HIDE );
+			GetWifiAmpduGraph.Value = 0;
+			setTimeout ('Wifi3DDelayed()', 100 );
+		}
 
-        epochSeconds = Math.floor(local.getTime() / 1000);
-        //alert("local Date " + epochSeconds );
-        tzOffset = local.getTimezoneOffset();
-        //alert("TZ offset " + local.getTimezoneOffset() );
-        localdatetime = (local.getUTCMonth()+1).padZero() + local.getUTCDate().padZero() + local.getUTCHours().padZero() + local.getUTCMinutes().padZero() +
-                        local.getUTCFullYear() + "." + local.getUTCSeconds().padZero();
+		epochSeconds = Math.floor(local.getTime() / 1000);
+		//alert("local Date " + epochSeconds );
+		tzOffset = local.getTimezoneOffset();
+		//alert("TZ offset " + local.getTimezoneOffset() );
+		localdatetime = (local.getUTCMonth()+1).padZero() + local.getUTCDate().padZero() + local.getUTCHours().padZero() + local.getUTCMinutes().padZero() +
+			local.getUTCFullYear() + "." + local.getUTCSeconds().padZero();
 
-        var newpoints = "";
-        var newheight = 0;
-        for (polylinenumber=1; polylinenumber<(gNumCpus-1)+1 ; polylinenumber++) { //once for all CPUs
-            newpoints = "20,100 "; // 100% idle
-            lineid = "polyline0" + polylinenumber;
-            //alert("lineid " + lineid );
-            svgobj = document.getElementById(lineid);
-            if (svgobj) {
-                var rect = svgobj.getBoundingClientRect();
+		var newpoints = "";
+		var newheight = 0;
+		for (polylinenumber=1; polylinenumber<(gNumCpus-1)+1 ; polylinenumber++) { //once for all CPUs
+			newpoints = "20,100 "; // 100% idle
+			lineid = "polyline0" + polylinenumber;
+			//alert("lineid " + lineid );
+			svgobj = document.getElementById(lineid);
+			if (svgobj) {
+				var rect = svgobj.getBoundingClientRect();
 
-                //alert("lineid " + lineid + "; left " + rect.left + "; right " + rect.right + "; top " + rect.top + ";btm " + rect.bottom );
-                for (idx=2; idx<1-1; idx+=2) {
-                    newheight = randomFromTo(0,100);
-                    newpoints += idx + "," + newheight + " ";
-                }
-                //alert("for " + lineid + ", 1st newpoints (" + newpoints + ")" + svgobj );
-                svgobj.setAttribute('points', newpoints );
-            }
-        }
+				//alert("lineid " + lineid + "; left " + rect.left + "; right " + rect.right + "; top " + rect.top + ";btm " + rect.bottom );
+				for (idx=2; idx<1-1; idx+=2) {
+					newheight = randomFromTo(0,100);
+					newpoints += idx + "," + newheight + " ";
+				}
+				//alert("for " + lineid + ", 1st newpoints (" + newpoints + ")" + svgobj );
+				svgobj.setAttribute('points', newpoints );
+			}
+		}
 
-        SetInternalCheckboxStatus ( "checkboxcpus", GetCpuInfo );
-        SetInternalCheckboxStatus ( "checkboxmemory", GetMemory );
-        SetInternalCheckboxStatus ( "checkboxnets", GetNetStats );
-        SetInternalCheckboxStatus ( "checkboxwifi", GetWifiStats );
-        SetInternalCheckboxStatus ( "checkboxirqs", GetIrqInfo );
-        SetInternalCheckboxStatus ( "checkboxprofiling", GetProfiling );
-        SetInternalCheckboxStatus ( "checkboxPerfFlame", GetPerfFlame);
+		SetInternalCheckboxStatus ( "checkboxcpus", GetCpuInfo );
+		SetInternalCheckboxStatus ( "checkboxmemory", GetMemory );
+		SetInternalCheckboxStatus ( "checkboxnets", GetNetStats );
+		SetInternalCheckboxStatus ( "checkboxwifi", GetWifiStats );
+		SetInternalCheckboxStatus ( "checkboxirqs", GetIrqInfo );
+		SetInternalCheckboxStatus ( "checkboxprofiling", GetProfiling );
+		SetInternalCheckboxStatus ( "checkboxPerfFlame", GetPerfFlame);
 
-        iperfInit = GetNetStats.Value;
+		iperfInit = GetNetStats.Value;
 
-        GetSataUsb.Stop = 1; // tell the server to stop any SATA/USB data collection that may have been started earlier
+		GetSataUsb.Stop = 1; // tell the server to stop any SATA/USB data collection that may have been started earlier
 
-        hideOrShow("row_DvfsControl", HIDE );
-        hideOrShow("row_Record", HIDE );
+		hideOrShow("row_DvfsControl", HIDE );
+		hideOrShow("row_Record", HIDE );
 
-        var queryString = "";
-        if( window.location.search.length > 1) {
-            queryString = window.location.search.substring (1);
-            var elements = queryString.split("&");
-            var keyValues = {};
-            for(var i in elements) {
-                var key = elements[i].split("=");
-                if (key.length > 1) {
-                  keyValues[decodeURIComponent(key[0].replace(/\+/g, " "))] = decodeURIComponent(key[1].replace(/\+/g, " "));
-                }
-            }
-            //console.log("keyValue RecordFile is (" + keyValues['RecordFile'] + ")" );
-            //console.log("keyValue RecordButton is (" + keyValues['RecordButton'] + ")" );
-            if ( keyValues['RecordButton'] == 1 ) {
-                //console.log("detected RecordButton is 1");
-                var obj = document.getElementById("checkboxRecord" );
-                if ( obj ) {
-                    obj.checked = true;
-                    hideOrShow("row_Record", SHOW );
-                }
-            }
-        }
+		var queryString = "";
+		if( window.location.search.length > 1) {
+			queryString = window.location.search.substring (1);
+			var elements = queryString.split("&");
+			var keyValues = {};
+			for(var i in elements) {
+				var key = elements[i].split("=");
+				if (key.length > 1) {
+					keyValues[decodeURIComponent(key[0].replace(/\+/g, " "))] = decodeURIComponent(key[1].replace(/\+/g, " "));
+				}
+			}
+			//console.log("keyValue RecordFile is (" + keyValues['RecordFile'] + ")" );
+			//console.log("keyValue RecordButton is (" + keyValues['RecordButton'] + ")" );
+			if ( keyValues['RecordButton'] == 1 ) {
+				//console.log("detected RecordButton is 1");
+				var obj = document.getElementById("checkboxRecord" );
+				if ( obj ) {
+					obj.checked = true;
+					hideOrShow("row_Record", SHOW );
+				}
+			}
+		}
 
-        var objRecordSaveFile = document.getElementById("RecordSaveFile");
-        objRecordSaveFile.addEventListener('click', RecordSaveFileListener, false);
+		//var objRecordSaveFile = document.getElementById("RecordSaveFile");
+		//objRecordSaveFile.addEventListener('click', RecordSaveFileListener, false);
 
-        var objExportCpuStats = document.getElementById("buttonExportCpuStats");
-        objExportCpuStats.addEventListener('click', ExportCpuStatsListener, false);
+		//var objExportCpuStats = document.getElementById("buttonExportCpuStats");
+		//objExportCpuStats.addEventListener('click', ExportCpuStatsListener, false);
 
-        var objExportNetStats = document.getElementById("buttonExportNetStats");
-        objExportNetStats.addEventListener('click', ExportNetStatsListener, false);
+		//var objExportNetStats = document.getElementById("buttonExportNetStats");
+		//objExportNetStats.addEventListener('click', ExportNetStatsListener, false);
 
-        //console.log( "MyLoad: calling sendCgiRequest()");
-        CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
+		//console.log( "MyLoad: calling sendCgiRequest()");
+		CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS );
+		SpliceTimeoutId = setTimeout ('FiveSecond()', REFRESH_IN_MILLISECONDS * 5);
 
-        //alert("pass 0 done");
-    } else {
-        UpdateCpuGraphs();
-    }
-    //alert("polyline01 points (" + document.getElementById('polyline01').getAttribute('points') + ")" );
-    previous_height += 10;
-    //alert("prev_hgt " + previous_height);
-    if ( previous_height > 100) previous_height = 0;
+		//alert("pass 0 done");
+	} else {
+		UpdateCpuGraphs();
+	}
+	//alert("polyline01 points (" + document.getElementById('polyline01').getAttribute('points') + ")" );
+	previous_height += 10;
+	//alert("prev_hgt " + previous_height);
+	if ( previous_height > 100) previous_height = 0;
 
-    //var svgid = 'svg' + GetPerfFlameSvgCount.padZero(4);
-    var svgid = 'svg001';
-    svgid = 'svg' + GetPerfFlameSvgCount.padZero(4);
-    //alert("MyLoad - svgid:" + svgid );
-    svgobj = document.getElementById( svgid );
-    if (svgobj) {
-        svgobj.addEventListener("click", SvgClickHandler, false);
-    }
-    passcount++;
+	//var svgid = 'svg' + GetPerfFlameSvgCount.padZero(4);
+	var svgid = 'svg001';
+	svgid = 'svg' + GetPerfFlameSvgCount.padZero(4);
+	//alert("MyLoad - svgid:" + svgid );
+	svgobj = document.getElementById( svgid );
+	if (svgobj) {
+		svgobj.addEventListener("click", SvgClickHandler, false);
+	}
+	passcount++;
 
-    sendCgiRequest();
+	sendCgiRequest();
 
-    //alert("MyLoad: end passcount==" + passcount);
+	//alert("MyLoad: end passcount==" + passcount);
 }
 
 function randomFromTo(from, to)
 {
-    return Math.floor(Math.random() * (to - from + 1) + from);
+	return Math.floor(Math.random() * (to - from + 1) + from);
 }
 
 function rtrim(stringToTrim) { return stringToTrim.replace(/\s+$/,"");}
 
 function MyChange(event)
 {
-    var target = event.target || event.srcElement;
-    var id = target.id;
-    var value=0;
-    var obj=document.getElementById(id);
-    if (obj) {
-        value = obj.value;
-    }
-    //alert("MyChange: value " + value);
-    setVariable(id);
+	var target = event.target || event.srcElement;
+	var id = target.id;
+	var value=0;
+	var obj=document.getElementById(id);
+	if (obj) {
+		value = obj.value;
+	}
+	//alert("MyChange: value " + value);
+	setVariable(id);
 }
 function AdjustRectangleToTextWidth ( id )
 {
-    var obj=document.getElementById(id);
-    if (obj) {
-        var pointsStr = obj.getAttribute("points");
-        var pointsStrNew = "";
+	var obj=document.getElementById(id);
+	if (obj) {
+		var pointsStr = obj.getAttribute("points");
+		var pointsStrNew = "";
 
-        //alert("points (" + pointsStr + ")" );
+		//alert("points (" + pointsStr + ")" );
 
-        // points (190,10  320,10  320,60  190,60 )
-        var points = pointsStr.split( " " );
-        pointsStrNew = points[0] + " ";
-        //alert("points1 (" + pointsStrNew + ")" );
+		// points (190,10  320,10  320,60  190,60 )
+		var points = pointsStr.split( " " );
+		pointsStrNew = points[0] + " ";
+		//alert("points1 (" + pointsStrNew + ")" );
 
-        var xypair = points[1].split( ",");
-        pointsStrNew += Number(xypair[0]) + Number(400);
-        pointsStrNew += "," + xypair[1] + " ";
-        //alert("points2 (" + pointsStrNew + ")" );
+		var xypair = points[1].split( ",");
+		pointsStrNew += Number(xypair[0]) + Number(400);
+		pointsStrNew += "," + xypair[1] + " ";
+		//alert("points2 (" + pointsStrNew + ")" );
 
-        xypair = points[2].split( ",");
-        pointsStrNew += Number(xypair[0]) + Number(400);
-        pointsStrNew += "," + xypair[1] + " ";
-        //alert("points3 (" + pointsStrNew + ")" );
+		xypair = points[2].split( ",");
+		pointsStrNew += Number(xypair[0]) + Number(400);
+		pointsStrNew += "," + xypair[1] + " ";
+		//alert("points3 (" + pointsStrNew + ")" );
 
-        pointsStrNew += points[3];
-        //alert("points4 (" + pointsStrNew + ")" );
+		pointsStrNew += points[3];
+		//alert("points4 (" + pointsStrNew + ")" );
 
-        obj.setAttribute("points", pointsStrNew );
-    } else {
-        alert("getElementById(" + id + ") failed");
-    }
+		obj.setAttribute("points", pointsStrNew );
+	} else {
+		alert("getElementById(" + id + ") failed");
+	}
+}
+
+function SliderCB(event, ui)
+{
+	var url = "";
+	var org_val = document.getElementById("origin_val").value;
+
+	if(ui.value != org_val)
+	{
+		url = "/cgi/splice.cgi?";
+		url += "&actPos=" + ui.value;
+		sendCgiRequestDoItNow(url);
+	}
+}
+
+function readCmdPLC()
+{
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&readCmdPLC=" + 1;
+	sendCgiRequestDoItNow(url);
+}
+
+function GetACTStatus()
+{
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&getActStatus=" + 1;
+	sendCgiRequestDoItNow(url);
+}
+
+function GetIPfromFile()
+{
+	var rawFile = new XMLHttpRequest(); // XMLHttpRequest (often abbreviated as XHR) is a browser object accessible in JavaScript that provides data in XML, JSON, but also HTML format, or even a simple text using HTTP requests.
+	rawFile.open("GET", "ipaddr", false); // open with method GET the file with the link file ,  false (synchronous)
+	rawFile.onreadystatechange = function ()
+	{
+		if(rawFile.readyState === 4) // readyState = 4: request finished and response is ready
+		{
+			if(rawFile.status === 200) // status 200: "OK"
+			{
+				var allText = rawFile.responseText; //  Returns the response data as a string
+				document.getElementById("ip_addr").value = allText;
+			}
+		}
+	}
+	rawFile.send(null);
+}
+
+function SetACTStatus()
+{
+	ActStatus.ACTDIR = document.getElementById("direction_val").value;
+	ActStatus.ACTSTROKE = document.getElementById("stroke_val").value;
+	ActStatus.ACTSPEED = document.getElementById("speed_val").value;
+	ActStatus.ACTLLIMIT = document.getElementById("left_limit_val").value / 100;
+	ActStatus.ACTRLIMIT = document.getElementById("right_limit_val").value / 100;
+	ActStatus.ACTORG = document.getElementById("origin_val").value;
+
+	//alert(ActStatus.ACTLLIMIT + ":" + ActStatus.ACTRLIMIT);
+	var url = "";
+
+	url = "/cgi/splice.cgi?";
+	url += "&setActStatus=" + 1;
+	url += "&ACTDIR=" + ActStatus.ACTDIR;
+	url += "&ACTSTROKE=" + ActStatus.ACTSTROKE;
+	url += "&ACTSPEED=" + ActStatus.ACTSPEED;
+	url += "&ACTLLIMIT=" + ActStatus.ACTLLIMIT;
+	url += "&ACTRLIMIT=" + ActStatus.ACTRLIMIT;
+	url += "&ACTORG=" + ActStatus.ACTORG;
+
+	sendCgiRequestDoItNow(url);
 }
 
 function MyClick(event)
@@ -583,9 +676,58 @@ function MyClick(event)
     var id = target.id;
     //alert("MyClick: id (" + id + ");" );
 
+
     gEvent = event;
 
     setVariable(id);
+}
+
+function Act_left_button(event)
+{
+	var value = $( "#Slider1" ).slider( "option", "value" );
+	var llimit = document.getElementById("left_limit_val").value / 100 * -1;
+
+	if(value - 1 < llimit)
+	{
+		alert("Invalid actuator position! " + value);
+		$( "#Slider1" ).slider( "option", "value", llimit );
+		$("#calibar_val").val(llimit);
+	}
+	else
+	{
+		$( "#Slider1" ).slider( "option", "value", value - 1 );
+		$("#calibar_val").val(value - 1);
+	}
+}
+
+function Act_right_button(event)
+{
+	var value = $( "#Slider1" ).slider( "option", "value" );
+	var rlimit = document.getElementById("right_limit_val").value / 100;
+
+	if(value + 1 > rlimit)
+	{
+		alert("Invalid actuator position! " + value);
+		$( "#Slider1" ).slider( "option", "value", rlimit );
+		$("#calibar_val").val(rlimit);
+	}
+	else
+	{
+		$( "#Slider1" ).slider( "option", "value", value + 1 );
+		$("#calibar_val").val(value + 1);
+	}
+}
+
+function Act_origin_button(event)
+{
+	var url = "";
+	var value = document.getElementById("origin_val").value;
+	$( "#Slider1" ).slider( "option", "value", value / 100 );
+	$("#calibar_val").val(value / 100);
+
+	url = "/cgi/splice.cgi?";
+	url += "&actPosOrg=" + 1;
+	sendCgiRequestDoItNow(url);
 }
 
 function DisableCheckboxes ( newValue )
@@ -1029,14 +1171,14 @@ function setButtonImage ( fieldName, newImageName )
  **/
 function setVariable(fieldName)
 {
-    var debug=0;
+    var debug=1;
     var fieldValue = "";
     //console.log ("setVariable: name " + fieldName );
     var obj=document.getElementById(fieldName);
 
     SetVariableCount++;
 
-    if (debug) alert("setVariable: name " + fieldName + "; type " + obj.type );
+    if (debug) alert("setVariable: name " + fieldName + "; type " + obj.type + "value : " + obj.value);
 
     if ( PlaybackControl.Value ) { // if playback is in progress
         if ( (fieldName == "buttonRecordStart") || (fieldName == "buttonPlaybackRun") || (fieldName == "h1bsysperf") ||
@@ -1420,6 +1562,14 @@ function sendCgiRequest( )
         if (GetWifiScan.State == GetWifiScanState.SCANNING ) {
             url += "&wifiscanresults=" + GetWifiScan.ServerIdx;
         }
+    }
+
+    if (GetSysInfo.Value == true) {
+        url += "&systemInfo=1";
+    }
+
+    if (GetTime.Value == true) {
+        url += "&getTime=1";
     }
 
     if (GetHeapStats.Value == true) {
@@ -2203,8 +2353,6 @@ function ProcessResponses ( oResponses )
                 //if (debug) alert("setting stbtime to " + oResponses[i+1] );
                 obj2.innerHTML = oResponses[i+1];
                 i++;
-            } else {
-                alert("id=splicetime not found");
             }
         } else if (entry == "CPUPERCENTS") {
             AddToDebugOutput ( entry + ": len of entry " + oResponses[i+1].length + eol );
@@ -2878,34 +3026,248 @@ function ProcessResponses ( oResponses )
                 }
             }
             i++;
-        } else if (entry == "PLATFORM") {
+        } else if (entry == "WEBVERSION") {
             PlaybackPLATFORM = oResponses[i+1];
-            var objplatform = document.getElementById("platform");
+            var objplatform = document.getElementById("webversion");
             if (objplatform) {
-                objplatform.innerHTML = oResponses[i+1]; CurrentPlatform = oResponses[i+1];
+                objplatform.innerHTML = oResponses[i+1];
             }
-        } else if (entry == "VARIANT") {
+            window.document.title = "SPLICE CENTERING SYSTEM " + oResponses[i+1];
+			i++;
+        } else if (entry == "SPLICEVERSION") {
             PlaybackVARIANT = oResponses[i+1];
-            var objvariant = document.getElementById("VARIANT");
+            var objvariant = document.getElementById("spliceversion");
             if ( objvariant ) {
-                objvariant.innerHTML = "(Variant: " + oResponses[i+1] + ")";
+                objvariant.innerHTML = oResponses[i+1];
             }
             i++;
-        } else if (entry == "PLATVER") {
+        } else if (entry == "CAMERAVERSION") {
             PlaybackPLATVER = oResponses[i+1];
-            var objplatform = document.getElementById("platver");
+            var objplatform = document.getElementById("cameraversion");
             if (objplatform) {
                 objplatform.innerHTML = oResponses[i+1]
             }
-            window.document.title = CurrentPlatform + " " + oResponses[i+1];
             i++;
         } else if (entry == "UNAME") {
             PlaybackUNAME = oResponses[i+1];
             //alert(entry + ":" + oResponses[i+1] );
             var objplatform = document.getElementById("UNAME");
             if (objplatform) {
-                objplatform.innerHTML = "Kernel: " + oResponses[i+1];
+                objplatform.innerHTML = oResponses[i+1];
             }
+            i++;
+        } else if (entry == "MWIDTH") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "SWIDTHIN") {
+            var obj = document.getElementById("SWidthIn_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "OFFSETIN") {
+            var obj = document.getElementById("OffsetIn_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "GETSWIDTH") {
+            var obj = document.getElementById("GetSWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOLPOS") {
+            var obj = document.getElementById("TolPos_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOLNEG") {
+            var obj = document.getElementById("TolNeg_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "SWIDTHOUT") {
+            var obj = document.getElementById("SWidthOut_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "OFFSETOUT") {
+            var obj = document.getElementById("OffsetOut_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "POFFSET") {
+            var obj = document.getElementById("P_Offset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "MOFFSET") {
+            var obj = document.getElementById("M_Offset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+/*
+        } else if (entry == "LOENABLE") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TOENABLE") {
+            var obj = document.getElementById("MWidth_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+*/
+        } else if (entry == "LO0") {
+            var obj = document.getElementById("LeadOffset0_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO1") {
+            var obj = document.getElementById("LeadOffset1_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO2") {
+            var obj = document.getElementById("LeadOffset2_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO3") {
+            var obj = document.getElementById("LeadOffset3_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO4") {
+            var obj = document.getElementById("LeadOffset4_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO5") {
+            var obj = document.getElementById("LeadOffset5_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "LO6") {
+            var obj = document.getElementById("LeadOffset6_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO0") {
+            var obj = document.getElementById("TrailOffset0_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO1") {
+            var obj = document.getElementById("TrailOffset1_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO2") {
+            var obj = document.getElementById("TrailOffset2_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO3") {
+            var obj = document.getElementById("TrailOffset3_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO4") {
+            var obj = document.getElementById("TrailOffset4_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO5") {
+            var obj = document.getElementById("TrailOffset5_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "TO6") {
+            var obj = document.getElementById("TrailOffset6_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTRESET") {
+            var obj = document.getElementById("ActReset_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTDIR") {
+            var obj = document.getElementById("direction_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTSTROKE") {
+            var obj = document.getElementById("stroke_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTSPEED") {
+            var obj = document.getElementById("speed_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTLLIMIT") {
+            var obj = document.getElementById("left_limit_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTRLIMIT") {
+            var obj = document.getElementById("right_limit_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "ACTORG") {
+            var obj = document.getElementById("origin_val");
+            if (obj) {
+                obj.value = oResponses[i+1];
+            }
+            i++;
+        } else if (entry == "SERVERIP") {
+            PlaybackPLATVER = oResponses[i+1];
+            var objplatform = document.getElementById("serverip");
+            if (objplatform) {
+                objplatform.innerHTML = oResponses[i+1]
+            }
+            i++;
+        } else if (entry == "CURVAL") {
+            actCurPos = oResponse[i+1];
+            i++;
+        } else if (entry == "PREVVAL") {
+            actPrevPos = oResponses[i+1];
             i++;
         } else if (entry == "BOLTVER") {
             PlaybackBOLTVER = oResponses[i+1];
@@ -3287,6 +3649,14 @@ function clearTimeoutOneSecond( caller ) {
     }
 }
 
+function clearTimeoutFiveSecond()
+{
+	if (SpliceTimeoutId){
+		clearTimeout(SpliceTimeoutId);
+		SpliceTimeoutId = 0;
+	}
+}
+
 // This function runs as an asynchronous response to a previous server request
 function serverHttpResponse ()
 {
@@ -3316,10 +3686,6 @@ function serverHttpResponse ()
             localtime = new Date();
             var responseText1 = xmlhttp.responseText.replace(/</g,"&lt;"); // fails on ie7, safari
             var responseText2 = responseText1.replace(/</g,"&lt;"); // fails on ie7, safari
-
-            if (userAgent.indexOf("MSIE") >= 0 ) { // for ie9, must replace carriage returns with <br>
-                eol = "<br>";
-            }
 
             var responseText = rtrim(xmlhttp.responseText);
 
@@ -3355,9 +3721,11 @@ function serverHttpResponse ()
                 ResponseCount++;
 
                 clearTimeoutOneSecond( "response 1");
+                clearTimeoutFiveSecond();
 
                 //console.log( "Response: calling setTimeout(OneSecond)");
                 CgiTimeoutId = setTimeout ('OneSecond()', REFRESH_IN_MILLISECONDS/10 );
+                SpliceimeoutId = setTimeout ('FiveSecond()', REFRESH_IN_MILLISECONDS/2 );
                 AddToDebugOutput ( "calling setTimeout(); ID (" + CgiTimeoutId + ")" + eol );
             } else {
 
@@ -3380,11 +3748,15 @@ function serverHttpResponse ()
                     //console.log( "Response:200 calling OneSecond() manually" );
                     OneSecond();
                 }
+				if ( SpliceTimeoutId == 0) {
+					FiveSecond();
+				}
             }
         } else {
             var msg = "";
 
             clearTimeoutOneSecond( "response 2");
+            clearTimeoutFiveSecond();
 
             //console.log ("TIMEOUT1: urlSentSuccessfully:" + urlSentSuccessfully + "; urlSentRetryCount:" + urlSentRetryCount + "; urlSentRetryCountAfterSuccess:" + urlSentRetryCountAfterSuccess );
             // if we have previously successfully received some responses (used so we do not ignore the very first failure)

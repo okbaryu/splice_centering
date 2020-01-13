@@ -1,8 +1,8 @@
 SPLICE_WEB_DIR = $(BUILD_DIR)/splice_web
-LDFLAGS += -lpthread -lm
+LDFLAGS += -lpthread -lm -ljson-c -L${SPLICE_WEB_DIR}/../../../../../../../buildroot/target/ipu/skel/usr/lib/
 MAIN_OBJS = ${SPLICE_WEB_DIR}/splice_cgi.c
-SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c
-EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c
+SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c ${SPLICE_WEB_DIR}/actuator.c ${SPLICE_WEB_DIR}/plc.c ${SPLICE_WEB_DIR}/centering.c
+EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c ${SPLICE_WEB_DIR}/osal_msg.c
 
 CFLAGS += -I${SPLICE_WEB_DIR}
 CFLAGS += -Wimplicit-function-declaration -Wall -lm
@@ -31,17 +31,13 @@ ${SPLICE_WEB_DIR}/splice_server: $(SERVER_OBJS)
 	$(TARGET_CC) -o $@ $(SERVER_OBJS) $(EXTRA_OBJS) $(CFLAGS) $(LDFLAGS)
 
 splice_web : $(SPLICE_WEB_DIR)/.configured ${SPLICE_WEB_DIR}/splice.cgi ${SPLICE_WEB_DIR}/splice_server
-	install -d -m 755 $(TARGET_DIR)/var/splice_web
+	install -d -m 755 $(TARGET_DIR)/var/splice_web/
 	install -D -m 755 $(SPLICE_WEB_DIR)/splice.cgi $(TARGET_DIR)/var/splice_web/splice.cgi
 	install -D -m 755 $(SPLICE_WEB_DIR)/splice_server $(TARGET_DIR)/var/splice_web/splice_server
-	install -D -m 644 package/splice_web/boundingbox.js $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/chart1.js $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/chart2.js $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/hs_logo.gif $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/splice.css $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/splice.html $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/splice.js $(TARGET_DIR)/var/splice_web
-	install -D -m 644 package/splice_web/svgvml3d.js $(TARGET_DIR)/var/splice_web
+	cp -rf package/splice_web/* $(TARGET_DIR)/var/splice_web
+	ln -sf /usr/bin/php-cgi $(TARGET_DIR)/var/splice_web/php
+	ln -sf /data/ipaddr $(TARGET_DIR)/var/splice_web/ipaddr
+	ln -sf /data/usersdb.php $(TARGET_DIR)/var/splice_web/usersdb.php
 
 
 ##############################################################
