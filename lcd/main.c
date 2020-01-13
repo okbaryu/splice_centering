@@ -102,7 +102,7 @@ pthread_mutex_t gMutex1;
 #define STR_OFF				"off"
 
 
-#define FILE_PATH		"/mnt/extsd/calibration_data.json"
+#define FILE_PATH		"/data/calibration_data.json"
 #define KEY_CAM0_CENTER 	"cam0Center"
 #define KEY_CAM1_CENTER  	"cam1Center"
 #define KEY_CAM0_LEFT_TRIM  	"cam0LeftTrim"
