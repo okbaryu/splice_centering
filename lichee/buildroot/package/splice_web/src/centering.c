@@ -14,7 +14,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#include "json-c-inc/json.h"
+#include "json-c/json.h"
 #include "splice_libs.h"
 #include "splice_utils.h"
 #include "actuator.h"
