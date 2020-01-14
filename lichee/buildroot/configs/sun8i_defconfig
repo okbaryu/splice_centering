@@ -561,6 +561,7 @@ BR2_PACKAGE_LIBEVDEV=y
 # BR2_PACKAGE_LIBXML2 is not set
 # BR2_PACKAGE_LIBXSLT is not set
 # BR2_PACKAGE_XERCES is not set
+BR2_PACKAGE_JSON_C=y
 
 #
 # Miscellaneous
