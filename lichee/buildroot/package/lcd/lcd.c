@@ -1939,7 +1939,7 @@ void loadFont()
 	for(n=0; n<FONT_COUNT; n++)
 	{
 		char strPath[255];
-		sprintf(strPath, "/root/font/%d.dat", n);
+		sprintf(strPath, "/var/splice_web/font/%d.dat", n);
 		FILE* fp = fopen(strPath, "r");
 		if(fp==NULL)
 		{
