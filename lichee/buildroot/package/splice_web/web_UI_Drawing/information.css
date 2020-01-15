@@ -1,0 +1,89 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-repeat: no-repeat;
+}
+.wrap{
+  width: 1024px;
+  height: 768px;
+  display: grid;
+  grid-template-columns: repeat(16, 64px);
+  grid-template-rows: repeat(14, 48px) 44px 52px;
+  grid-gap: 0px;
+}
+.mainToollBar{
+  background-color: #1d1e21;
+}
+.homeButton{
+  grid-area: 1/1/2/2;
+}
+.mainTitle{
+  height: 48px;
+  line-height: 48px;
+  font-size: 36px;
+  font-weight: bold;
+  grid-area: 1/2/2/16;
+  color: #d2d2d2;
+}
+.menuButton{
+  grid-area: 1/16/2/17;
+}
+.homeToolBar{
+  /* background-color: #45464d; */
+  grid-area: 2/1/3/17;
+}
+.backButton{
+    grid-area: 2/1/3/2;
+}
+.accountButton{
+    grid-area: 2/15/3/17;
+}
+.exitButton{
+  position: absolute;
+  top: 7%;
+  left: 90%;
+  font-size: 24px;
+  color: #D63E2E;
+  font-weight: bold;
+  text-decoration: none;
+
+}
+.menuTitle{
+  line-height: 48px;
+  font-size: 32px;
+  height: 48px;
+  grid-area: 2/2/3/15;
+  text-align: center;
+  color: #fff;
+}
+.container{
+  border-top: solid gray 1px;
+  grid-area: 3/1/16/17;
+}
+.container1{
+  position: absolute;
+  width: 600px;
+  top: 50%;
+  left: 57%;
+  transform: translate(-50%, -50%);
+}
+.foot{
+  background-color: #e3e3e3;
+}
+.footClock{
+  text-align: center;
+  grid-area: 16/1/17/3;
+}
+.footMenu{
+  height: 52px;
+  line-height: 52px;
+  text-align: left;
+  grid-area: 16/3/17/15;
+}
+.footLogo{
+    grid-area: 16/15/17/17;
+}

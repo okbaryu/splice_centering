@@ -61,7 +61,7 @@ body{
   color: #fff;
 }
 .container{
-  border-top: solid white 2px;
+  border-top: solid gray 1px;
   grid-area: 3/1/16/17;
 }
 .container1{
@@ -78,6 +78,7 @@ body{
   padding: 10px;
 }
 .container1 ul li a{
+  outline: none;
   text-decoration: none;
   text-align: center;
   color: #FFFFFF;
@@ -91,7 +92,7 @@ body{
   box-shadow: 0px 0px 20px 4px #45464d;
 }
 .foot{
-  background-color: #c3c2c0;
+  background-color: #e3e3e3;
 }
 .footClock{
   text-align: center;
