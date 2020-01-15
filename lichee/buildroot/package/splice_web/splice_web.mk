@@ -9,9 +9,8 @@ CFLAGS += -Wimplicit-function-declaration -Wall -lm
 
 # Always build with debug
 CFLAGS += -g
-CFLAGS += -D_LINUX_TYPES_H 
 
-$(SPLICE_WEB_DIR)/.source : 
+$(SPLICE_WEB_DIR)/.source :
 	mkdir -pv $(SPLICE_WEB_DIR)
 	cp -rf package/splice_web/src/* $(SPLICE_WEB_DIR)
 	touch $@
