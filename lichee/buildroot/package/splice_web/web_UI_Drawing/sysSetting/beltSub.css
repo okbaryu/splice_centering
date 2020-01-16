@@ -1,4 +1,6 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
+  font-family: "Noto Sans KR", sans-serif;
   width: 720px;
   height: 550px;
   margin: 0;
@@ -37,6 +39,6 @@ body{
 .container{
   width: 710px;
   height: 502px;
-  background-color: rgba(0, 0, 0, 0.5);
+  background-color: rgba(0, 0, 0, 0.3);
   float: bottom;
 }

@@ -30,7 +30,7 @@
             </li>
             <li>
               <a href="#">
-                <table onclick="location.href='./plcSetting.php'">
+                <table onclick="location.href='./login.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/passwd.png" width="100px" height="100px"></td>
                   </tr>

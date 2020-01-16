@@ -65,11 +65,21 @@ body{
   grid-area: 3/1/16/17;
 }
 .container1{
-  position: absolute;
-  width: 600px;
-  top: 50%;
-  left: 57%;
-  transform: translate(-50%, -50%);
+  grid-area: 4/2/15/16;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+.info{
+  color: white;
+  border-spacing: 0;
+  width: 896px;;
+  height: 528px;
+}
+.info td{
+  border: 1px solid white;
+  padding: 20px;
+}
+.tableTag{
+  width: 224px;
 }
 .foot{
   background-color: #e3e3e3;

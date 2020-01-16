@@ -63,28 +63,28 @@ function changePage(tag){
       protocolSet.style.backgroundColor = '#45464d';
       plcDataLen.style.backgroundColor = '#45464d';
       plcDataMonit.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./plcSetting/plcConSet.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       break;
     case 'protocolSet':
       plcConnectSet.style.backgroundColor = '#45464d';
       protocolSet.style.backgroundColor = '#1D1E21';
       plcDataLen.style.backgroundColor = '#45464d';
       plcDataMonit.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./plcSetting/protocolSet.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       break;
     case 'plcDataLen':
       plcConnectSet.style.backgroundColor = '#45464d';
       protocolSet.style.backgroundColor = '#45464d';
       plcDataLen.style.backgroundColor = '#1D1E21';
       plcDataMonit.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./plcSetting/dataLen.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       break;
     case 'plcDataMonit':
       plcConnectSet.style.backgroundColor = '#45464d';
       protocolSet.style.backgroundColor = '#45464d';
       plcDataLen.style.backgroundColor = '#45464d';
       plcDataMonit.style.backgroundColor = '#1D1E21';
-      container.innerHTML = '<iframe src="./plcSetting/dataMonitor.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       break;
 
     //userManagement.php

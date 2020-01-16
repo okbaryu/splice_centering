@@ -14,9 +14,27 @@
         INFORMATION</div>
         <?php include('topMenu2.html') ?>
       <div class="container">
-        <div class="container1">
 
-        </div>
+      </div>
+      <div class="container1">
+        <table class="info">
+          <tr>
+            <td class="tableTag">S/W Version</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="tableTag">Runtime Data</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="tableTag">Network Information</td>
+            <td></td>
+          </tr>
+          <tr>
+            <td class="tableTag">System Status</td>
+            <td></td>
+          </tr>
+        </table>
       </div>
       <div class="footClock foot">
           <?php include("./clock.html") ?>

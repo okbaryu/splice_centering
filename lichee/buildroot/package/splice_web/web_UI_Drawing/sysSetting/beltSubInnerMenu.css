@@ -1,0 +1,42 @@
+body{
+  width: 720px;
+  height: 550px;
+  margin: 0;
+  padding: 0;
+}
+.container{
+  width: 710px;
+  height: 550px;
+}
+a{
+  text-decoration: none;
+  color: white;
+}
+a:hover{
+  color: #D63E2E;
+}
+.container div{
+margin-left: 15px;
+}
+ul{
+  list-style: none;
+  position:absolute; top:70%; left:30%;
+}
+li{
+  float: left;
+  padding: 10px;
+}
+.button1{
+  color: white;
+  width: 102px;
+  height: 34px;
+  background-color: #D63E2E;
+  border-width: 0;
+}
+.button2{
+  color: white;
+  width: 102px;
+  height: 34px;
+  background-color: #45464d;
+  border-width: 0;
+}
