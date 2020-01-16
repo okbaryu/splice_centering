@@ -13,6 +13,7 @@
 #include <errno.h>
 #include <pthread.h>
 #include <signal.h>
+#include <poll.h>
 
 #include "json-c/json.h"
 #include "splice_libs.h"
@@ -32,7 +33,12 @@
 #define BUF_SIZE 256
 #define STREAM_ONOFF_SIZE 32
 
+#define MAX_ENCODER_CNT 3
+#define POLL_GPIO_EVENT POLLPRI
+#define POLL_GPIO_REVENT (POLLPRI | POLLERR)
+
 //#define VIEW_POS
+#define VIEW_ENCODER_CNT
 #define R_DUMP
 
 extern unsigned char PLCIO;
@@ -43,6 +49,10 @@ static act_status ACT;
 static int actLLimit;
 static int actRLimit;
 static int g_onOff;
+
+static int cnt_enc_a;
+static int cnt_enc_b;
+static int cnt_enc_z;
 
 typedef struct
 {
@@ -431,10 +441,58 @@ void readRRegister(void)
 #endif
 }
 
+void *encoderTask(void *data)
+{
+	struct pollfd enc_fd[MAX_ENCODER_CNT];
+	int i;
+	char buf[8];
+
+	enc_fd[0].fd = open("/sys/class/gpio/gpio34/value", O_RDONLY); //ENCODER A+
+	enc_fd[1].fd = open("/sys/class/gpio/gpio36/value", O_RDONLY); //ENCODER B+
+	enc_fd[2].fd = open("/sys/class/gpio/gpio44/value", O_RDONLY); //ENCODER Z+
+
+	for(i=0; i<MAX_ENCODER_CNT; i++)
+	{
+		enc_fd[i].events = POLL_GPIO_EVENT;
+		lseek(enc_fd[i].fd, 0, SEEK_SET);
+		read(enc_fd[i].fd, buf, sizeof(buf)); //Should be exist, otherwise fd gonna generate interrupt forever
+	}
+
+	while(1)
+	{
+		poll(enc_fd, MAX_ENCODER_CNT, -1);
+
+		if(enc_fd[0].revents & POLL_GPIO_REVENT)
+		{
+			cnt_enc_a++;
+			lseek(enc_fd[0].fd, 0, SEEK_SET);
+			read(enc_fd[0].fd, buf, sizeof(buf));
+		}
+
+		if(enc_fd[1].revents & POLL_GPIO_REVENT)
+		{
+			cnt_enc_b++;
+			lseek(enc_fd[1].fd, 0, SEEK_SET);
+			read(enc_fd[1].fd, buf, sizeof(buf));
+		}
+
+		if(enc_fd[2].revents & POLL_GPIO_REVENT)
+		{
+			cnt_enc_z++;
+			lseek(enc_fd[2].fd, 0, SEEK_SET);
+			read(enc_fd[2].fd, buf, sizeof(buf));
+		}
+
+#ifdef VIEW_ENCODER_CNT
+		printf("a=%d, b=%d, z=%d\n", cnt_enc_a, cnt_enc_b, cnt_enc_z);
+#endif
+	}
+}
+
 int centering_init(void)
 {
 	struct sockaddr_in server;
-	pthread_t centeringTaskId= 0, readPosTaskId;
+	pthread_t centeringTaskId, readPosTaskId, encoderTaskId;
 
 	centering_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (centering_fd == -1)
@@ -461,6 +519,10 @@ int centering_init(void)
 		return -1;
 	}
 
+	if (pthread_create( &encoderTaskId, NULL, encoderTask, (void *)NULL ))
+	{
+		PrintError( "could not create thread for encoder %s\n", strerror( errno ));
+	}
 	if (pthread_create( &centeringTaskId, NULL, centeringTask, (void *)NULL ))
 	{
 		PrintError( "could not create thread for centering %s\n", strerror( errno ));
