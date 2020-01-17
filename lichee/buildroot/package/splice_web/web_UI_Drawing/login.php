@@ -66,6 +66,7 @@
     <meta charset="utf-8">
     <title>SPWGC Home</title>
     <link rel="stylesheet" href="login.css">
+    </script>
   </head>
   <body>
     <div class="wrap">
@@ -75,7 +76,7 @@
           <img src="./images/web_GUI/icon/mainLogo.png" height="48px" width="140px">
         </div>
         <div class="inputGroup">
-          <li><a id="closeButton" href="#" >X</a></li>
+          <a id="closeButton" href="#">X</a>
         </div>
         <form name="loginform" method="post" accept-charset="UTF-8" action="<?php echo basename(__FILE__); ?>" id="loginform">
           <input type="hidden" name="form_name" value="loginform">
@@ -84,13 +85,13 @@
                <td class="header"></td>
             </tr>
             <tr>
-               <td class="label"><label for="username">User Name</label></td>
+               <td class="label"><img src="./images/web_GUI/icon2/account2.png" height="15"width="15" style="margin-right:3px;"><label for="username">User Name</label></td>
             </tr>
             <tr>
                <td class="row"><input class="input" name="username" type="text" id="username" value="<?php echo $username; ?>"></td>
             </tr>
             <tr>
-               <td class="label"><label for="password">Password</label></td>
+               <td class="label"><img src="./images/web_GUI/icon2/passwd2.png" height="15"width="15" style="margin-right:3px;"><label for="password">Password</label></td>
             </tr>
             <tr>
                <td class="row"><input class="input" name="password" type="password" id="password" value="<?php echo $password; ?>"></td>
@@ -105,7 +106,7 @@
         </form>
       </div>
         <div class="footClock foot">
-          <?php include("clock.php") ?>
+          <?php include("clock.html") ?>
         </div>
         <div class="footMenu foot">
         </div>

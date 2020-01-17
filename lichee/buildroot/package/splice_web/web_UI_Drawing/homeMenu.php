@@ -8,24 +8,11 @@
   </head>
   <body>
     <div class="wrap">
-      <div class="homeButton mainToollBar">
-        <input onClick="location.href='./homeMenu.php'" type="image" src="images/web_GUI/icon/home.png" width="32px" height="32px" class="hBtn" style="position:absolute;top:1%;left:1%;">
-      </div>
-      <div class="menuButton mainToollBar">
-        <input type="image" src="images/web_GUI/icon/menu.png" width="32px" height="32px" class="mBtn" style="position:absolute;top:1%;left:95%;">
-      </div>
-      <div class="mainTitle mainToollBar">SPWGC</div>
-      <div class="backButton homeToolBar">
-        <input onClick="history.go(-1)" type="image" src="images/web_GUI/icon/back.png" width="32px" height="32px" class="mBtn" style="position:absolute;top:7%;left:1%;">
-      </div>
+      <?php include('topMenu1.html') ?>
       <div class="menuTitle homeToolBar">
         <img src="images/web_GUI/icon/home.png"  width="32px" height="32px" style="position:absolute;top:7.5%;left:33.5%;">
         HOME MENU</div>
-      <div class="accountButton homeToolBar">
-        <img src="images/web_GUI/icon/alert.png"  width="32px" height="32px" style="position:absolute;top:7%;left:80%;">
-        <input onClick="location.href='./account.php'" type="image" src="images/web_GUI/icon/account.png" width="32px" height="32px" class="mBtn" style="position:absolute;top:7%;left:85%;">
-        <a class="exitButton" href="./login.php">EXIT</a>
-      </div>
+        <?php include('topMenu2.html') ?>
       <div class="container">
         <div class="container1">
           <ul>
@@ -43,7 +30,7 @@
             </li>
             <li>
               <a href="#">
-                <table>
+                <table onclick="location.href='./account.php'">
                   <tr>
                     <td><img id="account" class="linkImg" src="images/web_GUI/icon/account.png" width="100px" height="100px"></td>
                   </tr>
@@ -55,7 +42,7 @@
             </li>
             <li>
               <a href="#">
-                <table>
+                <table onclick="location.href='./information.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/information.png" width="100px" height="100px"></td>
                   </tr>
@@ -67,7 +54,7 @@
             </li>
             <li>
               <a href="#">
-                <table>
+                <table  onclick="location.href='./webServerSetting.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/webServerSetting.png" width="100px" height="100px"></td>
                   </tr>
@@ -81,12 +68,12 @@
         </div>
       </div>
       <div class="footClock foot">
-          <?php include("clock.php") ?>
+          <?php include("clock.html") ?>
       </div>
       <div class="footMenu foot">
-        <div class="footContainer" style="position:relative; left:5%;">
-          <img src="images/web_GUI/icon/home.png" width="32px" height="32px" style="position:relative; top: 10px;">
-          Home Menu
+        <div class="footContainer">
+          <img src="images/web_GUI/icon2/home.png" width="32px" height="32px" style="position:relative; top: 10px;">
+          <span style="color:red;">Home Menu</span>
         </div>
       </div>
       <div class="footLogo foot">

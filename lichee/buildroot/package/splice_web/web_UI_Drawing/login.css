@@ -71,6 +71,7 @@ body{
   width: 204px;
 }
 .button3 ul li{
+  outline: none;
   list-style: none;
   vertical-align: middle;
   float: left;
