@@ -10,18 +10,17 @@
         session_start();
      }
      unset($_SESSION['username']);
-     unset($_SESSION['fullname']);
+     unset($_SESSION['is_logged']);
      header('Location: ./login.php');
      exit;
   }
   if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['form_name']) && $_POST['form_name'] == 'loginform')
   {
      $success_page = './homeMenu.php';
-     $error_page = './access_denied.html';
+     $error_page = './access_denied.php';
      $database = './usersdb.php';
      $crypt_pass = md5($_POST['password']);
      $found = false;
-     $fullname = '';
      $session_timeout = 1200;
      if(filesize($database) > 0)
      {
@@ -32,7 +31,6 @@
            if ($username == $_POST['username'] && $active != "0" && $password == $crypt_pass)
            {
               $found = true;
-              $fullname = $name;
            }
         }
      }else{
@@ -50,15 +48,13 @@
            session_start();
         }
         $_SESSION['username'] = $_POST['username'];
-        $_SESSION['fullname'] = $fullname;
         $_SESSION['expires_by'] = time() + $session_timeout;
         $_SESSION['expires_timeout'] = $session_timeout;
+        $_SESSION['is_logged'] = 'yes';
         header('Location: '.$success_page);
         exit;
      }
   }
-  $username = isset($_COOKIE['username']) ? $_COOKIE['username'] : '';
-  $password = isset($_COOKIE['password']) ? $_COOKIE['password'] : '';
 ?>
 <!DOCTYPE html>
 <html>
@@ -66,7 +62,6 @@
     <meta charset="utf-8">
     <title>SPWGC Home</title>
     <link rel="stylesheet" href="login.css">
-    </script>
   </head>
   <body>
     <div class="wrap">
@@ -76,7 +71,7 @@
           <img src="./images/web_GUI/icon/mainLogo.png" height="48px" width="140px">
         </div>
         <div class="inputGroup">
-          <a id="closeButton" href="#">X</a>
+          <a id="closeButton" href="about:blank">X</a>
         </div>
         <form name="loginform" method="post" accept-charset="UTF-8" action="<?php echo basename(__FILE__); ?>" id="loginform">
           <input type="hidden" name="form_name" value="loginform">
@@ -88,19 +83,19 @@
                <td class="label"><img src="./images/web_GUI/icon2/account2.png" height="15"width="15" style="margin-right:3px;"><label for="username">User Name</label></td>
             </tr>
             <tr>
-               <td class="row"><input class="input" name="username" type="text" id="username" value="<?php echo $username; ?>"></td>
+               <td class="row"><input class="input" name="username" type="text" id="username" value=""></td>
             </tr>
             <tr>
                <td class="label"><img src="./images/web_GUI/icon2/passwd2.png" height="15"width="15" style="margin-right:3px;"><label for="password">Password</label></td>
             </tr>
             <tr>
-               <td class="row"><input class="input" name="password" type="password" id="password" value="<?php echo $password; ?>"></td>
+               <td class="row"><input class="input" name="password" type="password" id="password" value=""></td>
             </tr>
           </table>
           <div class="button3">
             <ul>
               <li><input class="button1 btn" type="submit" value="Log In"></li>
-              <li><input class="button2 btn" type="button" value="EXIT"></li>
+              <li><input class="button2 btn" type="button" value="EXIT" onclick="location.href='about:blank'"></li>
             </ul>
           </div>
         </form>
@@ -114,5 +109,6 @@
           <?php include("footlogo.html") ?>
         </div>
     </div>
+    <script type="text/javascript" src="./close.js"></script>
   </body>
 </html>

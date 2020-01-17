@@ -1,4 +1,6 @@
-<?php  ?>
+<?php
+include('./loginChek.php')
+ ?>
 <!DOCTYPE html>
 <html>
   <head>

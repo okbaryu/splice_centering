@@ -15,6 +15,7 @@ body{
   grid-template-rows: repeat(14, 48px) 44px 52px;
   grid-gap: 0px;
 }
+
 .mainToollBar{
   background-color: #1d1e21;
 }
@@ -83,13 +84,80 @@ body{
   text-align: center;
   color: #FFFFFF;
 }
-.linkImg:hover{
-  background-color: #1D1E21;
+.block{
+  position: relative;
+  top: 215px;
+  left: 430px;
+  width: 160px;
+  height: 160px;
+  z-index: 10;
 }
-.linkImg{
-  background-color: #5E5F67 ;
-  padding: 30px;
-  box-shadow: 0px 0px 20px 4px #45464d;
+
+.inContainer{
+  position: relative;
+  right: 20%;
+  width: 320px;
+  height: 160px;
+  z-index: 5;
+}
+.inContainer #ractangel{
+  width: 160px;
+  height: 160px;
+  background-color: #c0c0c0;
+  box-shadow: -10px 10px 20px 0px #45464d;
+}
+.inContainer #triangle{
+  position: relative;
+  bottom: 160px;
+  left: 160px;
+  width: 0px;height: 0px;
+  border-top:80px solid #c0c0c0;
+  border-bottom:80px solid transparent;
+  border-right: 80px solid transparent;
+  border-left: 80px solid #c0c0c0;
+}
+
+.inContainer1{
+  width: 320px;
+  height: 160px;
+  position:absolute;
+  top: 25px;
+  left: 160px;
+  box-shadow: 10px 10px 20px 0px #45464d;
+  z-index: 1;
+}
+.inContainer1 #ractangel1{
+  position: relative;
+  left: 160px;
+  width: 160px;
+  height: 160px;
+  background-color: #c0c0c0;
+}
+.inContainer1 #triangle1{
+  position: relative;
+  bottom: 160px;
+  left: 1px;
+  width: 0px;height: 0px;
+  border-top:80px solid transparent;
+  border-bottom:80px solid #c0c0c0;
+  border-right: 80px solid #c0c0c0;
+  border-left: 80px solid transparent;
+}
+.linkimg{
+  position:relative;
+  top: 30px;
+}
+.textB{
+  position: relative;
+  bottom: 140px;
+}
+.sysText{
+  position: relative;
+  right: 80px;
+}
+.plcText{
+  position: relative;
+  left: 80px;
 }
 .foot{
   background-color: #e3e3e3;
