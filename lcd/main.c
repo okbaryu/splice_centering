@@ -399,7 +399,7 @@ void generateComboTable(int center)
 	while(i<1919)
 	{
 		char color = bin[i];
-		if(color==bin[i+1])
+		if(color==bin[i+1] || (color==1&&bin[i+1]==0) ) // skip changing from white(1) to black(0)
 		{
 			combo++;
 		}
@@ -757,7 +757,7 @@ void render(char * framebuffer, const char * buf, int size)
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[1920+i-center]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
 			}
 		}
 		for(i=0; i<center; i++) gCalibrationData.pixelLen[3839+i-center] = -1;
@@ -789,7 +789,7 @@ void render(char * framebuffer, const char * buf, int size)
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[i+(1920-center)]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[i+(1920-center)]=10.0/combo; // 1cell = 5mm
 			}
 		}
 		for(i=0; i<1920-center; i++) gCalibrationData.pixelLen[i] = -1;
