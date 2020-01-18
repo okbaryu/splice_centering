@@ -1,0 +1,52 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  position: absolute;
+  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-repeat: no-repeat;
+  margin: 0;
+  padding: 0;
+}
+.wrap{
+  width: 1024px;
+  height: 768px;
+  display: grid;
+  grid-template-columns: repeat(16, 64px);
+  grid-template-rows: repeat(14, 48px) 44px 52px;
+  grid-gap: 0px;
+}
+.homeTitle{
+  grid-area: 4/1/5/17;
+  font-size: 42px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  color: white;
+}
+.back{
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  height: 34px;
+  width: 102px;
+  background-color: #D63E2E;
+  border: 0;
+  color: white;
+}
+.foot{
+  background-color: #e3e3e3;
+}
+.footClock{
+  text-align: center;
+  grid-area: 16/1/17/3;
+}
+.footMenu{
+  height: 52px;
+  line-height: 52px;
+  text-align: center;
+  grid-area: 16/3/17/15;
+}
+.footLogo{
+  grid-area: 16/15/17/17;
+}

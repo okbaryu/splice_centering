@@ -1,0 +1,27 @@
+<span id="cal" style="font-size: 12px;color:gray;"></span>
+<span id="clock" style="font-size: 17px;color:gray;"></span>
+
+<script type="text/javascript">
+  var clockTarget = document.getElementById("clock");
+  var calTarget = document.getElementById("cal");
+
+  function clock() {
+    var date = new Date();
+    var year = date.getFullYear();
+    var month = date.getMonth();
+    var clockDate = date.getDate();
+    var day = date.getDay();
+    var hours = date.getHours();
+    var minutes = date.getMinutes();
+    var seconds = date.getSeconds();
+    calTarget . innerText =  `${year} - ${(month+1) < 10 ? `0${month+1}` : month} - ${clockDate}`;
+    clockTarget .innerText = `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes }`  : minutes }:${seconds < 10 ? `0${seconds }`  : seconds }`;
+  }
+
+  function init() {
+  clock();
+  setInterval(clock, 1000);
+  }
+
+  init();
+</script>

@@ -1,0 +1,133 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  position: absolute;
+  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-repeat: no-repeat;
+  margin: 0;
+  padding: 0;
+}
+.wrap{
+  width: 1024px;
+  height: 768px;
+  display: grid;
+  grid-template-columns: repeat(16, 64px);
+  grid-template-rows: repeat(14, 48px) 44px 52px;
+  grid-gap: 0px;
+}
+.homeTitle{
+  grid-area: 3/1/4/17;
+  font-size: 42px;
+  font-style: normal;
+  font-weight: bold;
+  text-align: center;
+  color: white;
+}
+.login{
+  /* grid-area: 7/7/14/11; */
+  display: table;
+  width: 242px;
+  height: 338px;
+  background-color: #969696;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  box-shadow: 0px 0px 20px 5px #45464d;
+}
+.inputGroup{
+  position: absolute;
+  padding: 7px;
+  top: -4px;
+  left: 90%;
+}
+.inputGroup li{
+  list-style: none;
+  text-decoration: none;
+  color: white;
+  display: block;
+}
+.inputGroup #closeButton{
+  list-style: none;
+  display: block;
+  text-decoration: none;
+  background-color: #969696;
+  border: 0;
+  outline: 0;
+  color: white;
+}
+.input{
+  color: white;
+  background-color: #45464d;
+  border-width: 0;
+  height: 34px;
+  width: 206px;
+}
+.button3{
+  padding-top: 10px;
+  display: table-cell;
+  text-align: center;
+  height: 34px;
+  width: 204px;
+}
+.button3 ul li{
+  outline: none;
+  list-style: none;
+  vertical-align: middle;
+  float: left;
+  padding: 5px;
+}
+.button1{
+  color: white;
+  position: absolute;
+  width: 102px;
+  height: 34px;
+  background-color: #D63E2E;
+  border-width: 0;
+  left: 3px;
+  bottom: 0px;
+}
+.button2{
+  color: white;
+  width: 102px;
+  height: 34px;
+  background-color: #45464d;
+  border-width: 0;
+  position: absolute;
+  right: 3px;
+  bottom: 0px;
+}
+.loginLogo{
+  display: table-cell;
+  text-align: center;
+  position: absolute;
+  top: 23%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#loginform{
+  position: absolute;
+  top: 60%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+#loginform #Login1 .label{
+  padding-top: 15px;
+  color: white;
+}
+.foot{
+  background-color: #e3e3e3;
+}
+.footClock{
+  text-align: center;
+  grid-area: 16/1/17/3;
+}
+.footMenu{
+  height: 52px;
+  line-height: 52px;
+  text-align: center;
+  grid-area: 16/3/17/15;
+}
+.footLogo{
+  grid-area: 16/15/17/17;
+}

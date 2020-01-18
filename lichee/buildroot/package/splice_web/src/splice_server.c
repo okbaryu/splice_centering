@@ -12,19 +12,18 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <pthread.h>
+#include <signal.h>
 
 #include "splice_libs.h"
 #include "splice_utils.h"
+#include "actuator.h"
+#include "centering.h"
+#include "plc.h"
 
 #define MAXHOSTNAME                  80
 #define PERF_FILE_FULL_PATH_LEN      64
 #define SATA_USB_FILE_FULL_PATH_LEN  64
 #define LINUX_TOP_FILE_FULL_PATH_LEN 64
-
-static unsigned int         g_interval = 1000;             /**g_interval is in msec unit*/
-static splice_cpu_percent g_cpuData;
-static pthread_mutex_t      g_mutex_lock;
-static void reusePort( int sock );
 
 static unsigned char Quit = 0;
 
@@ -754,7 +753,6 @@ static int Splice_ReadRequest(
 {
 	int         rc;
 	static bool bFirstPass = true;
-	int fd=0;
 
 	PrintInfo( "%u Started new thread serving %s\n", ntohs( from.sin_port ), inet_ntoa( from.sin_addr ));
 
@@ -771,12 +769,6 @@ static int Splice_ReadRequest(
 	{
 		PrintInfo( "%u ", ntohs( from.sin_port ));
 		CloseAndExit( psd, "receiving stream  message" );
-	}
-
-	fd = open("tkey.txt", O_RDONLY);
-	if(fd > 0)
-	{
-		pResponse->profile = 0xFFAA;
 	}
 
 	if (rc > 0)
@@ -831,6 +823,121 @@ static int Splice_ReadRequest(
 					break;
 				}
 
+			case SPLICE_CMD_GET_ACTUATOR_STATUS:
+				{
+					act_status p;
+					actuator_get_status(&p);
+
+					pResponse->data[0] = p.act_direction;
+					pResponse->data[1] = p.act_max_stroke;
+					pResponse->data[2] = p.act_speed;
+					pResponse->data[3] = p.act_l_limit;
+					pResponse->data[4] = p.act_r_limit;
+					pResponse->data[5] = p.act_origin_offset_msb;
+					pResponse->data[6] = p.act_origin_offset_lsb;
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_SET_ACTUATOR_STATUS:
+				{
+					act_status p;
+
+					p.act_direction = pRequest->request.strCmdLine[0];
+					p.act_max_stroke = pRequest->request.strCmdLine[1];
+					p.act_speed = pRequest->request.strCmdLine[2];
+					p.act_l_limit = pRequest->request.strCmdLine[3];
+					p.act_r_limit = pRequest->request.strCmdLine[4];
+					p.act_origin_offset_msb = pRequest->request.strCmdLine[5];
+					p.act_origin_offset_lsb = pRequest->request.strCmdLine[6];
+
+					actuator_set_status(&p);
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_GET_ACTUATOR_POSITION:
+				{
+					act_position p;
+					actuator_get_current_postion(&p);
+
+					pResponse->data[0] = p.act_cur_position_msb;
+					pResponse->data[1] = p.act_cur_position_lsb;
+					pResponse->data[2] = p.act_prev_position_msb;
+					pResponse->data[3] = p.act_prev_position_lsb;
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_SET_ACTUATOR_POSITION:
+				{
+					act_position p;
+					p.act_cur_position_msb = 0;
+					p.act_cur_position_lsb = 0;
+					int val;
+
+					pResponse->cmd = pRequest->cmdSecondary;
+					if(pRequest->cmdSecondary == CMD2_ACT_MOVE)
+					{
+						if(pRequest->cmdSecondaryOption < 0)
+						{
+							p.act_cur_position_msb |= 0x80;
+							pRequest->cmdSecondaryOption *= -1;
+						}
+
+						val = pRequest->cmdSecondaryOption;
+						p.act_cur_position_lsb |= val & 0xff;
+						p.act_cur_position_msb |= (val >> 8) & 0xff;
+						actuator_set_current_position(&p, CMD2_ACT_MOVE);
+
+						if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+						{
+							CloseAndExit( psd, "sending response cmd" );
+						}
+					}
+					else if(pRequest->cmdSecondary == CMD2_ACT_MOVE_ORG)
+					{
+						actuator_set_current_position(&p, CMD2_ACT_MOVE_ORG);
+
+						if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+						{
+							CloseAndExit( psd, "sending response cmd" );
+						}
+					}
+
+					break;
+				}
+
+			case SPLICE_CMD_GET_RREGISTER_PLC:
+				{
+					pResponse->cmd = pRequest->cmd;
+					if(sendPlc(EEP_Data_Start_R_Register, pResponse->data, EEP_R_Register_Size, true) != PLC_COMM_ACK)
+					{
+						printf("failed to get R register from PLC\n");
+					}
+
+					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
+					{
+						CloseAndExit( psd, "sending response cmd" );
+					}
+					break;
+				}
+
 			case SPLICE_CMD_QUIT:
 				{
 					Quit = 1;
@@ -854,49 +961,9 @@ static int Splice_ReadRequest(
 	return( 0 );
 }
 
-
-/**
- *  Function: This function will configure the socket so that the address can be re-used without a long timeout.
- **/
-static void reusePort(
-		int s
-		)
+void handler(int signum)
 {
-	int one = 1;
-
-	if (setsockopt( s, SOL_SOCKET, SO_REUSEADDR, (char *)&one, sizeof( one )) == -1)
-	{
-		PrintError( "error in setsockopt, SO_REUSEADDR(%d) (%s) \n", SO_REUSEADDR, strerror(errno) );
-	}
-}
-
-void *dataFetchThread(
-		void *data
-		)
-{
-	splice_cpu_percent cpuData;
-
-	UNUSED( data );
-
-	memset( &cpuData, 0, sizeof( cpuData ));
-	memset( &g_cpuData, 0, sizeof( g_cpuData ));
-
-	/** create mutex ***/
-	pthread_mutex_init( &g_mutex_lock, NULL );
-
-	while (1)
-	{
-		setUpTime();
-
-		set_cpu_utilization();
-
-		P_getCpuUtilization();
-
-		fflush( stdout );
-		fflush( stderr );
-
-		usleep(( g_interval*1000 ));
-	}
+	printf("broken pipe signal~!~!  0x%x\n", signum);
 }
 
 /**
@@ -907,8 +974,6 @@ int main(
 		char *argv[]
 		)
 {
-	pthread_t dataGatheringThreadId = 0;
-	void     *(*threadFunc)( void * );
 
 	UNUSED( argc );
 
@@ -917,28 +982,22 @@ int main(
 
 	Splice_Server_InitMutex( &gSataUsbMutex );
 
-	/*printf( "%s: splice_response size %ld\n", __FUNCTION__, (long int) sizeof( splice_response ));*/
-	threadFunc = dataFetchThread;
-	if (pthread_create( &dataGatheringThreadId, NULL, threadFunc, (void *)NULL ))
-	{
-		PrintError( "could not create thread for data gathering; %s\n", strerror( errno ));
-	}
-	else
-	{
+	signal(SIGPIPE, handler);
+	plc_init();
+	actuator_init("192.168.29.181");
+	TASK_Sleep(1000);
+	centering_init();
+
 #if 1
-		PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",
-				sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
+	PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",
+			sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
 #endif
 
-		startServer();
+	startServer();
 
-		{
-			unsigned int idx = 0;
-			for (idx = 0; idx<5000; idx++) {
-				//PrintInfo( "%s: sleep(1000)\n", argv[0] );
-				sleep( 1000 );
-			}
-		}
+	while(1)
+	{
+		TASK_Sleep(1000);
 	}
 
 	PrintInfo( "%s exiting.\n", argv[0] );
