@@ -66,6 +66,9 @@ int gRightTrim0 = 1919;
 int gLeftTrim1 = 0;
 int gRightTrim1 = 1919;
 
+int gLeftPosition = 0;
+int gRightPosition = 0;
+
 #define FONT_WIDTH	16
 #define FONT_HEIGHT	21
 #define FONT_COUNT	10
@@ -100,7 +103,11 @@ pthread_mutex_t gMutex1;
 #define STR_SET_STREAMING		"setStreaming"
 #define STR_ON				"on"
 #define STR_OFF				"off"
-
+#define STR_LPOS02			"LPos02"
+#define STR_LPOS01			"LPos01"
+#define STR_RPOS01			"RPos01"
+#define STR_RPOS02			"RPos02"
+#define STR_GET_POSITIONS	"getPositions"
 
 #define FILE_PATH		"/mnt/extsd/calibration_data.json"
 #define KEY_CAM0_CENTER 	"cam0Center"
@@ -157,6 +164,10 @@ struct {
 }; // Create an anonymous struct, instanciate an array and fill it
 
 void setMode(int uartPort, int mode, int threshold);
+int getPositions(int sock, int LPos, int RPos, int center);
+
+int min(int a, int b) { return a<b?a:b; }
+int max(int a, int b) { return a>b?a:b;}
 
 void clearScreen()
 {
@@ -399,7 +410,7 @@ void generateComboTable(int center)
 	while(i<1919)
 	{
 		char color = bin[i];
-		if(color==bin[i+1])
+		if(color==bin[i+1] || (color==1&&bin[i+1]==0) ) // skip changing from white(1) to black(0)
 		{
 			combo++;
 		}
@@ -757,7 +768,7 @@ void render(char * framebuffer, const char * buf, int size)
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[1920+i-center]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
 			}
 		}
 		for(i=0; i<center; i++) gCalibrationData.pixelLen[3839+i-center] = -1;
@@ -789,7 +800,7 @@ void render(char * framebuffer, const char * buf, int size)
 			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[i+(1920-center)]=5.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[i+(1920-center)]=10.0/combo; // 1cell = 5mm
 			}
 		}
 		for(i=0; i<1920-center; i++) gCalibrationData.pixelLen[i] = -1;
@@ -1059,12 +1070,15 @@ void receiveFrame(char* fb)
 
     char vf0[1920];
     char vf1[1920];
-	char vfCombined[1920];
+    char vfCombined[3840];
+    char vfBin[3840];
+    char vfResized[1920];
 
     memset(vf0, 0, 1920);
     memset(vf1, 0, 1920);
-	memset(vfCombined, 0 ,1920);
-
+    memset(vfCombined, 0 ,3840);
+    memset(vfBin, 0 ,3840);
+    memset(vfResized, 0 ,1920);
 
     while(1)
     {
@@ -1112,72 +1126,87 @@ void receiveFrame(char* fb)
 			// copy cam1 left side image
 			int i=0;
 			int center = gCalibrationData.cam1Center;
-			#if 1
-			for(i=0; i<1920/2; i++)
+			//printf("(i) cam1 center=%d\n", center);
+
+			for(i=0; i<1920; i++)
 			{
-				if(center-i*2-1<0) break;
-				vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
+				if(center-i<0) break;
+
+				vfCombined[1919-i] = vf1[center-i];
+
+				if(gMode==MODE_RUNNING)
+				{
+					if(vf1[center-i]>gCalibrationData.cam1Threshold)
+						vfBin[1919-i] = 1;
+					else vfBin[1919-i] = 0;
+				}
 			}
 	
 			// copy cam0 right side image
 			center = gCalibrationData.cam0Center;
-			for(i=0; i<1920/2; i++)
-			{
-				if(center+i*2+1>=1920) break;
-				vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
-			}
-			
-			filterNoise(vfCombined, 1920);
-			gCount0 = countBar(vfCombined, 1920/2, 1919, gThreshold0);
-			gCount1 = countBar(vfCombined, 0, 1920/2-1, gThreshold1);
-
-			render(fb, vfCombined, 1920);
-
-			#elif 0
+			//printf("(i) cam0 center=%d\n", center);
 			for(i=0; i<1920; i++)
 			{
-			if(center-i-1<0) break;
-			//vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
-			vfCombined[1920-i] = vf1[center-i];
-			}
+				if(center+i>=1920) break;
 
-			// copy cam0 right side image
-			center = gCalibrationData.cam0Center;
-			for(i=0; i<1920; i++)
-			{
-				if(center+i+1>=1920) break;
-				//vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
 				vfCombined[1920+i] = vf0[center+i];
+
+				if(gMode==MODE_RUNNING)
+				{
+					if(vf0[center+i]>gCalibrationData.cam0Threshold)
+						vfBin[1920+i] = 1;
+					else vfBin[1920+i] = 0;
+				}
 			}
-
-			filterNoise(vfCombined, 1920);
-			gCount0 = countBar(vfCombined, 1920, 1920*2 -1, gThreshold0);
-			gCount1 = countBar(vfCombined, 0, 1920-1, gThreshold1);
-
-			render(fb, vfCombined, 1920*2);
-			#else
-			for(i=0; i<1920/2; i++)
+/*
+			printf("\n(i)vfBin:\n");
+			for(i=0; i<3840; i++)
 			{
-				if(center-i*2-1<0) break;
-				//vfCombined[1920/2-i] = (vf1[center-i*2] + vf1[center-i*2-1])/2;
-				vfCombined[1920/2-i] = vf1[center-i];
+				printf("%d,", vfBin[i]);
 			}
-
-			// copy cam0 right side image
-			center = gCalibrationData.cam0Center;
-			for(i=0; i<1920/2; i++)
+*/			
+			//printf("(i) filter Noise will be called\n");
+			//filterNoise(vfCombined, 3840);
+			//printf("(i) filter Nosise done\n");
+			
+			// get Left Edge Position
+			center=gCalibrationData.cam1Center;
+			int startIndex = 1920-center+1;
+			for(i=startIndex; i<3839; i++)
 			{
-				if(center+i*2+1>=1920) break;
-				//vfCombined[1920/2+i] = (vf0[center+i*2] + vf0[center+i*2+1])/2;
-				vfCombined[1920/2+i] = vf0[center+i];
+				if(vfBin[i]==1 && vfBin[i+1]==0) // the material make some shadows.
+				{
+					gLeftPosition = i+1;
+					break;
+				}
 			}
+			//printf("(i) gLeftPosition = %d\n", gLeftPosition);
+			
+			// get Right Edge Position
+			center=gCalibrationData.cam0Center;
+			startIndex = 3839-center-1;
+			for(i=startIndex; i>0; i--)
+			{
+				if(vfBin[i]==1 && vfBin[i-1]==0)
+				{
+					gRightPosition = i-1;
+					break;
+				}
+			}
+			//printf("(i) gRightPosition=%d\n", gRightPosition);
+			
+			// resize to 1/2 scale
+			for(i=0; i<1920; i++)
+				vfResized[i] = (vfCombined[i*2] + vfCombined[i*2+1])/2.0;
 
-			filterNoise(vfCombined, 1920);
-			gCount0 = countBar(vfCombined, 1920/2, 1919, gThreshold0);
-			gCount1 = countBar(vfCombined, 0, 1920/2-1, gThreshold1);
+			//printf("(i) vf resized\n");
+			
+			gCount0 = countBar(vfResized, 1920/2, 1919, gThreshold0);
+			gCount1 = countBar(vfResized, 0, 1920/2-1, gThreshold1);
 
-			render(fb, vfCombined, 1920);
-			#endif
+			//printf("(i) render function will be called\n");
+
+			render(fb, vfResized, 1920);
 		}
 	}
 	else
@@ -1528,6 +1557,20 @@ void responseUserRequest(int sock, char * msg, int len)
 		json_object_object_add(response,
 			STR_SET_RIGHT_TRIM, json_object_new_string(buf) );	
 	}
+	
+	// 12. getPositions
+	exists=json_object_object_get_ex(rootObj, STR_GET_POSITIONS, 0);
+	if(exists!=0) {
+
+		int LPos = gLeftPosition;
+		int RPos = gRightPosition;
+		int center = 1919; // center index on pixel_length array in calibration_data.json
+		
+		getPositions(sock, LPos, RPos, center);
+		
+		return;
+	}
+
 
 	strcpy(buf, json_object_to_json_string_ext(response, json_flags[0].flag) );
 	len = write(sock,buf,strlen(buf)+1);
@@ -1537,6 +1580,122 @@ void responseUserRequest(int sock, char * msg, int len)
 	json_object_put(response); // delete the new object.
 
 	return;
+}
+
+
+float getRelativeMM(int indexCenter, int indexPos)
+{
+	// exception handling
+	if(indexPos==0 || indexCenter==0) return 0;
+
+	float lengthMM = 0;
+
+	// Sumation of all pixels from center to the position
+	int from = min(indexCenter, indexPos);
+	int to = max(indexCenter, indexPos);
+
+	int i=0;
+	for(i=from; i<=to; i++)
+	{
+		float pixelLengthMM = gCalibrationData.pixelLen[i];	
+		lengthMM+=pixelLengthMM;
+	}
+
+	// Make decision on the signal
+	if(indexPos<indexCenter)
+		lengthMM*=-1;
+
+	return lengthMM;	
+}
+
+int getPositions(int sock, int LPos, int RPos, int center)
+{
+	printf("(i) sendPosition called, sock=%d, LPos=%d, RPos=%d, center=%d\n", sock, LPos, RPos, center);
+
+	int LPos02 = 0;
+	int LPos01 = 0;
+	int RPos01 = 0;
+	int RPos02 = 0;
+	
+	// exception handling
+	if(gMode != MODE_RUNNING)
+	{
+		printf("(!)gMode != MODE_RUNNING\n");
+		return -1;
+	}
+	
+	if(gSetCam != SET_CAM_ALL)
+	{
+		printf("(!)gSetCam != SET_CAM_ALL\n");
+		return -1;
+	}
+	
+	if(LPos >= RPos)
+	{
+		printf("(!)LPos(%d) >= RPos(%d)\n", LPos, RPos);
+		return -1;
+	}
+	
+	// 4 case branch
+	if(LPos <= center && RPos <= center)
+	{
+		LPos02 = LPos;
+		LPos01 = RPos;
+	}
+	else if(LPos<=center && RPos>center)
+	{
+		LPos01 = LPos;
+		RPos01 = RPos;
+	}
+	else if(LPos>center && RPos>center)
+	{
+		RPos01 = LPos;
+		RPos02 = RPos;
+	}
+	printf("(i) 4 positions have been prepared\n");
+
+	// Convert pixel array index to mm length based on center pixel
+	float fLPos02=0;
+	float fLPos01=0;
+	float fRPos01=0;
+	float fRPos02=0;
+
+	fLPos02 = getRelativeMM(center, LPos02);
+	fLPos01 = getRelativeMM(center, LPos01);
+	fRPos01 = getRelativeMM(center, RPos01);
+	fRPos02 = getRelativeMM(center, RPos02);
+	
+	// Packing on JSON and sending
+	json_object *response = json_object_new_object();
+	
+	char bufLPos02[255];
+	char bufLPos01[255];
+	char bufRPos01[255];
+	char bufRPos02[255];
+	sprintf(bufLPos02,"%f",fLPos02);
+	sprintf(bufLPos01,"%f",fLPos01);
+	sprintf(bufRPos01,"%f",fRPos01);
+	sprintf(bufRPos02,"%f",fRPos02);
+
+	json_object_object_add(response, STR_LPOS02, json_object_new_string(bufLPos02) );
+	json_object_object_add(response, STR_LPOS01, json_object_new_string(bufLPos01) );
+	json_object_object_add(response, STR_RPOS01, json_object_new_string(bufRPos01) );
+	json_object_object_add(response, STR_RPOS02, json_object_new_string(bufRPos02) );
+
+	char buf[256];
+	sprintf(buf,"%s\n",json_object_to_json_string_ext(response, json_flags[0].flag) );
+	int len = write(sock,buf,strlen(buf)+1);
+
+	json_object_put(response); // delete the new object.
+
+	if(len>0) printf("(i) server: send response success(%d).n=%d, %s\n", len, strlen(buf), buf);
+	if(len<=0)
+	{
+		printf("(!) server: getPositions response failed(%d).\n", len);
+		return -1;
+	}
+
+	return 0;
 }
 
 
