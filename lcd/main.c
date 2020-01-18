@@ -164,6 +164,10 @@ struct {
 }; // Create an anonymous struct, instanciate an array and fill it
 
 void setMode(int uartPort, int mode, int threshold);
+int getPositions(int sock, int LPos, int RPos, int center);
+
+int min(int a, int b) { return a<b?a:b; }
+int max(int a, int b) { return a>b?a:b;}
 
 void clearScreen()
 {
@@ -1579,6 +1583,31 @@ void responseUserRequest(int sock, char * msg, int len)
 }
 
 
+float getRelativeMM(int indexCenter, int indexPos)
+{
+	// exception handling
+	if(indexPos==0 || indexCenter==0) return 0;
+
+	float lengthMM = 0;
+
+	// Sumation of all pixels from center to the position
+	int from = min(indexCenter, indexPos);
+	int to = max(indexCenter, indexPos);
+
+	int i=0;
+	for(i=from; i<=to; i++)
+	{
+		float pixelLengthMM = gCalibrationData.pixelLen[i];	
+		lengthMM+=pixelLengthMM;
+	}
+
+	// Make decision on the signal
+	if(indexPos<indexCenter)
+		lengthMM*=-1;
+
+	return lengthMM;	
+}
+
 int getPositions(int sock, int LPos, int RPos, int center)
 {
 	printf("(i) sendPosition called, sock=%d, LPos=%d, RPos=%d, center=%d\n", sock, LPos, RPos, center);
@@ -1624,18 +1653,29 @@ int getPositions(int sock, int LPos, int RPos, int center)
 		RPos02 = RPos;
 	}
 	printf("(i) 4 positions have been prepared\n");
+
+	// Convert pixel array index to mm length based on center pixel
+	float fLPos02=0;
+	float fLPos01=0;
+	float fRPos01=0;
+	float fRPos02=0;
+
+	fLPos02 = getRelativeMM(center, LPos02);
+	fLPos01 = getRelativeMM(center, LPos01);
+	fRPos01 = getRelativeMM(center, RPos01);
+	fRPos02 = getRelativeMM(center, RPos02);
 	
 	// Packing on JSON and sending
 	json_object *response = json_object_new_object();
 	
-	char bufLPos02[16];
-	char bufLPos01[16];
-	char bufRPos01[16];
-	char bufRPos02[16];
-	sprintf(bufLPos02,"%d",LPos02);
-	sprintf(bufLPos01,"%d",LPos01);
-	sprintf(bufRPos01,"%d",RPos01);
-	sprintf(bufRPos02,"%d",RPos02);
+	char bufLPos02[255];
+	char bufLPos01[255];
+	char bufRPos01[255];
+	char bufRPos02[255];
+	sprintf(bufLPos02,"%f",fLPos02);
+	sprintf(bufLPos01,"%f",fLPos01);
+	sprintf(bufRPos01,"%f",fRPos01);
+	sprintf(bufRPos02,"%f",fRPos02);
 
 	json_object_object_add(response, STR_LPOS02, json_object_new_string(bufLPos02) );
 	json_object_object_add(response, STR_LPOS01, json_object_new_string(bufLPos01) );
