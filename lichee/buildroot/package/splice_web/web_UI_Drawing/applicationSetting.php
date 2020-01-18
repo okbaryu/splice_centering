@@ -1,4 +1,6 @@
-<?php  ?>
+<?php
+include('./loginChek.php')
+ ?>
 <!DOCTYPE html>
 <html>
   <head>
@@ -18,30 +20,33 @@
           <ul>
             <li>
               <a href="#">
-                <table onclick="location.href='./systemsetting.php'">
-                  <tr>
-                    <td><img id="account" class="linkImg" src="images/web_GUI/icon/systemSetting.png" width="100px" height="100px"></td>
-                  </tr>
-                  <tr>
-                    <td class="menuText">System Setting</td>
-                  </tr>
-                </table>
+                <div class="inContainer" onclick="location.href='./systemsetting.php'">
+                  <div id="ractangel" onmouseover="changeColor()" onmouseout="resetColor()">
+                    <img id="account" class="linkImg" src="images/web_GUI/icon/systemSetting.png" width="100px" height="100px" style="position:relative; top:30px;">
+                  </div><!-- -->
+                  <div id="triangle" onmouseover="changeColor()" onmouseout="resetColor()">
+
+                  </div><!-- -->
+                  <span class="textB sysText">System Setting</span>
+                </div>
               </a>
             </li>
             <li>
               <a href="#">
-                <table onclick="location.href='./plcSetting.php'">
-                  <tr>
-                    <td><img class="linkImg" src="images/web_GUI/icon/plcDevice.png" width="100px" height="100px"></td>
-                  </tr>
-                  <tr>
-                    <td class="menuText">PLC Setting</td>
-                  </tr>
-                </table>
+                <div class="inContainer1" onclick="location.href='./plcSetting.php'">
+                  <div id="ractangel1" onmouseover="changeColor1()" onmouseout="resetColor1()">
+                    <img class="linkImg" src="images/web_GUI/icon/plcDevice.png" width="100px" height="100px" style="position:relative; top:30px;">
+                  </div><!-- -->
+                  <div id="triangle1" onmouseover="changeColor1()" onmouseout="resetColor1()">
+
+                  </div><!-- -->
+                  <span class="textB plcText">PLC Setting</span>
+                </div>
               </a>
             </li>
           </ul>
         </div>
+        <div class="block"></div>
       </div>
       <div class="footClock foot">
           <?php include("clock.html") ?>
@@ -59,5 +64,6 @@
         <?php include("footlogo.html") ?>
       </div>
     </div>
+    <script src="./blockColorSet.js"></script>
   </body>
 </html>
