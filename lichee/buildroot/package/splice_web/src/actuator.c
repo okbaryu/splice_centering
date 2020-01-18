@@ -19,14 +19,14 @@
 int socket_fd;
 static char ip_addr[MAX_IP_LENGTH];
 
-int actuator_init(const char *p)
+int actuator_init(void)
 {
 	int fd;
 	ssize_t rc;
 	struct sockaddr_in server;
 
 	fd = open(IP_FILE, O_RDWR);
-	if(fd < 0 && p == NULL)
+	if(fd < 0)
 	{
 		perror("failed to open");
 		return -1;
