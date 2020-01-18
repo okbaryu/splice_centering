@@ -154,8 +154,8 @@ static int CloseAndExit(
  *  Function: This function will open a connection to a specific port that will be used to receive and send data
  *  from the user's browser.
  **/
-static int startServer(
-		void
+void *startServer(
+		void *data
 		)
 {
 	int                fromlen;
@@ -176,7 +176,7 @@ static int startServer(
 
 	/* Create socket on which to send and receive */
 
-	sd = socket( AF_INET, SOCK_STREAM, IPPROTO_TCP );
+	sd = socket( AF_INET, SOCK_STREAM, 0);
 
 	if (sd < 0)
 	{
@@ -977,6 +977,8 @@ int main(
 
 	UNUSED( argc );
 
+	pthread_t serverTaskId;
+
 	memset( &g_savedIrqData, 0, sizeof( g_savedIrqData ));
 	memset( &gSataUsbMbps, 0, sizeof( gSataUsbMbps ));
 
@@ -984,7 +986,7 @@ int main(
 
 	signal(SIGPIPE, handler);
 	plc_init();
-	actuator_init("192.168.29.181");
+	actuator_init();
 	TASK_Sleep(1000);
 	centering_init();
 
@@ -993,7 +995,10 @@ int main(
 			sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
 #endif
 
-	startServer();
+	if (pthread_create( &serverTaskId, NULL, startServer, (void *)NULL ))
+	{
+		PrintError( "could not create thread for splice_server %s\n", strerror( errno ));
+	}
 
 	while(1)
 	{
