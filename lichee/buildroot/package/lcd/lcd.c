@@ -174,11 +174,12 @@ void clearScreen()
 	memset(gFb, 0, 800*480*4);// clear screen
 }
 
-long long GetNowUs() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+unsigned long GetNowUs()
+{
+	struct timespec tv;
 
-    return (long long)tv.tv_sec * 1000000ll + tv.tv_usec;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return (tv.tv_sec * 1000000) + (tv.tv_nsec/1000);
 }
 
 void fetchFrameCalibration(char * vf, const char * buf, int size)
@@ -1919,11 +1920,11 @@ void* thread_function_streaming(void* arg)
 
 	int sock = *((int*)arg);
 
-	long prev = GetNowUs();
+	unsigned long prev = GetNowUs();
 	while(1)
 	{
-		long current = GetNowUs();
-		long elapsedTime = current - prev;
+		unsigned long current = GetNowUs();
+		unsigned long elapsedTime = current - prev;
 		if( (gMode==MODE_RUNNING && elapsedTime>16667) ||
 			(gMode==MODE_CALIBRATION && elapsedTime>1000000) )
 		{
