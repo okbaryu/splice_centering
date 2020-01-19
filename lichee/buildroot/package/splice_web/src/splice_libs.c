@@ -21,6 +21,7 @@
 #include <pthread.h>
 #include <dirent.h>
 #include <time.h>
+#include <poll.h>
 
 #include "splice_libs.h"
 #include "splice_utils.h"
@@ -805,6 +806,7 @@ int send_request_read_response(
 	struct sockaddr_in from;
 	struct in_addr sin_temp_addr;
 	struct sockaddr_in    server;
+	struct pollfd sock_pfd;
 
 	sin_temp_addr.s_addr = get_my_ip4_addr();
 	if ( sin_temp_addr.s_addr == 0 )
@@ -858,10 +860,17 @@ int send_request_read_response(
 	}
 
 	PrintInfo( "Reading response from server; sizeof(response) %u\n", response_len );
-	if (( rc = recv( sd, response, response_len, 0 )) < 0)
+	sock_pfd.fd = sd;
+	sock_pfd.events = POLLIN;
+
+	poll(&sock_pfd, 1, 1000);
+	if(sock_pfd.revents & POLLIN)
 	{
-		PrintError( "failed to recv cmd %u from socket %u\n", cmd, sd );
-		return( -1 );
+		rc = recv( sd, response, response_len, 0);
+	}
+	else
+	{
+		PrintInfo("poll timeout, event=0x%x\n", sock_pfd.revents);
 	}
 
 	Close( sd );
