@@ -776,56 +776,18 @@ static int Splice_ReadRequest(
 		PrintInfo( "%u %s: Received: from TCP/Client (%s); cmd (%u) \n", ntohs( from.sin_port ), DateYyyyMmDdHhMmSs(), inet_ntoa( from.sin_addr ), pRequest->cmd );
 		PrintInfo( "cmd %u; cmdSecondary %u; cmdOption %lu\n", pRequest->cmd, pRequest->cmdSecondary, pRequest->cmdSecondaryOption );
 		switch (pRequest->cmd) {
-			case SPLICE_CMD_GET_OVERALL_STATS:
-				{
-					pResponse->cmd = pRequest->cmd;
-
-					PrintInfo( "bFirstPass %u\n", bFirstPass );
-					if (( bFirstPass == true ))
-					{
-						bFirstPass = false;
-					}
-
-					splice_computeIrqData( pResponse->response.overallStats.cpuData.numActiveCpus, &pResponse->response.overallStats.irqData );
-
-					PrintInfo( "sending cmd (%u); %lu bytes\n", pResponse->cmd, sizeof( *pResponse ));
-					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
-					{
-						CloseAndExit( psd, "sending response cmd" );
-					}
-					break;
-				}
-
-			case SPLICE_CMD_GET_CPU_IRQ_INFO:
-				{
-					pResponse->cmd = pRequest->cmd;
-					splice_getCpuUtilization( &pResponse->response.cpuIrqData.cpuData );
-
-					PrintInfo( "detected SPLICE_CMD_GET_CPU_IRQ_INFO (%u); numCpus %u\n", pResponse->cmd,
-							pResponse->response.cpuIrqData.cpuData.numActiveCpus );
-					splice_computeIrqData( pResponse->response.cpuIrqData.cpuData.numActiveCpus, &pResponse->response.cpuIrqData.irqData );
-
-					if (( pRequest->cmdSecondary == SPLICE_CMD_START_SATA_USB ) || ( pRequest->cmdSecondary == SPLICE_CMD_STOP_SATA_USB ))
-					{
-						splice_sata_usb_start( pRequest->cmdSecondaryOption );
-
-						splice_sata_usb_gather( pResponse );
-					}
-
-					pResponse->response.overallStats.contextSwitches = g_ContextSwitchesDelta;
-
-					PrintInfo( "sending cmd (%u); %lu bytes\n", pResponse->cmd, sizeof( *pResponse ));
-					if (send( psd, pResponse, sizeof( *pResponse ), 0 ) < 0)
-					{
-						CloseAndExit( psd, "sending response cmd" );
-					}
-
-					break;
-				}
-
 			case SPLICE_CMD_GET_ACTUATOR_STATUS:
 				{
 					act_status p;
+
+					if(getIsCentering())
+					{
+						PrintInfo( "In middle of centering\n");
+						break;
+					}
+
+					PrintInfo( " SPLICE_CMD_GET_ACTUATOR_STATUS\n");
+
 					actuator_get_status(&p);
 
 					pResponse->data[0] = p.act_direction;
@@ -848,6 +810,14 @@ static int Splice_ReadRequest(
 				{
 					act_status p;
 
+					if(getIsCentering())
+					{
+						PrintInfo( "In middle of centering\n");
+						break;
+					}
+
+					PrintInfo( "SPLICE_CMD_SET_ACTUATOR_STATUS\n");
+
 					p.act_direction = pRequest->request.strCmdLine[0];
 					p.act_max_stroke = pRequest->request.strCmdLine[1];
 					p.act_speed = pRequest->request.strCmdLine[2];
@@ -869,6 +839,17 @@ static int Splice_ReadRequest(
 			case SPLICE_CMD_GET_ACTUATOR_POSITION:
 				{
 					act_position p;
+
+					if(getIsCentering())
+					{
+						PrintInfo( "In middle of centering\n");
+						break;
+					}
+
+					PrintInfo( " SPLICE_CMD_GET_ACTUATOR_POSITION\n");
+
+					actuator_get_status(&p);
+
 					actuator_get_current_postion(&p);
 
 					pResponse->data[0] = p.act_cur_position_msb;
@@ -890,6 +871,16 @@ static int Splice_ReadRequest(
 					p.act_cur_position_msb = 0;
 					p.act_cur_position_lsb = 0;
 					int val;
+
+					if(getIsCentering())
+					{
+						PrintInfo( "In middle of centering\n");
+						break;
+					}
+
+					PrintInfo( " SPLICE_CMD_SET_ACTUATOR_POSITION\n");
+
+					actuator_get_status(&p);
 
 					pResponse->cmd = pRequest->cmdSecondary;
 					if(pRequest->cmdSecondary == CMD2_ACT_MOVE)

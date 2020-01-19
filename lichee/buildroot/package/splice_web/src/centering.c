@@ -38,7 +38,7 @@
 #define POLL_GPIO_REVENT (POLLPRI | POLLERR)
 
 //#define VIEW_POS
-#define VIEW_ENCODER_CNT
+//#define VIEW_ENCODER_CNT
 #define R_DUMP
 
 extern unsigned char PLCIO;
@@ -49,6 +49,7 @@ static act_status ACT;
 static int actLLimit;
 static int actRLimit;
 static int g_onOff;
+static int isCentering;
 
 static int cnt_enc_a;
 static int cnt_enc_b;
@@ -114,6 +115,16 @@ void *readPosTask(void * data)
 	}
 }
 
+int getIsCentering(void)
+{
+	return isCentering;
+}
+
+void setIsCentering(char status)
+{
+	isCentering = status;
+}
+
 void *centeringTask(void *data)
 {
 	double diff;
@@ -133,6 +144,7 @@ void *centeringTask(void *data)
 			tip_detect = FALSE;
 			enableReadPos(FALSE);
 			sendPlcIO(PLC_WR_RESET);
+			setIsCentering(FALSE);
 
 			if(act_need_reset_flag == TRUE)
 			{
@@ -149,6 +161,7 @@ void *centeringTask(void *data)
 		if(!(PLCIO & 0x1))
 		{
 			enableReadPos(TRUE);
+			setIsCentering(TRUE);
 			act_need_reset_flag = TRUE;
 		}
 
