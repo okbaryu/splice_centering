@@ -3,7 +3,7 @@
 #include <string.h>  
 #include <fcntl.h>  
 #include <unistd.h>  
-#include <linux/fb.h>
+#include <linux/fb.h>  
 #include <sys/mman.h>  
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -174,12 +174,11 @@ void clearScreen()
 	memset(gFb, 0, 800*480*4);// clear screen
 }
 
-unsigned long GetNowUs()
-{
-	struct timespec tv;
+long long GetNowUs() {
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
 
-	clock_gettime(CLOCK_MONOTONIC, &tv);
-	return (tv.tv_sec * 1000000) + (tv.tv_nsec/1000);
+    return (long long)tv.tv_sec * 1000000ll + tv.tv_usec;
 }
 
 void fetchFrameCalibration(char * vf, const char * buf, int size)
@@ -1656,10 +1655,10 @@ int getPositions(int sock, int LPos, int RPos, int center)
 	printf("(i) 4 positions have been prepared\n");
 
 	// Convert pixel array index to mm length based on center pixel
-	float fLPos02=0;
-	float fLPos01=0;
-	float fRPos01=0;
-	float fRPos02=0;
+	double fLPos02=0;
+	double fLPos01=0;
+	double fRPos01=0;
+	double fRPos02=0;
 
 	fLPos02 = getRelativeMM(center, LPos02);
 	fLPos01 = getRelativeMM(center, LPos01);
@@ -1669,19 +1668,10 @@ int getPositions(int sock, int LPos, int RPos, int center)
 	// Packing on JSON and sending
 	json_object *response = json_object_new_object();
 	
-	char bufLPos02[255];
-	char bufLPos01[255];
-	char bufRPos01[255];
-	char bufRPos02[255];
-	sprintf(bufLPos02,"%f",fLPos02);
-	sprintf(bufLPos01,"%f",fLPos01);
-	sprintf(bufRPos01,"%f",fRPos01);
-	sprintf(bufRPos02,"%f",fRPos02);
-
-	json_object_object_add(response, STR_LPOS02, json_object_new_string(bufLPos02) );
-	json_object_object_add(response, STR_LPOS01, json_object_new_string(bufLPos01) );
-	json_object_object_add(response, STR_RPOS01, json_object_new_string(bufRPos01) );
-	json_object_object_add(response, STR_RPOS02, json_object_new_string(bufRPos02) );
+	json_object_object_add(response, STR_LPOS02, json_object_new_double(fLPos02) );
+	json_object_object_add(response, STR_LPOS01, json_object_new_double(fLPos01) );
+	json_object_object_add(response, STR_RPOS01, json_object_new_double(fRPos01) );
+	json_object_object_add(response, STR_RPOS02, json_object_new_double(fRPos02) );
 
 	char buf[256];
 	sprintf(buf,"%s\n",json_object_to_json_string_ext(response, json_flags[0].flag) );
@@ -1718,8 +1708,8 @@ int sendImage(int sock)
 
 	if( gSetCam == SET_CAM_0 )
 	{
-		
-	
+
+
 		pthread_mutex_lock(&gMutex0);
 		memcpy(vfb, gVf0, 1920);
 		pthread_mutex_unlock(&gMutex0);
@@ -1919,12 +1909,17 @@ void* thread_function_streaming(void* arg)
 	fprintf(stderr,"(i) streaming thread started.\n");
 
 	int sock = *((int*)arg);
+	int LPos = 0;
+	int RPos = 0;
+	int center = 1919;	
 
-	unsigned long prev = GetNowUs();
+	long prev = GetNowUs();
 	while(1)
 	{
-		unsigned long current = GetNowUs();
-		unsigned long elapsedTime = current - prev;
+		LPos = gLeftPosition;
+		RPos = gRightPosition;
+		long current = GetNowUs();
+		long elapsedTime = current - prev;
 		if( (gMode==MODE_RUNNING && elapsedTime>16667) ||
 			(gMode==MODE_CALIBRATION && elapsedTime>1000000) )
 		{
@@ -1932,10 +1927,12 @@ void* thread_function_streaming(void* arg)
 
 			if(gStreamMode==STREAM_MODE_STOP) continue;
 
-			if(sendImage(sock) == -1) break;
+			// if(sendImage(sock) == -1)  break;
+			getPositions(sock,LPos,RPos,center);
 
 			if(gStreamMode==STREAM_MODE_ONESHOT)
 				gStreamMode = STREAM_MODE_STOP;
+
 		}
 		else
 		{
@@ -2099,7 +2096,7 @@ void loadFont()
 	for(n=0; n<FONT_COUNT; n++)
 	{
 		char strPath[255];
-		sprintf(strPath, "/var/splice_web/font/%d.dat", n);
+		sprintf(strPath, "/root/font/%d.dat", n);
 		FILE* fp = fopen(strPath, "r");
 		if(fp==NULL)
 		{
