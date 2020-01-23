@@ -37,6 +37,16 @@
 #define POLL_GPIO_EVENT POLLPRI
 #define POLL_GPIO_REVENT (POLLPRI | POLLERR)
 
+#define FILE_TIP_DIRECTION "/data/tip_direction"
+#define MAX_TIP_DIRECTION_STRING 10
+#define TIP_LEFT 0x1
+#define TIP_RIGHT 0x0
+
+#define LPos02 0
+#define LPos01 1
+#define RPos01 2
+#define RPos02 3
+
 //#define VIEW_POS
 //#define VIEW_ENCODER_CNT
 #define R_DUMP
@@ -98,7 +108,7 @@ void *readPosTask(void * data)
 		}
 
 		cam = json_tokener_parse(buf);
-		pos = json_object_object_get(cam, "getImage");
+		pos = json_object_object_get(cam, "Pos");
 
 #ifdef VIEW_POS
 		printf("\n");
@@ -107,12 +117,49 @@ void *readPosTask(void * data)
 		for(i=0; i<json_object_array_length(pos); i++)
 		{
 			pos_val = json_object_array_get_idx(pos, i);
-			rWidth[i] = json_object_get_double(pos_val);
+			rWidth[i] = json_object_get_double(pos_val); //LPos02, LPos01, RPos01, RPos02
+			if(i == LPos02) rWidth[LPos02] *= -1;
+			if(i == LPos01) rWidth[LPos01] *= -1;
 #ifdef VIEW_POS
 			printf("pos=%f ", json_object_get_double(pos_val));
 #endif
 		}
 	}
+}
+
+char getTipDirection(void)
+{
+	int fd, td, cnt;
+	char buf[MAX_TIP_DIRECTION_STRING];
+
+	fd = open(FILE_TIP_DIRECTION, O_RDONLY);
+	if(fd < 0)
+	{
+		perror("failed to open tip direction file\n");
+		return TIP_LEFT;
+	}
+
+	cnt = read(fd, (void *)buf, MAX_TIP_DIRECTION_STRING);
+	buf[cnt - 1] = 0;
+
+	if(strncmp("left", buf, MAX_TIP_DIRECTION_STRING) == 0)
+	{
+		printf("Tip direction seems look like normal(%s)\n", buf);
+		td = TIP_LEFT;
+	}
+	else if(strncmp("right", buf, MAX_TIP_DIRECTION_STRING) == 0)
+	{
+		printf("Tip direction seems look like normal(%s)\n", buf);
+		td = TIP_RIGHT;
+	}
+	else
+	{
+		printf("Tip direction seems look like abnormal(%s)\n", buf);
+		td = TIP_LEFT;
+	}
+
+	close(fd);
+	return td;
 }
 
 int getIsCentering(void)
@@ -125,14 +172,17 @@ void setIsCentering(char status)
 	isCentering = status;
 }
 
+#define TIP_DETECT_POS_DIR_LEFT  (rWidth[LPos02] - rWidth[LPos01])
+#define TIP_DETECT_POS_DIR_RIGHT (rWidth[RPos02] - rWidth[RPos01])
 void *centeringTask(void *data)
 {
 	double diff;
-	char tip_detect = 0, act_need_reset_flag = TRUE;
+	char tip_detect = 0, tip_direction, act_need_reset_flag = TRUE;
 	act_position act_p;
 	int CPCStart = R.GetSWidth * 90 / 100; // if width is 90% of GetSWidth, assume CPC started
 	int isCPC = FALSE, cnt = 1;
 	int pos, avgWidth = 0;
+	int MWidth;
 
 	while(1)
 	{
@@ -148,6 +198,7 @@ void *centeringTask(void *data)
 
 			if(act_need_reset_flag == TRUE)
 			{
+				tip_direction = getTipDirection();
 				actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
 				act_need_reset_flag = FALSE;
 				printf("Actuator reset!\n");
@@ -165,11 +216,21 @@ void *centeringTask(void *data)
 			act_need_reset_flag = TRUE;
 		}
 
-		printf("%f:%f:%f:%f, PLCIO=%d\n", rWidth[0], rWidth[1], rWidth[2], rWidth[3], PLCIO);
+		printf("%f:%f:%f:%f, PLCIO=%4x\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02], ~PLCIO);
 
-		if((rWidth[0] + rWidth[1]) > CPCStart) isCPC = TRUE;
 
-		if(rWidth[3] >= R.MWidth && !isCPC)
+		if(((rWidth[LPos01]) + rWidth[RPos01]) > CPCStart) isCPC = TRUE;
+
+		if(tip_direction == TIP_LEFT)
+		{
+			MWidth = TIP_DETECT_POS_DIR_LEFT;
+		}
+		else
+		{
+			MWidth = TIP_DETECT_POS_DIR_RIGHT;
+		}
+
+		if(MWidth >= R.MWidth && !isCPC)
 		{
 			if(tip_detect == FALSE)
 			{
@@ -180,7 +241,8 @@ void *centeringTask(void *data)
 				tip_detect = TRUE;
 			}
 
-			diff = (rWidth[2] + rWidth[3]) - (R.GetSWidth / 2); //demo web's width is about 180mm
+			/*
+			diff = (rWidth[LPos01] + rWidth[RPos01]) - (R.GetSWidth / 2); //demo web's width is about 180mm
 			if(abs(diff) > 10)
 			{
 				pos = ACT_MOVE_1MM * diff;
@@ -215,13 +277,15 @@ void *centeringTask(void *data)
 				act_p.act_cur_position_lsb = pos;
 				actuator_set_current_position(&act_p, CMD2_ACT_MOVE);
 			}
+			*/
 		}
 		else if(isCPC && (PLCIO & 0x2)) // masking PLC_RD_CPC_TO_EPC
 		{
+			//if(rWidth[0] + rWidth[1] + rWidth[2] + rWidth[3] > 0.0) test_cnt++;
 			int sWidth, median;
-			sWidth = rWidth[0] + rWidth[1];
+			sWidth = rWidth[LPos01] + rWidth[RPos01];
 			median = sWidth / 2;
-			diff = rWidth[0] - median;
+			diff = rWidth[LPos01] - median; //depends on TIP direction
 
 			if(abs(diff) > 10)
 			{
@@ -376,7 +440,7 @@ void *centeringTask(void *data)
 		}
 #endif
 		//memset(buf, 0, BUF_SIZE);
-		TASK_Sleep(50);
+		TASK_Sleep(10);
 	}
 }
 
@@ -415,8 +479,8 @@ void readRRegister(void)
 	R.MWidth /= EEP_Scale_Num_for_PLC;
 	R.SWidthIn /= EEP_Scale_Num_for_PLC;
 	R.OffsetIn /= EEP_Scale_Num_for_PLC;
-	//R.GetSWidth /= EEP_Scale_Num_for_PLC;
-	R.GetSWidth = 180;//for demo
+	R.GetSWidth /= EEP_Scale_Num_for_PLC;
+	//R.GetSWidth = 180;//for demo
 	R.TolPos /= EEP_Scale_Num_for_PLC;
 	R.TolNeg /= EEP_Scale_Num_for_PLC;
 	R.SWidthOut /= EEP_Scale_Num_for_PLC;
