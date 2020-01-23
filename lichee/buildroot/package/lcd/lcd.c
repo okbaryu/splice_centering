@@ -107,7 +107,7 @@ pthread_mutex_t gMutex1;
 #define STR_LPOS01			"LPos01"
 #define STR_RPOS01			"RPos01"
 #define STR_RPOS02			"RPos02"
-#define STR_GET_POSITIONS	"getPositions"
+#define STR_GET_POSITIONS	"Pos"
 
 #define FILE_PATH		"/mnt/extsd/calibration_data.json"
 #define KEY_CAM0_CENTER 	"cam0Center"
@@ -1610,13 +1610,15 @@ float getRelativeMM(int indexCenter, int indexPos)
 
 int getPositions(int sock, int LPos, int RPos, int center)
 {
-	printf("(i) sendPosition called, sock=%d, LPos=%d, RPos=%d, center=%d\n", sock, LPos, RPos, center);
+	//printf("(i) sendPosition called, sock=%d, LPos=%d, RPos=%d, center=%d\n", sock, LPos, RPos, center);
 
 	int LPos02 = 0;
 	int LPos01 = 0;
 	int RPos01 = 0;
 	int RPos02 = 0;
-	
+	int i=0;
+	char buf[256];
+
 	// exception handling
 	if(gMode != MODE_RUNNING)
 	{
@@ -1632,7 +1634,7 @@ int getPositions(int sock, int LPos, int RPos, int center)
 	
 	if(LPos >= RPos)
 	{
-		printf("(!)LPos(%d) >= RPos(%d)\n", LPos, RPos);
+		//printf("(!)LPos(%d) >= RPos(%d)\n", LPos, RPos);
 		return -1;
 	}
 	
@@ -1652,34 +1654,36 @@ int getPositions(int sock, int LPos, int RPos, int center)
 		RPos01 = LPos;
 		RPos02 = RPos;
 	}
-	printf("(i) 4 positions have been prepared\n");
+	//printf("(i) 4 positions have been prepared\n");
 
 	// Convert pixel array index to mm length based on center pixel
-	double fLPos02=0;
-	double fLPos01=0;
-	double fRPos01=0;
-	double fRPos02=0;
+	float fPos[4];
 
-	fLPos02 = getRelativeMM(center, LPos02);
-	fLPos01 = getRelativeMM(center, LPos01);
-	fRPos01 = getRelativeMM(center, RPos01);
-	fRPos02 = getRelativeMM(center, RPos02);
-	
+	fPos[0] = getRelativeMM(center, LPos02);
+	fPos[1] = getRelativeMM(center, LPos01);
+	fPos[2] = getRelativeMM(center, RPos01);
+	fPos[3] = getRelativeMM(center, RPos02);
+
 	// Packing on JSON and sending
 	json_object *response = json_object_new_object();
-	
-	json_object_object_add(response, STR_LPOS02, json_object_new_double(fLPos02) );
-	json_object_object_add(response, STR_LPOS01, json_object_new_double(fLPos01) );
-	json_object_object_add(response, STR_RPOS01, json_object_new_double(fRPos01) );
-	json_object_object_add(response, STR_RPOS02, json_object_new_double(fRPos02) );
+	json_object * array = json_object_new_array();
 
-	char buf[256];
+	for(i=0; i<4; i++)
+	{
+		memset(&buf, 0, 256);
+		sprintf(buf, "%.6f", fPos[i]);
+		json_object_array_add(array, json_object_new_string(buf));
+	}
+
+	json_object_object_add(response,STR_GET_POSITIONS, array);
+
+	memset(&buf, 0, 256);
 	sprintf(buf,"%s\n",json_object_to_json_string_ext(response, json_flags[0].flag) );
 	int len = write(sock,buf,strlen(buf)+1);
 
 	json_object_put(response); // delete the new object.
 
-	if(len>0) printf("(i) server: send response success(%d).n=%d, %s\n", len, strlen(buf), buf);
+	//if(len>0) printf("(i) server: send response success(%d).n=%d, %s\n", len, strlen(buf), buf);
 	if(len<=0)
 	{
 		printf("(!) server: getPositions response failed(%d).\n", len);
