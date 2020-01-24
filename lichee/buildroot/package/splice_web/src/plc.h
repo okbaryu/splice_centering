@@ -35,6 +35,7 @@ typedef struct{
 	long LeadingOffset[7];
 	long TrailingOffset[7];
 	long ActReset;
+	float CPCStart;
 }RRegister;
 
 enum {
