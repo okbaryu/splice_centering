@@ -1,0 +1,44 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  width: 720px;
+  height: 550px;
+  margin: 0;
+  padding: 0;
+}
+
+.button{
+  padding-bottom:4px;
+  width: 780px;
+  height: 43px;
+}
+.button ul{
+  margin: 0;
+  padding: 0;
+}
+.button ul li{
+  list-style: none;
+  vertical-align: middle;
+  font-size: 14px;
+  float: left;
+  width: 234px;
+  height: 40px;
+  margin-right: 4px;
+  background-color: #5E5F67;
+}
+.button ul li a{
+  outline: none;
+  padding-top: 5px;
+  height: 30px;
+  position: relative;
+  top: 5%;
+  display: block;
+  color: white;
+  text-decoration: none;
+}
+.container{
+  width: 710px;
+  height: 502px;
+  background-color: rgba(0, 0, 0, 0.3);
+  float: bottom;
+}

@@ -1,0 +1,157 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-repeat: no-repeat;
+}
+.wrap{
+  width: 1024px;
+  height: 768px;
+  display: grid;
+  grid-template-columns: repeat(16, 64px);
+  grid-template-rows: repeat(14, 48px) 44px 52px;
+  grid-gap: 0px;
+}
+.mainToollBar{
+  background-color: #1d1e21;
+}
+.homeButton{
+  grid-area: 1/1/2/2;
+}
+.mainTitle{
+  height: 48px;
+  line-height: 48px;
+  font-size: 36px;
+  font-weight: bold;
+  grid-area: 1/2/2/16;
+  color: #d2d2d2;
+}
+.menuButton{
+  grid-area: 1/16/2/17;
+}
+.homeToolBar{
+  /* background-color: #45464d; */
+  grid-area: 2/1/3/17;
+}
+.backButton{
+    grid-area: 2/1/3/2;
+}
+.accountButton{
+    grid-area: 2/15/3/17;
+}
+.exitButton{
+  position: absolute;
+  top: 7%;
+  left: 90%;
+  font-size: 24px;
+  color: #D63E2E;
+  font-weight: bold;
+  text-decoration: none;
+
+}
+.menuTitle{
+  line-height: 48px;
+  font-size: 32px;
+  height: 48px;
+  grid-area: 2/2/3/15;
+  text-align: center;
+  color: #fff;
+}
+.container{
+  border-top: solid gray 1px;
+  grid-area: 3/1/16/17;
+}
+#sideMenu{
+  width: 276px;
+  height: 584px;
+  border-right: 3px black solid;
+  background: #45464d;
+
+}
+#sideMenu ul{
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  width: 276px;
+  height: 86px;
+}
+#sideMenu ul li{
+  display: block;
+  vertical-align: middle;
+  list-style: none;
+  width: 250px;
+  height:80px;
+  float: left;
+  padding: 7px 16px;
+  border-bottom: 1px black solid;
+  position:relative;
+  right:2%;
+}
+#sideMenu ul li a{
+  outline: none;
+  text-decoration: none;
+}
+.sideButton{
+   position:relative;
+   top:5%;
+}
+.sideButton span{
+  color:white;
+  position:relative;
+  right:20%; top:45%;
+  font-size: 16px;
+  font-weight:bold;
+}
+.sideButton .thumnail{
+  position:relative;
+  left:100%;
+  top:-48.5%
+}
+.sideButton{
+  width:122px;
+  height:72px;
+  background-color:black;
+  display: block;
+}
+.icon{
+  position: relative;
+  left: 30%;
+  top: 10%;
+   width:50px;
+   height:30px;
+}
+.thumnail{
+  width:122px;
+  height:72px;
+}
+.subPage{
+  position: absolute;
+  top: 15%;
+  left: 29%;
+  width: 8000px;
+  height: 600px;
+  /* border: red solid 1px; */
+
+}
+.foot{
+  background-color: #e3e3e3;
+}
+.footClock{
+  text-align: center;
+  grid-area: 16/1/17/3;
+}
+.footMenu{
+  height: 52px;
+  line-height: 52px;
+  text-align: left;
+  grid-area: 16/3/17/15;
+}
+.footContainer{
+  margin-left: 64px;
+}
+.footLogo{
+    grid-area: 16/15/17/17;
+}
