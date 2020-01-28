@@ -3,7 +3,7 @@
 #include <string.h>  
 #include <fcntl.h>  
 #include <unistd.h>  
-#include <linux/fb.h>  
+#include <linux/fb.h>
 #include <sys/mman.h>  
 #include <sys/ioctl.h>
 #include <sys/types.h>
@@ -174,11 +174,12 @@ void clearScreen()
 	memset(gFb, 0, 800*480*4);// clear screen
 }
 
-long long GetNowUs() {
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
+unsigned long GetNowUs()
+{
+	struct timespec tv;
 
-    return (long long)tv.tv_sec * 1000000ll + tv.tv_usec;
+	clock_gettime(CLOCK_MONOTONIC, &tv);
+	return (tv.tv_sec * 1000000) + (tv.tv_nsec/1000);
 }
 
 void fetchFrameCalibration(char * vf, const char * buf, int size)
@@ -1915,15 +1916,15 @@ void* thread_function_streaming(void* arg)
 	int sock = *((int*)arg);
 	int LPos = 0;
 	int RPos = 0;
-	int center = 1919;	
+	int center = 1919;
 
-	long prev = GetNowUs();
+	unsigned long prev = GetNowUs();
 	while(1)
 	{
 		LPos = gLeftPosition;
 		RPos = gRightPosition;
-		long current = GetNowUs();
-		long elapsedTime = current - prev;
+		unsigned long current = GetNowUs();
+		unsigned long elapsedTime = current - prev;
 		if( (gMode==MODE_RUNNING && elapsedTime>16667) ||
 			(gMode==MODE_CALIBRATION && elapsedTime>1000000) )
 		{
@@ -2100,7 +2101,7 @@ void loadFont()
 	for(n=0; n<FONT_COUNT; n++)
 	{
 		char strPath[255];
-		sprintf(strPath, "/root/font/%d.dat", n);
+		sprintf(strPath, "/var/splice_web/font/%d.dat", n);
 		FILE* fp = fopen(strPath, "r");
 		if(fp==NULL)
 		{
