@@ -20,6 +20,7 @@
 #include <linux/gpio.h>
 #include <linux/init-input.h>
 #include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/pinconf-sunxi.h>
 
 /*********************************CTP*******************************************/
 
@@ -1143,7 +1144,159 @@ script_get_err:
 
 /******************************** MOTOR END ***********************************/
 
+/********************************* ENCODER*************************************/
+static int encoder_init_platform_resource(enum input_sensor_type *encoder)
+{
+	int ret;
+	unsigned long config;
+	struct gpio_config *irq_gpio;
+	char pin_name[SUNXI_PIN_NAME_MAX_LEN] = {0};
+	struct encoder_config_info *data = container_of(encoder,
+			struct encoder_config_info, input_type);
 
+	irq_gpio = &(data->irq_gpio_a);
+	sunxi_gpio_to_name(irq_gpio->gpio, pin_name);
+	data->int_number_a = irq_gpio->gpio;
+	pr_info("%s, pin(%s), pull(%d), level(%d), func(%d)\n", __FUNCTION__, pin_name, \
+			irq_gpio->pull, irq_gpio->drv_level, irq_gpio->mul_sel);
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_PUD, irq_gpio->pull);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_PUD failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_DRV, irq_gpio->drv_level);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_DRV failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_FUNC, irq_gpio->mul_sel);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_FUNC failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	irq_gpio = &(data->irq_gpio_b);
+	sunxi_gpio_to_name(irq_gpio->gpio, pin_name);
+	data->int_number_b = irq_gpio->gpio;
+	pr_info("%s, pin(%s), pull(%d), level(%d), func(%d)\n", __FUNCTION__, pin_name, \
+			irq_gpio->pull, irq_gpio->drv_level, irq_gpio->mul_sel);
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_PUD, irq_gpio->pull);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_PUD failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_DRV, irq_gpio->drv_level);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_DRV failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	config = SUNXI_PINCFG_PACK(SUNXI_PINCFG_TYPE_FUNC, irq_gpio->mul_sel);
+	ret = pin_config_set(SUNXI_PINCTRL, pin_name, config);
+	if(ret)
+	{
+		pr_err("%s, set PINCFG_TYPE_FUNC failed\n", __FUNCTION__);
+		return -1;
+	}
+
+	return 0;
+}
+
+static void encoder_free_platform_resource(enum input_sensor_type *encoder)
+{
+	pr_info("%s", __FUNCTION__);
+	return;
+}
+
+static int encoder_fetch_sysconfig_para(enum input_sensor_type *encoder)
+{
+	int ret = -1;
+	script_item_u val;
+	script_item_value_type_e type;
+	struct encoder_config_info *data = container_of(encoder,
+			struct encoder_config_info, input_type);
+
+	type = script_get_item("encoder_para", "encoder_used", &val);
+
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+		pr_err("%s: type err  device_used = %d. \n", __func__, val.val);
+		goto script_get_err;
+	}
+	data->encoder_used = val.val;
+
+	if (1 == data->encoder_used) {
+		type = script_get_item("encoder_para", "encoder_int_a", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+			pr_err("%s: type err to get encoder_int_a\n", __func__);
+			goto script_get_err;
+		}
+		data->irq_gpio_a = val.gpio;
+
+		type = script_get_item("encoder_para", "encoder_int_b", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+			pr_err("%s: type err to get encoder_int_b\n", __func__);
+			goto script_get_err;
+		}
+		data->irq_gpio_b = val.gpio;
+
+		type = script_get_item("encoder_para", "encoder_axis", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_axis\n", __func__);
+			goto script_get_err;
+		}
+		data->axis = val.val;
+
+		type = script_get_item("encoder_para", "encoder_axis_relative", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_axis_relative\n", __func__);
+			goto script_get_err;
+		}
+		data->axis_relative = val.val;
+
+		type = script_get_item("encoder_para", "encoder_rollover", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_rollover\n", __func__);
+			goto script_get_err;
+		}
+		data->rollover = val.val;
+
+		type = script_get_item("encoder_para", "encoder_half_period", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_half_period\n", __func__);
+			goto script_get_err;
+		}
+		data->encoder_half_period= val.val;
+
+		ret = 0;
+	} else {
+		pr_err("%s: pir_sensor_unused. \n",  __func__);
+		return ret;
+	}
+
+	return ret;
+
+script_get_err:
+	pr_notice("=========script_get_err============\n");
+	return ret;
+
+}
+
+/******************************* ENCODER END **********************************/
 static int (* const fetch_sysconfig_para[])(enum input_sensor_type *input_type) = {
 	ctp_fetch_sysconfig_para,
 	gsensor_fetch_sysconfig_para,
@@ -1153,7 +1306,8 @@ static int (* const fetch_sysconfig_para[])(enum input_sensor_type *input_type) 
 	ir_fetch_sysconfig_para,
 	ths_fetch_sysconfig_para,
 	motor_fetch_sysconfig_para,
-	bat_fetch_sysconfig_para
+	bat_fetch_sysconfig_para,
+	encoder_fetch_sysconfig_para
 };
 
 static int (*init_platform_resource[])(enum input_sensor_type *input_type) = {
@@ -1165,7 +1319,8 @@ static int (*init_platform_resource[])(enum input_sensor_type *input_type) = {
 	ir_init_platform_resource,
 	ths_init_platform_resource,
 	motor_init_platform_resource,
-	bat_init_platform_resource
+	bat_init_platform_resource,
+	encoder_init_platform_resource
 };
 
 static void (*free_platform_resource[])(enum input_sensor_type *input_type) = {
@@ -1177,7 +1332,8 @@ static void (*free_platform_resource[])(enum input_sensor_type *input_type) = {
 	ir_free_platform_resource,
 	ths_free_platform_resource,
 	motor_free_platform_resource,
-	bat_free_platform_resource
+	bat_free_platform_resource,
+	encoder_free_platform_resource
 };
 
 int input_set_power_enable(enum input_sensor_type *input_type, u32 enable)
@@ -1233,7 +1389,7 @@ EXPORT_SYMBOL(input_set_power_enable);
 int input_set_int_enable(enum input_sensor_type *input_type, u32 enable)
 {
 	int ret = -1;
-	u32 irq_number = 0;
+	u32 irq_number = 0, irq_number_ext = 0;
 	void *data = NULL;
 
 	switch (*input_type) 
@@ -1244,6 +1400,12 @@ int input_set_int_enable(enum input_sensor_type *input_type, u32 enable)
 		irq_number = gpio_to_irq(((struct ctp_config_info *)data)->int_number);
 		break;
 	case GSENSOR_TYPE:
+		break;
+	case ENCODER:
+		data = container_of(input_type,
+					struct sensor_config_info, input_type);
+		irq_number = gpio_to_irq(((struct encoder_config_info *)data)->int_number_a);
+		irq_number_ext = gpio_to_irq(((struct encoder_config_info *)data)->int_number_b);
 		break;
 	case LS_TYPE:
 		data = container_of(input_type,
@@ -1260,9 +1422,15 @@ int input_set_int_enable(enum input_sensor_type *input_type, u32 enable)
 		return ret;
 	}
 	if (1 == enable)
+	{
 		enable_irq(irq_number);
+		if(irq_number_ext) enable_irq(irq_number);
+	}
 	else
+	{
 		disable_irq_nosync(irq_number);
+		if(irq_number_ext) disable_irq_nosync(irq_number);
+	}
 
 	return 0;       
 }
@@ -1277,7 +1445,7 @@ EXPORT_SYMBOL(input_set_int_enable);
  */
 int input_free_int(enum input_sensor_type *input_type, void *para)
 {
-	int irq_number = 0;
+	int irq_number = 0, irq_number_ext = 0;
 	void *data = NULL;
 	struct device *dev = NULL;
 	
@@ -1292,6 +1460,14 @@ int input_free_int(enum input_sensor_type *input_type, void *para)
 		break;
 	case GSENSOR_TYPE:
 		break;
+	case ENCODER:
+		data = container_of(input_type,
+					struct sensor_config_info, input_type);
+		irq_number = gpio_to_irq(((struct encoder_config_info *)data)->int_number_a);
+		irq_number_ext = gpio_to_irq(((struct encoder_config_info *)data)->int_number_b);
+
+		dev = ((struct encoder_config_info *)data)->dev;
+		break;
 	case LS_TYPE:
 		data = container_of(input_type,
 					struct sensor_config_info, input_type);
@@ -1305,9 +1481,18 @@ int input_free_int(enum input_sensor_type *input_type, void *para)
 		break;
 	}
 
-	devm_free_irq(dev, irq_number, para);
+	if(dev)
+	{
+		devm_free_irq(dev, irq_number, para);
+		if(irq_number_ext) devm_free_irq(dev, irq_number_ext, para);
+	}
+	else
+	{
+		free_irq(irq_number, para);
+		if(irq_number_ext) free_irq(irq_number_ext, para);
+	}
 
-	return 0;       
+	return 0;
 }
 EXPORT_SYMBOL(input_free_int);
 
@@ -1334,7 +1519,7 @@ int input_request_irq(enum input_sensor_type *input_type,
 			unsigned long trig_type, void *param)
 {
 	int ret = -1;
-	int irq_number = 0;
+	int irq_number = 0, irq_number_ext = 0;
 	void *data = NULL;
 	struct device *dev = NULL;
 
@@ -1343,7 +1528,7 @@ int input_request_irq(enum input_sensor_type *input_type,
 		data = container_of(input_type, struct ctp_config_info, input_type);
 		irq_number = gpio_to_irq(((struct ctp_config_info *)data)->int_number);
 		if (IS_ERR_VALUE(irq_number)) {
-			pr_warn("map gpio [%d] to virq failed, errno = %d\n", 
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
 					((struct ctp_config_info *)data)->int_number, irq_number);
 			return -EINVAL;
 		}
@@ -1354,11 +1539,29 @@ int input_request_irq(enum input_sensor_type *input_type,
 	case GSENSOR_TYPE:
 		break;
 
+	case ENCODER:
+		data = container_of(input_type, struct sensor_config_info, input_type);
+		irq_number = gpio_to_irq(((struct encoder_config_info *)data)->int_number_a);
+		if (IS_ERR_VALUE(irq_number)) {
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
+					GPIOA(3), irq_number);
+			return -EINVAL;
+		}
+		irq_number_ext = gpio_to_irq(((struct encoder_config_info *)data)->int_number_b);
+		if (IS_ERR_VALUE(irq_number_ext)) {
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
+					GPIOA(3), irq_number_ext);
+			return -EINVAL;
+		}
+
+		dev = ((struct encoder_config_info *)data)->dev;
+		break;
+
 	case LS_TYPE:
 		data = container_of(input_type, struct sensor_config_info, input_type);
 		irq_number = gpio_to_irq(((struct sensor_config_info *)data)->int_number);
 		if (IS_ERR_VALUE(irq_number)) {
-			pr_warn("map gpio [%d] to virq failed, errno = %d\n", 
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
 					GPIOA(3), irq_number);
 			return -EINVAL;
 		}
@@ -1374,8 +1577,28 @@ int input_request_irq(enum input_sensor_type *input_type,
 	}
 
 	/* request virq, set virq type to high level trigger */
-	ret = devm_request_threaded_irq(dev, irq_number, handler, thread_fn,
-				trig_type, "PA3_EINT", param);
+	if(dev)
+	{
+		ret = devm_request_threaded_irq(dev, irq_number, handler, thread_fn,
+					trig_type, "PA3_EINT", param);
+		if(irq_number_ext)
+		{
+			ret = devm_request_threaded_irq(dev, irq_number_ext, handler, thread_fn,
+						trig_type, "PA3_EINT", param);
+		}
+	}
+	else
+	{
+		ret = request_threaded_irq(irq_number, handler, thread_fn,
+					trig_type, "PA3_EINT", param);
+
+		if(irq_number_ext)
+		{
+			ret = request_threaded_irq(irq_number_ext, handler, thread_fn,
+						trig_type, "PA3_EINT", param);
+		}
+	}
+
 	if (IS_ERR_VALUE(ret)) {
 		pr_warn("request virq %d failed, errno = %d\n", 
 				irq_number, ret);
