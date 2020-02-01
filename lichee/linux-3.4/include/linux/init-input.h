@@ -32,15 +32,13 @@ enum input_sensor_type{
 struct encoder_config_info{
 	enum input_sensor_type input_type;
 	int encoder_used;
+	int steps;
 	struct gpio_config irq_gpio_a;
 	struct gpio_config irq_gpio_b;
-	u32 int_number_a;
-	u32 int_number_b;
 	int axis;
 	int axis_relative;
 	int rollover;
 	int encoder_half_period;
-	struct device *dev;
 };
 
 struct sensor_config_info{
