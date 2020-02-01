@@ -1410,7 +1410,7 @@ encoder_steps = 24
 encoder_int_a = port:PB2<6><2><default><0>
 encoder_int_b = port:PB4<6><2><default><0>
 encoder_axis = 0
-encoder_axis_relative = 0
+encoder_axis_relative = 1
 encoder_rollover = 0
 encoder_half_period = 0
 
