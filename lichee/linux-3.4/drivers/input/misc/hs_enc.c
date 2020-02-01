@@ -50,65 +50,49 @@ static ssize_t encoder_set_debug(struct device *dev,
 	return count;
 }
 
-static struct encoder_config_info encoder_info = {
-	.input_type = ENCODER,
-};
-
 static struct device_attribute encoder_attributes[] = {
 	__ATTR(interrupt, 0644, encoder_debug_status, encoder_set_debug),
 	__ATTR_NULL
 };
 
-/*
+static struct encoder_config_info encoder_info = {
+	.input_type = ENCODER,
+};
+
 static struct rotary_encoder_platform_data my_rotary_encoder_info = {
-	.steps		= 24,
-	.axis		= ABS_X,
-	.relative_axis	= false,
-	.rollover	= false,
-	.gpio_a		= GPIO_ROTARY_A,
-	.gpio_b		= GPIO_ROTARY_B,
-	.inverted_a	= 0,
-	.inverted_b	= 0,
-	.half_period	= false,
 };
 
 static struct platform_device rotary_encoder_device = {
-	.name		= "hansung-encoder",
+	.name		= "rotary-encoder",
 	.id		= 0,
 	.dev		= {
 	.platform_data = &my_rotary_encoder_info,
 	}
 };
-*/
-
-static irqreturn_t encoder_int_handler(int irq, void *dev_id)
-{
-	dprintk(DEBUG_DATA_INFO, "encoder int handler, %d\n", irq);
-	return IRQ_HANDLED;
-}
 
 static int __init hs_enc_init(void)
 {
 	dprintk(DEBUG_INIT, "hs_enc : init\n");
-	//platform_device_register(&rotary_encoder_device);
 
 	if (input_fetch_sysconfig_para(&(encoder_info.input_type))) {
 		printk("%s: err.\n", __func__);
 		return -1;
 	}
 
-	if(input_init_platform_resource(&(encoder_info.input_type)))
-	{
-		printk("%s: err.\n", __func__);
-		return -1;
-	}
+	my_rotary_encoder_info.steps = encoder_info.steps;
+	my_rotary_encoder_info.gpio_a = encoder_info.irq_gpio_a.gpio;
+	my_rotary_encoder_info.gpio_b = encoder_info.irq_gpio_b.gpio;
+	my_rotary_encoder_info.axis = encoder_info.axis;
+	my_rotary_encoder_info.relative_axis = encoder_info.axis_relative;
+	my_rotary_encoder_info.rollover = encoder_info.rollover;
+	my_rotary_encoder_info.half_period = encoder_info.encoder_half_period;
 
-	if(input_request_int(&(encoder_info.input_type), encoder_int_handler, \
-				IRQF_TRIGGER_RISING, NULL))
-	{
-		printk("%s: err.\n", __func__);
-		return -1;
-	}
+	dprintk(DEBUG_INIT, "steps = %d, gpio_a = %d, gpio_b = %d, axis = %d, relative_axis = %d, rollover = %d, half = %d\n",\
+			my_rotary_encoder_info.steps, my_rotary_encoder_info.gpio_a, my_rotary_encoder_info.gpio_b,\
+			my_rotary_encoder_info.axis, my_rotary_encoder_info.relative_axis, my_rotary_encoder_info.rollover,\
+			my_rotary_encoder_info.half_period);
+
+	platform_device_register(&rotary_encoder_device);
 
 	dprintk(DEBUG_INIT, "%s: init succeed\n", __func__);
 
