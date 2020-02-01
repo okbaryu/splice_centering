@@ -14,6 +14,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <poll.h>
+#include <linux/input.h>
 
 #include "json-c/json.h"
 #include "splice_libs.h"
@@ -32,10 +33,6 @@
 
 #define BUF_SIZE 256
 #define STREAM_ONOFF_SIZE 32
-
-#define MAX_ENCODER_CNT 3
-#define POLL_GPIO_EVENT POLLPRI
-#define POLL_GPIO_REVENT (POLLPRI | POLLERR)
 
 #define FILE_TIP_DIRECTION "/data/tip_direction"
 #define FILE_TIP_OFFSET_DIVICE "/data/offset_divide"
@@ -63,9 +60,7 @@ static int g_onOff;
 static int isCentering;
 static float mm_per_pulse;
 
-static int cnt_enc_a;
-static int cnt_enc_b;
-static int cnt_enc_z;
+static int cnt_enc;
 
 typedef struct
 {
@@ -379,7 +374,7 @@ void *centeringTask(void *data)
 				readRRegister(TRUE);
 
 				printf("Actuator reset!\n");
-				printf("enc_a = %d, enc_b = %d, avgWidth=%f, cnt=%d\n", cnt_enc_a, cnt_enc_b, avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
+				printf("enc = %d, avgWidth=%f, cnt=%d\n", cnt_enc, avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
 
 				avgWidthCnt = 1;
 				avgWidth = 0;
@@ -437,9 +432,7 @@ void *centeringTask(void *data)
 				sendPlcIO(PLC_WR_TIP_DETECT);
 				sendPlcIO(PLC_WR_CENTERING);
 				tip_detect = TRUE;
-				cnt_enc_a = 0;
-				cnt_enc_b = 0;
-				cnt_enc_z = 0;
+				cnt_enc = 0;
 				tip_offset_cnt = 0;
 
 				for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
@@ -641,48 +634,26 @@ void readRRegister(char dump)
 
 void *encoderTask(void *data)
 {
-	struct pollfd enc_fd[MAX_ENCODER_CNT];
+	struct pollfd enc_fd;
+	struct input_event ev;
 	int i;
 	char buf[8];
 
-	enc_fd[0].fd = open("/sys/class/gpio/gpio34/value", O_RDONLY); //ENCODER A+
-	enc_fd[1].fd = open("/sys/class/gpio/gpio36/value", O_RDONLY); //ENCODER B+
-	enc_fd[2].fd = open("/sys/class/gpio/gpio44/value", O_RDONLY); //ENCODER Z+
-
-	for(i=0; i<MAX_ENCODER_CNT; i++)
-	{
-		enc_fd[i].events = POLL_GPIO_EVENT;
-		lseek(enc_fd[i].fd, 0, SEEK_SET);
-		read(enc_fd[i].fd, buf, sizeof(buf)); //Should be exist, otherwise fd gonna generate interrupt forever
-	}
+	enc_fd.fd = open("/dev/input/event0", O_RDONLY);
+	enc_fd.events = POLL_IN;
 
 	while(1)
 	{
-		poll(enc_fd, MAX_ENCODER_CNT, -1);
+		poll(&enc_fd, 1, -1);
 
-		if(enc_fd[0].revents & POLL_GPIO_REVENT)
+		if(enc_fd.revents & POLL_IN)
 		{
-			cnt_enc_a++;
-			lseek(enc_fd[0].fd, 0, SEEK_SET);
-			read(enc_fd[0].fd, buf, sizeof(buf));
-		}
-
-		if(enc_fd[1].revents & POLL_GPIO_REVENT)
-		{
-			cnt_enc_b++;
-			lseek(enc_fd[1].fd, 0, SEEK_SET);
-			read(enc_fd[1].fd, buf, sizeof(buf));
-		}
-
-		if(enc_fd[2].revents & POLL_GPIO_REVENT)
-		{
-			cnt_enc_z++;
-			lseek(enc_fd[2].fd, 0, SEEK_SET);
-			read(enc_fd[2].fd, buf, sizeof(buf));
+			read(enc_fd.fd, &ev, sizeof(struct input_event));
+			if(ev.type == 2 && ev.value > 0) cnt_enc++;
 		}
 
 #ifdef VIEW_ENCODER_CNT
-		printf("a=%d, b=%d, z=%d\n", cnt_enc_a, cnt_enc_b, cnt_enc_z);
+		printf("enc=%d\n", cnt_enc);
 #endif
 	}
 }
