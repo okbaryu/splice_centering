@@ -222,62 +222,139 @@ void act_move(char direction, int pos)
 #define EPC_POS_DIR_LEFT (rWidth[RPos02] - rWidth[RPos01])
 #define EPC_POS_DIR_RIGHT (rWidth[LPos02] - rWidth[LPos01])
 
+#define CPC_POS (rWidth[LPos01] - rWidth[RPos01])
+
 #define AUTO_MODE !(PLCIO & 0x1)
 #define MANUAL_MODE ((PLCIO & 0x7) == 0x7)
 #define PLC_RD_WIDTH ((PLCIO & 0x7) == 0x2)
 #define PLC_RD_EPC (!(PLCIO & 0x2))
 #define PLC_RD_CPC (isCPC && (PLCIO & 0x2))
 
-void edgeCentering(char tip_edge_guide)
+void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 {
-	float diff;
-	int pos;
+	float diff, pos_diff, ref_pos, ref_width;
+	int act_pos, coeff = 3; //determine how fast set to OffsetIn position
+
+	if(tip_edge_guide == TRUE)
+	{
+		ref_pos = (R.GetSWidth/2) + OffsetIn;
+	}
+	else
+	{
+		OffsetIn = 0;
+		ref_pos = (R.GetSWidth/2);
+	}
+	/*
+	if(rWidth[LPos02] != 0 && rWidth[LPos01] != 0 && rWidth[RPos01] == 0 && rWidth[RPos02] == 0) // tip left
+	{
+		ref_width = rWidth[LPos02];
+	}
+	else if(rWidth[LPos02] == 0 && rWidth[LPos01] != 0 && rWidth[RPos01] != 0 && rWidth[RPos02] == 0) // tip left/right
+	{
+		if(tip_direction == TIP_LEFT)
+			ref_width = rWidth[LPos01];
+		else
+			ref_width = rWidth[RPos01];
+	}
+	else if(rWidth[LPos02] == 0 && rWidth[LPos01] == 0 && rWidth[RPos01] != 0 && rWidth[RPos02] != 0) // tip right
+	{
+		ref_width = rWidth[RPos02];
+	}
+	else
+	{
+		printf("couldn't be here, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
+	}
+
+	if(ref_width < R.SWidthIn)
+	{
+		ref_pos = (R.GetSWidth/2) + OffsetIn;
+	}
+	else
+	{
+		OffsetIn = 0;
+		ref_pos = (R.GetSWidth/2);
+	}
+
+
+	diff = ref_width - ref_pos;
+	*/
 
 	if(tip_direction == TIP_LEFT)
 	{
-		if(tip_edge_guide)
-			diff = rWidth[LPos02] - (R.GetSWidth/2);
-		else
-			diff = rWidth[LPos01] - (R.GetSWidth/2);
+	//	if(tip_edge_guide)
+			diff = rWidth[LPos02] - ref_pos;
+	//	else
+	//		diff = rWidth[LPos01] - ref_pos;
 	}
 	else
 	{
-		if(tip_edge_guide)
-			diff = rWidth[RPos02] - (R.GetSWidth/2);
-		else
-			diff = rWidth[RPos01] - (R.GetSWidth/2);
+	//	if(tip_edge_guide)
+			diff = rWidth[RPos02] - ref_pos;
+	//	else
+	//		diff = rWidth[RPos01] - ref_pos;
 	}
 
-	if(abs(diff) > 10)
+	if(diff > OffsetIn) pos_diff = diff - OffsetIn;
+	else pos_diff = OffsetIn - diff;
+
+	if(pos_diff < 0) pos_diff *= -1;
+
+	if(pos_diff > coeff)
 	{
-		pos = ACT_MOVE_1MM;
+			act_pos = ACT_MOVE_1MM;
 	}
 	else
 	{
-		pos = ACT_MOVE_1MM / 2;
+			act_pos = ACT_MOVE_1MM / 4;
 	}
+	//printf("%d:%f:%d:%f:%f\n", tip_edge_guide, diff, act_pos, rWidth[LPos02], rWidth[LPos01]);
 
-	if(diff > 0)
+	if(diff > OffsetIn)
 	{
 		if(tip_direction == TIP_LEFT)
 		{
-			act_move(ACT_MOVE_RIGHT, pos);
+			act_move(ACT_MOVE_RIGHT, act_pos);
 		}
 		else
 		{
-			act_move(ACT_MOVE_LEFT, pos);
+			act_move(ACT_MOVE_LEFT, act_pos);
 		}
 	}
-	else if(diff < 0)
+	else if(diff < OffsetIn)
 	{
 		if(tip_direction == TIP_LEFT)
 		{
-			act_move(ACT_MOVE_LEFT, pos);
+			act_move(ACT_MOVE_LEFT, act_pos);
 		}
 		else
 		{
-			act_move(ACT_MOVE_RIGHT, pos);
+			act_move(ACT_MOVE_RIGHT, act_pos);
 		}
+	}
+}
+
+void CPCCentering(void)
+{
+	int act_pos;
+
+	if(CPC_POS > 10)
+		act_pos = ACT_MOVE_1MM;
+	else
+		act_pos = ACT_MOVE_1MM / 2;
+
+	if(CPC_POS > 0)
+	{
+		if(tip_direction == TIP_LEFT)
+			act_move(ACT_MOVE_RIGHT, act_pos);
+		else
+			act_move(ACT_MOVE_LEFT, act_pos);
+	}
+	else
+	{
+		if(tip_direction == TIP_LEFT)
+			act_move(ACT_MOVE_LEFT, act_pos);
+		else
+			act_move(ACT_MOVE_RIGHT, act_pos);
 	}
 }
 
@@ -402,6 +479,51 @@ static void tip_offset_divide(float MWidth, float *leading_tip_width, float *tra
 	}
 }
 
+static void divided_tip_guide(float MWidth, float *leading_tip_width, int *leading_tip_offset)
+{
+	if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
+	{
+		if(leading_tip_width[tip_offset_cnt] > MWidth)
+		{
+			if(tip_direction == TIP_LEFT && tip_offset_flag && R.OffsetIn != 0)
+			{
+				if(R.OffsetIn > 0)
+					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+				else
+					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+
+				tip_offset_flag = FALSE;
+				printf("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+			}
+			else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetIn != 0)
+			{
+				if(R.OffsetIn > 0)
+					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+				else
+					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+
+				//tip_offset_flag = FALSE;
+				printf("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+			}
+			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
+			{
+				tipEdgeCentering(TRUE, R.OffsetIn);
+				//tip_offset_flag = FALSE;
+				//printf("ledge\n");
+			}
+		}
+		else
+		{
+			tip_offset_cnt++;
+			tip_offset_flag = TRUE; //Used for move actuator once per each leading_tip_width
+		}
+	}
+	else
+	{
+		tipEdgeCentering(FALSE, 0);
+	}
+}
+
 static void leading_tip_guide(float MWidth, float *leading_tip_width, int *leading_tip_offset)
 {
 	if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
@@ -425,14 +547,14 @@ static void leading_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 				else
 					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
 
-				tip_offset_flag = FALSE;
+				//tip_offset_flag = FALSE;
 				printf("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
 			}
 			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
 			{
-				edgeCentering(TRUE);
-				tip_offset_flag = FALSE;
-				printf("ledge\n");
+				tipEdgeCentering(TRUE, R.OffsetIn);
+				//tip_offset_flag = FALSE;
+				//printf("ledge\n");
 			}
 		}
 		else
@@ -443,7 +565,7 @@ static void leading_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 	}
 	else
 	{
-		edgeCentering(FALSE);
+		tipEdgeCentering(FALSE, 0);
 	}
 }
 
@@ -591,11 +713,20 @@ void *centeringTask(void *data)
 				tip_offset_divide(MWidth, leading_tip_width, trailing_tip_width, leading_tip_offset, trailing_tip_offset); // alg1
 			}
 
-			leading_tip_guide(MWidth, leading_tip_width, leading_tip_offset); // alg1
+			//leading_tip_guide(MWidth, leading_tip_width, leading_tip_offset); // alg1
+			//if(MWidth < leading_tip_width[TIP_OFFSET_DIVIDE_COUNT - 1])
+			if(MWidth < R.SWidthIn)
+			{
+				tipEdgeCentering(TRUE, R.OffsetIn);
+			}
+			else
+			{
+				tipEdgeCentering(FALSE, R.OffsetIn);
+			}
 		}
 		else if(PLC_RD_CPC) // masking PLC_RD_CPC_TO_EPC
 		{
-			edgeCentering(FALSE);
+			CPCCentering();
 		}
 		else if(PLC_RD_EPC)
 		{
