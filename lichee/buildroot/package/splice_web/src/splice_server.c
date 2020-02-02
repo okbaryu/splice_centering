@@ -878,8 +878,6 @@ static int Splice_ReadRequest(
 
 					PrintInfo( " SPLICE_CMD_SET_ACTUATOR_POSITION\n");
 
-					actuator_get_current_postion(&p);
-
 					pResponse->cmd = pRequest->cmdSecondary;
 					if(pRequest->cmdSecondary == CMD2_ACT_MOVE)
 					{
