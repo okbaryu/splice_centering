@@ -20,6 +20,7 @@
 #include <linux/gpio.h>
 #include <linux/init-input.h>
 #include <linux/pinctrl/consumer.h>
+#include <linux/pinctrl/pinconf-sunxi.h>
 
 /*********************************CTP*******************************************/
 
@@ -1143,7 +1144,88 @@ script_get_err:
 
 /******************************** MOTOR END ***********************************/
 
+/********************************* ENCODER*************************************/
+static int encoder_fetch_sysconfig_para(enum input_sensor_type *encoder)
+{
+	int ret = -1;
+	script_item_u val;
+	script_item_value_type_e type;
+	struct encoder_config_info *data = container_of(encoder,
+			struct encoder_config_info, input_type);
 
+	type = script_get_item("encoder_para", "encoder_used", &val);
+
+	if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+		pr_err("%s: type err  device_used = %d. \n", __func__, val.val);
+		goto script_get_err;
+	}
+	data->encoder_used = val.val;
+
+	if (1 == data->encoder_used) {
+		type = script_get_item("encoder_para", "encoder_steps", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_axis\n", __func__);
+			goto script_get_err;
+		}
+		data->steps = val.val;
+
+		type = script_get_item("encoder_para", "encoder_int_a", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+			pr_err("%s: type err to get encoder_int_a\n", __func__);
+			goto script_get_err;
+		}
+		data->irq_gpio_a = val.gpio;
+
+		type = script_get_item("encoder_para", "encoder_int_b", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_PIO != type) {
+			pr_err("%s: type err to get encoder_int_b\n", __func__);
+			goto script_get_err;
+		}
+		data->irq_gpio_b = val.gpio;
+
+		type = script_get_item("encoder_para", "encoder_axis", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_axis\n", __func__);
+			goto script_get_err;
+		}
+		data->axis = val.val;
+
+		type = script_get_item("encoder_para", "encoder_axis_relative", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_axis_relative\n", __func__);
+			goto script_get_err;
+		}
+		data->axis_relative = val.val;
+
+		type = script_get_item("encoder_para", "encoder_rollover", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_rollover\n", __func__);
+			goto script_get_err;
+		}
+		data->rollover = val.val;
+
+		type = script_get_item("encoder_para", "encoder_half_period", &val);
+		if (SCIRPT_ITEM_VALUE_TYPE_INT != type) {
+			pr_err("%s: type err to get encoder_half_period\n", __func__);
+			goto script_get_err;
+		}
+		data->encoder_half_period= val.val;
+
+		ret = 0;
+	} else {
+		pr_err("%s: pir_sensor_unused. \n",  __func__);
+		return ret;
+	}
+
+	return ret;
+
+script_get_err:
+	pr_notice("=========script_get_err============\n");
+	return ret;
+
+}
+
+/******************************* ENCODER END **********************************/
 static int (* const fetch_sysconfig_para[])(enum input_sensor_type *input_type) = {
 	ctp_fetch_sysconfig_para,
 	gsensor_fetch_sysconfig_para,
@@ -1153,7 +1235,8 @@ static int (* const fetch_sysconfig_para[])(enum input_sensor_type *input_type) 
 	ir_fetch_sysconfig_para,
 	ths_fetch_sysconfig_para,
 	motor_fetch_sysconfig_para,
-	bat_fetch_sysconfig_para
+	bat_fetch_sysconfig_para,
+	encoder_fetch_sysconfig_para
 };
 
 static int (*init_platform_resource[])(enum input_sensor_type *input_type) = {
@@ -1165,7 +1248,7 @@ static int (*init_platform_resource[])(enum input_sensor_type *input_type) = {
 	ir_init_platform_resource,
 	ths_init_platform_resource,
 	motor_init_platform_resource,
-	bat_init_platform_resource
+	bat_init_platform_resource,
 };
 
 static void (*free_platform_resource[])(enum input_sensor_type *input_type) = {
@@ -1177,7 +1260,7 @@ static void (*free_platform_resource[])(enum input_sensor_type *input_type) = {
 	ir_free_platform_resource,
 	ths_free_platform_resource,
 	motor_free_platform_resource,
-	bat_free_platform_resource
+	bat_free_platform_resource,
 };
 
 int input_set_power_enable(enum input_sensor_type *input_type, u32 enable)
@@ -1307,7 +1390,7 @@ int input_free_int(enum input_sensor_type *input_type, void *para)
 
 	devm_free_irq(dev, irq_number, para);
 
-	return 0;       
+	return 0;
 }
 EXPORT_SYMBOL(input_free_int);
 
@@ -1343,7 +1426,7 @@ int input_request_irq(enum input_sensor_type *input_type,
 		data = container_of(input_type, struct ctp_config_info, input_type);
 		irq_number = gpio_to_irq(((struct ctp_config_info *)data)->int_number);
 		if (IS_ERR_VALUE(irq_number)) {
-			pr_warn("map gpio [%d] to virq failed, errno = %d\n", 
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
 					((struct ctp_config_info *)data)->int_number, irq_number);
 			return -EINVAL;
 		}
@@ -1358,7 +1441,7 @@ int input_request_irq(enum input_sensor_type *input_type,
 		data = container_of(input_type, struct sensor_config_info, input_type);
 		irq_number = gpio_to_irq(((struct sensor_config_info *)data)->int_number);
 		if (IS_ERR_VALUE(irq_number)) {
-			pr_warn("map gpio [%d] to virq failed, errno = %d\n", 
+			pr_warn("map gpio [%d] to virq failed, errno = %d\n",
 					GPIOA(3), irq_number);
 			return -EINVAL;
 		}
@@ -1376,6 +1459,7 @@ int input_request_irq(enum input_sensor_type *input_type,
 	/* request virq, set virq type to high level trigger */
 	ret = devm_request_threaded_irq(dev, irq_number, handler, thread_fn,
 				trig_type, "PA3_EINT", param);
+
 	if (IS_ERR_VALUE(ret)) {
 		pr_warn("request virq %d failed, errno = %d\n", 
 				irq_number, ret);
