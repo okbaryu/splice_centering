@@ -19,7 +19,8 @@ MINIGUI_HEADERS = $(MINIGUI_INC_SRC_DIR)/common.h \
 				  $(MINIGUI_INC_SRC_DIR)/own_stdio.h \
 				  $(MINIGUI_INC_SRC_DIR)/xvfb.h \
 				  $(MINIGUI_INC_SRC_DIR)/customial.h \
-				  $(MINIGUI_INC_SRC_DIR)/dti.c
+				  $(MINIGUI_INC_SRC_DIR)/dti.c \
+				  $(MINIGUI_INC_SRC_DIR)/../mgconfig.h
 MINIGUI_INSTALL_STAGING = YES
 MINIGUI_INSTALL_TARGET = YES
 MINIGUI_CONF_OPT = --prefix=${TARGET_DIR} --host=arm-linux --build=i386-linux --with-targetname=fbcon --enable-sunximin --enable-savescreen \
