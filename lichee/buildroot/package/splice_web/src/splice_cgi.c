@@ -19,6 +19,7 @@
 #include "splice_utils.h"
 #include "actuator.h"
 #include "plc.h"
+#include "sys_trace.h"
 
 #define MAXHOSTNAME       80
 #define CONTENT_TYPE_HTML "Content-type: text/html\n\n"

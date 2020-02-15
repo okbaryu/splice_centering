@@ -17,6 +17,7 @@
 #include "datatypes.h"
 #include "splice_libs.h"
 #include "plc.h"
+#include "sys_trace.h"
 
 //#define STANDALONE
 //#define RX_DUMP

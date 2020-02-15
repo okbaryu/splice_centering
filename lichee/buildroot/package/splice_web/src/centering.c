@@ -23,6 +23,7 @@
 #include "actuator.h"
 #include "centering.h"
 #include "plc.h"
+#include "sys_trace.h"
 
 #define CENTERING_PORT 7076
 

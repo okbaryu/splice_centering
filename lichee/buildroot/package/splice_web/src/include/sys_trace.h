@@ -19,7 +19,8 @@ typedef enum
 	TRACE_EXIT	= 0x00000002,
 	TRACE_DEBUG	= 0x00000004,
 	TRACE_ERR	= 0x00000008,
-	TRACE_WARN	= 0x00000010
+	TRACE_WARN	= 0x00000010,
+	TRACE_INFO	= 0x00000020
 } TRACE_LEVEL;
 
 #define PrintEnter()	do \
@@ -67,6 +68,17 @@ typedef enum
 #define PrintWarn(X, ...)	do \
 							{ \
 								if(SYS_TRACE_CheckLevel(TRACE_WARN)) \
+								{ \
+									printf("%c[1;33;40m", 0x1b); \
+									printf("[%s:%d] ", __func__, __LINE__); \
+									printf(X, ##__VA_ARGS__); \
+									printf("\x1b[0m"); \
+								} \
+							} while (0)
+
+#define PrintInfo(X, ...)	do \
+							{ \
+								if(SYS_TRACE_CheckLevel(TRACE_INFO)) \
 								{ \
 									printf("%c[1;33;40m", 0x1b); \
 									printf("[%s:%d] ", __func__, __LINE__); \
