@@ -1,10 +1,10 @@
 SPLICE_WEB_DIR = $(BUILD_DIR)/splice_web
-LDFLAGS += -lpthread -lm -ljson-c
+LDFLAGS += -lpthread -lm -ljson-c -L${SPLICE_WEB_DIR} -lcmdtool
 MAIN_OBJS = ${SPLICE_WEB_DIR}/splice_cgi.c
 SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c ${SPLICE_WEB_DIR}/actuator.c ${SPLICE_WEB_DIR}/plc.c ${SPLICE_WEB_DIR}/centering.c
-EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c ${SPLICE_WEB_DIR}/osal_msg.c
+EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c ${SPLICE_WEB_DIR}/cmd_parser_init.c ${SPLICE_WEB_DIR}/cmd_parser_trace.c
 
-CFLAGS += -I${SPLICE_WEB_DIR}
+CFLAGS += -I${SPLICE_WEB_DIR}/include
 CFLAGS += -Wimplicit-function-declaration -Wall -lm
 
 # Always build with debug
