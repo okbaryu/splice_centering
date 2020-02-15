@@ -19,6 +19,9 @@
 #include "actuator.h"
 #include "centering.h"
 #include "plc.h"
+#include "cmdtool.h"
+#include "osal_init.h"
+#include "cmd_parser_init.h"
 
 #define MAXHOSTNAME                  80
 #define PERF_FILE_FULL_PATH_LEN      64
@@ -970,6 +973,10 @@ int main(
 	memset( &gSataUsbMbps, 0, sizeof( gSataUsbMbps ));
 
 	Splice_Server_InitMutex( &gSataUsbMutex );
+
+	OSAL_Init();
+	CMD_Init();
+	CMD_PI_Init();
 
 	signal(SIGPIPE, handler);
 	plc_init();
