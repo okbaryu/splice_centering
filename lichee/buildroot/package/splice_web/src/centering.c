@@ -245,54 +245,14 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 		OffsetIn = 0;
 		ref_pos = (R.GetSWidth/2);
 	}
-	/*
-	if(rWidth[LPos02] != 0 && rWidth[LPos01] != 0 && rWidth[RPos01] == 0 && rWidth[RPos02] == 0) // tip left
-	{
-		ref_width = rWidth[LPos02];
-	}
-	else if(rWidth[LPos02] == 0 && rWidth[LPos01] != 0 && rWidth[RPos01] != 0 && rWidth[RPos02] == 0) // tip left/right
-	{
-		if(tip_direction == TIP_LEFT)
-			ref_width = rWidth[LPos01];
-		else
-			ref_width = rWidth[RPos01];
-	}
-	else if(rWidth[LPos02] == 0 && rWidth[LPos01] == 0 && rWidth[RPos01] != 0 && rWidth[RPos02] != 0) // tip right
-	{
-		ref_width = rWidth[RPos02];
-	}
-	else
-	{
-		printf("couldn't be here, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
-	}
-
-	if(ref_width < R.SWidthIn)
-	{
-		ref_pos = (R.GetSWidth/2) + OffsetIn;
-	}
-	else
-	{
-		OffsetIn = 0;
-		ref_pos = (R.GetSWidth/2);
-	}
-
-
-	diff = ref_width - ref_pos;
-	*/
 
 	if(tip_direction == TIP_LEFT)
 	{
-	//	if(tip_edge_guide)
 			diff = rWidth[LPos02] - ref_pos;
-	//	else
-	//		diff = rWidth[LPos01] - ref_pos;
 	}
 	else
 	{
-	//	if(tip_edge_guide)
 			diff = rWidth[RPos02] - ref_pos;
-	//	else
-	//		diff = rWidth[RPos01] - ref_pos;
 	}
 
 	if(diff > OffsetIn) pos_diff = diff - OffsetIn;
@@ -300,14 +260,20 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 
 	if(pos_diff < 0) pos_diff *= -1;
 
+	/* Divide more specifically to prevent meaningless movement of actuator at tip detect position */
 	if(pos_diff > coeff)
 	{
 			act_pos = ACT_MOVE_1MM;
 	}
-	else
+	else if(pos_diff < coeff && pos_diff > 1)
 	{
 			act_pos = ACT_MOVE_1MM / 4;
 	}
+	else
+	{
+			act_pos = ACT_MOVE_1MM / 10;
+	}
+
 	//printf("%d:%f:%d:%f:%f\n", tip_edge_guide, diff, act_pos, rWidth[LPos02], rWidth[LPos01]);
 
 	if(diff > OffsetIn)
