@@ -14,8 +14,8 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include "datatypes.h"
 #include "splice_libs.h"
-#include "osal_msg.h"
 #include "plc.h"
 
 //#define STANDALONE

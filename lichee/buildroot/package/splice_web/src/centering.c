@@ -17,10 +17,10 @@
 #include <linux/input.h>
 
 #include "json-c/json.h"
+#include "datatypes.h"
 #include "splice_libs.h"
 #include "splice_utils.h"
 #include "actuator.h"
-#include "osal_msg.h"
 #include "centering.h"
 #include "plc.h"
 
