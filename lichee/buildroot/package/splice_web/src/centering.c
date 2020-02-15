@@ -106,7 +106,7 @@ void *readPosTask(void * data)
 		pos = json_object_object_get(cam, "Pos");
 
 #ifdef VIEW_POS
-		printf("\n");
+		PrintDebug("\n");
 #endif
 
 		for(i=0; i<json_object_array_length(pos); i++)
@@ -116,7 +116,7 @@ void *readPosTask(void * data)
 			if(i == LPos02) rWidth[LPos02] *= -1;
 			if(i == LPos01) rWidth[LPos01] *= -1;
 #ifdef VIEW_POS
-			printf("pos=%f ", json_object_get_double(pos_val));
+			PrintDebug("pos=%f ", json_object_get_double(pos_val));
 #endif
 		}
 	}
@@ -139,17 +139,17 @@ char getTipDirection(void)
 
 	if(strncmp("left", buf, MAX_TIP_DIRECTION_STRING) == 0)
 	{
-		printf("Tip direction seems look like normal(%s)\n", buf);
+		PrintDebug("Tip direction seems look like normal(%s)\n", buf);
 		td = TIP_LEFT;
 	}
 	else if(strncmp("right", buf, MAX_TIP_DIRECTION_STRING) == 0)
 	{
-		printf("Tip direction seems look like normal(%s)\n", buf);
+		PrintDebug("Tip direction seems look like normal(%s)\n", buf);
 		td = TIP_RIGHT;
 	}
 	else
 	{
-		printf("Tip direction seems look like abnormal(%s)\n", buf);
+		PrintError("Tip direction seems look like abnormal(%s)\n", buf);
 		td = TIP_LEFT;
 	}
 
@@ -212,7 +212,7 @@ void act_move(char direction, int pos)
 	}
 	else
 	{
-		printf("actuator set wrong direction\n");
+		PrintError("actuator set wrong direction\n");
 	}
 }
 
@@ -378,7 +378,7 @@ void EPCCentering(float avgWidth)
 		}
 		else
 		{
-			printf("couldn't be here, left, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
+			PrintError("couldn't be here, left, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 		}
 	}
 	else
@@ -395,7 +395,7 @@ void EPCCentering(float avgWidth)
 		}
 		else
 		{
-			printf("couldn't be here, right, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
+			PrintError("couldn't be here, right, %f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 		}
 	}
 
@@ -442,7 +442,7 @@ static void tip_offset_divide(float MWidth, float *leading_tip_width, float *tra
 		leading_tip_width[i] = MWidth + ((i+1) * R.SWidthIn/TIP_OFFSET_DIVIDE_COUNT);
 		if(R.OffsetIn != 0 && abs(R.OffsetIn) < TIP_OFFSET_DIVIDE_COUNT)
 		{
-			printf("OffsetIn is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
+			PrintDebug("OffsetIn is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
 			leading_tip_offset[i] = 1;
 		}
 		else if(R.OffsetIn == 0)
@@ -454,7 +454,7 @@ static void tip_offset_divide(float MWidth, float *leading_tip_width, float *tra
 			leading_tip_offset[i] = abs(R.OffsetIn) - (i * (abs(R.OffsetIn) / TIP_OFFSET_DIVIDE_COUNT));
 		}
 
-		printf("ltip %d : [%f][%d]\n", i, leading_tip_width[i], leading_tip_offset[i]);
+		PrintDebug("ltip %d : [%f][%d]\n", i, leading_tip_width[i], leading_tip_offset[i]);
 
 		/* Divide trailing tip offset area by TIP_OFFSET_DIVIDE_COUNT */
 		trailing_tip_width[i] = R.SWidthOut - ((i+1) * R.SWidthOut/TIP_OFFSET_DIVIDE_COUNT);
@@ -464,7 +464,7 @@ static void tip_offset_divide(float MWidth, float *leading_tip_width, float *tra
 	{
 		if(R.OffsetOut != 0 && abs(R.OffsetOut) < TIP_OFFSET_DIVIDE_COUNT)
 		{
-			printf("OffsetOut is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
+			PrintDebug("OffsetOut is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
 			trailing_tip_offset[i] = 1;
 		}
 		else if(R.OffsetOut == 0)
@@ -476,7 +476,7 @@ static void tip_offset_divide(float MWidth, float *leading_tip_width, float *tra
 			trailing_tip_offset[i] = abs(R.OffsetOut) - (i * (abs(R.OffsetOut) / TIP_OFFSET_DIVIDE_COUNT));
 		}
 
-		printf("ttip %d : [%f][%d]\n", i, trailing_tip_width[i], trailing_tip_offset[i]);
+		PrintDebug("ttip %d : [%f][%d]\n", i, trailing_tip_width[i], trailing_tip_offset[i]);
 	}
 }
 
@@ -494,7 +494,7 @@ static void divided_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
 
 				tip_offset_flag = FALSE;
-				printf("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+				PrintDebug("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
 			}
 			else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetIn != 0)
 			{
@@ -504,7 +504,7 @@ static void divided_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
 
 				//tip_offset_flag = FALSE;
-				printf("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+				PrintDebug("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
 			}
 			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
 			{
@@ -539,7 +539,7 @@ static void leading_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
 
 				tip_offset_flag = FALSE;
-				printf("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+				PrintDebug("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
 			}
 			else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetIn != 0)
 			{
@@ -549,7 +549,7 @@ static void leading_tip_guide(float MWidth, float *leading_tip_width, int *leadi
 					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
 
 				//tip_offset_flag = FALSE;
-				printf("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
+				PrintDebug("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], MWidth);
 			}
 			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
 			{
@@ -592,7 +592,7 @@ static void trailing_epc_tip_guide(float EPCWidth, float avgWidth, float *traili
 						act_move(ACT_MOVE_RIGHT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
 
 					tip_offset_flag = FALSE;
-					printf("ttol %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
+					PrintDebug("ttol %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
 				}
 				else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetOut != 0)
 				{
@@ -602,13 +602,13 @@ static void trailing_epc_tip_guide(float EPCWidth, float avgWidth, float *traili
 						act_move(ACT_MOVE_LEFT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
 
 					tip_offset_flag = FALSE;
-					printf("ttor %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
+					PrintDebug("ttor %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
 				}
 				else if(tip_offset_flag && R.OffsetOut == 0)
 				{
 					EPCCentering(avgWidth);
 					tip_offset_flag = FALSE;
-					printf("epc\n");
+					PrintDebug("epc\n");
 				}
 			}
 			else
@@ -638,8 +638,8 @@ void *centeringTask(void *data)
 				actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
 				act_need_reset_flag = FALSE;
 
-				printf("Actuator reset!\n");
-				printf("enc = %d, avgWidth=%f, cnt=%d\n", cnt_enc, avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
+				PrintDebug("Actuator reset!\n");
+				PrintDebug("enc = %d, avgWidth=%f, cnt=%d\n", cnt_enc, avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
 
 				avgWidthCnt = 1;
 				avgWidth = 0;
@@ -689,13 +689,13 @@ void *centeringTask(void *data)
 		/* Check whether if SWidthIn is in boundary of MWidth or not*/
 		if(R.SWidthIn > (R.GetSWidth * 40 / 100))
 		{
-			printf("R.SWidthIn is too big to control!\n");
+			PrintWarn("R.SWidthIn is too big to control!\n");
 		}
 
 		/* Check whether if SWidthOut is in boundary of MWidth or not*/
 		if(R.SWidthOut > (R.GetSWidth * 40 / 100))
 		{
-			printf("R.SWidthOut is too big to control!\n");
+			PrintWarn("R.SWidthOut is too big to control!\n");
 		}
 
 		//printf("%f:%f:%f:%f, %f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02], MWidth, isCPC);
@@ -704,7 +704,7 @@ void *centeringTask(void *data)
 		{
 			if(tip_detect == FALSE)
 			{
-				printf("Tip detect~!!\n");
+				PrintDebug("Tip detect~!!\n");
 				sendPlcIO(PLC_WR_TIP_DETECT);
 				sendPlcIO(PLC_WR_CENTERING);
 				tip_detect = TRUE;
@@ -753,7 +753,7 @@ void readRRegister(char dump)
 	 * This is for PLC internal implementation */
 	if(sendPlc(EEP_Data_Start_R_Register, plc_buf, EEP_R_Register_Size, true) != PLC_COMM_ACK)
 	{
-		printf("failed to get R register from PLC\n");
+		PrintError("failed to get R register from PLC\n");
 		return;
 	}
 
@@ -799,28 +799,28 @@ void readRRegister(char dump)
 #ifdef R_DUMP
 	if(dump == TRUE)
 	{
-		printf("R.MWidth = %ld\n", R.MWidth);
-		printf("R.SWidthIn = %ld\n", R.SWidthIn);
-		printf("R.OffsetIn= %ld\n", R.OffsetIn);
-		printf("R.GetSWidth= %ld\n", R.GetSWidth);
-		printf("R.TolPos= %ld\n", R.TolPos);
-		printf("R.TolNeg= %ld\n", R.TolNeg);
-		printf("R.SWidthOut= %ld\n", R.SWidthOut);
-		printf("R.OffsetOut= %ld\n", R.OffsetOut);
-		printf("R.POffset= %ld\n", R.POffset);
-		printf("R.MOffset= %ld\n", R.MOffset);
-		printf("R.LeadingOffsetEnable = %ld\n", R.LeadingOffsetEnable);
-		printf("R.TrailingOffsetEnable = %ld\n", R.TrailingOffsetEnable);
+		PrintDebug("R.MWidth = %ld\n", R.MWidth);
+		PrintDebug("R.SWidthIn = %ld\n", R.SWidthIn);
+		PrintDebug("R.OffsetIn= %ld\n", R.OffsetIn);
+		PrintDebug("R.GetSWidth= %ld\n", R.GetSWidth);
+		PrintDebug("R.TolPos= %ld\n", R.TolPos);
+		PrintDebug("R.TolNeg= %ld\n", R.TolNeg);
+		PrintDebug("R.SWidthOut= %ld\n", R.SWidthOut);
+		PrintDebug("R.OffsetOut= %ld\n", R.OffsetOut);
+		PrintDebug("R.POffset= %ld\n", R.POffset);
+		PrintDebug("R.MOffset= %ld\n", R.MOffset);
+		PrintDebug("R.LeadingOffsetEnable = %ld\n", R.LeadingOffsetEnable);
+		PrintDebug("R.TrailingOffsetEnable = %ld\n", R.TrailingOffsetEnable);
 		for(i=0; i<7; i++)
 		{
-			printf("R.LeadingOffset[%d] = %ld\n", i, R.LeadingOffset[i]);
+			PrintDebug("R.LeadingOffset[%d] = %ld\n", i, R.LeadingOffset[i]);
 		}
 		for(i=0; i<7; i++)
 		{
-			printf("R.TrailingOffset[%d] = %ld\n", i, R.TrailingOffset[i]);
+			PrintDebug("R.TrailingOffset[%d] = %ld\n", i, R.TrailingOffset[i]);
 		}
-		printf("mm_per_pulse = %f\n", mm_per_pulse);
-		printf("CPCStart = %f\n", R.CPCStart);
+		PrintDebug("mm_per_pulse = %f\n", mm_per_pulse);
+		PrintDebug("CPCStart = %f\n", R.CPCStart);
 	}
 #endif
 }
@@ -844,7 +844,7 @@ void *encoderTask(void *data)
 		}
 
 #ifdef VIEW_ENCODER_CNT
-		printf("enc=%d\n", cnt_enc);
+		PrintDebug("enc=%d\n", cnt_enc);
 #endif
 	}
 }
@@ -857,7 +857,8 @@ int centering_init(void)
 	centering_fd = socket(AF_INET, SOCK_STREAM, 0);
 	if (centering_fd == -1)
 	{
-		printf("Could not create socket");
+		PrintError("Could not create socket");
+		return -1;
 	}
 
 	printf("Centering 0.60\n");
@@ -886,13 +887,10 @@ int centering_init(void)
 	{
 		PrintError( "could not create thread for centering %s\n", strerror( errno ));
 	}
-#if 1
 	if (pthread_create( &readPosTaskId, NULL, readPosTask, (void *)NULL ))
 	{
 		PrintError( "could not create thread for read position from cam %s\n", strerror( errno ));
 	}
-#endif
-
 
 	return 0;
 }
