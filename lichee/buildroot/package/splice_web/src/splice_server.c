@@ -977,7 +977,7 @@ int main(
 	CMD_Init();
 	CMD_PI_Init();
 
-	SYS_TRACE_EnableLevel(TRACE_ERR | TRACE_DEBUG | TRACE_INFO);
+	SYS_TRACE_EnableLevel(TRACE_ERR | TRACE_WARN | TRACE_DEBUG | TRACE_INFO);
 
 	signal(SIGPIPE, handler);
 	plc_init();
