@@ -282,7 +282,7 @@ void do_centering(char section, float pos_diff)
 void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 {
 	float pos_diff, ref_pos, ref_width;
-	int act_pos, coeff = 3; //determine how fast set to OffsetIn position
+	int act_pos;
 
 	if(tip_edge_guide == TRUE)
 	{
@@ -379,7 +379,7 @@ void trailingEPCCentering(float avgWidth)
 void trailingTipGuide(long OffsetOut)
 {
 	float pos_diff, ref_pos, ref_width;
-	int act_pos, coeff = 3; //determine how fast set to OffsetIn position
+	int act_pos;
 
 	ref_pos = (R.GetSWidth/2) + OffsetOut;
 
@@ -700,8 +700,6 @@ void *centeringTask(void *data)
 			}
 
 			//leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset); // alg1
-			//if(RWidth < leading_tip_width[TIP_OFFSET_DIVIDE_COUNT - 1])
-//		printf("%f:%f:%f:%f\n", rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 
 			if(RWidth < R.SWidthIn)
 			{
@@ -750,7 +748,7 @@ int centering_init(void)
 {
 	pthread_t centeringTaskId;
 
-	printf("Centering 0.66\n");
+	printf("Centering 0.70\n");
 
 	/* do not remove since CPCStart in centering task should be calculated R.GetSWidth. */
 	readRRegister(FALSE, &R);

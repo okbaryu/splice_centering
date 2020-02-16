@@ -34,6 +34,7 @@
 
 static int centering_fd;
 static int isCentering;
+static int offsetCoeff;
 static volatile int cnt_enc;
 static act_status ACT;
 float rWidth[4];
@@ -46,6 +47,19 @@ int getIsCentering(void)
 void setIsCentering(char status)
 {
 	isCentering = status;
+}
+
+int setOffsetCoeff(int coeff)
+{
+	if(coeff > 100 || coeff < -100)
+	{
+		PrintWarn("Seems look like abnormal coeff value %d\n", coeff);
+		return 0;
+	}
+
+	offsetCoeff = coeff;
+
+	return 0;
 }
 
 void enableReadPos(char onOff)
@@ -231,6 +245,20 @@ void readRRegister(char dump, RRegister *R)
 		}
 		PrintDebug("mm_per_pulse = %f\n", R->mm_per_pulse);
 		PrintDebug("CPCStart = %f\n", R->CPCStart);
+	}
+
+	if(offsetCoeff != 0)
+	{
+		if(R->OffsetIn > 0)
+		{
+			R->OffsetIn += offsetCoeff;
+			PrintDebug("OffsetIn is compensate by %d\n", R->OffsetIn);
+		}
+		else if(R->OffsetIn < 0)
+		{
+			R->OffsetIn += (offsetCoeff * -1);
+			PrintDebug("OffsetIn is compensate by %d\n", R->OffsetIn);
+		}
 	}
 }
 

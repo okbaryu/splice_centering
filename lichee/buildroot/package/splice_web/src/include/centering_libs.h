@@ -19,4 +19,5 @@ int getIsCentering(void);
 int getEncoderCnt(void);
 void resetEncoder(void);
 void act_move(char direction, int pos);
+int setOffsetCoeff(int coeff);
 void setIsCentering(char status);
