@@ -1,45 +1,42 @@
-var beltButton = document.getElementById('beltButton');
-var threadButton = document.getElementById('threadButton');
-var carcassButton = document.getElementById('carcassButton');
-var cpsButton = document.getElementById('cpsButton');
-var asButton = document.getElementById('asButton');
-var csButton = document.getElementById('csButton');
-var plcConnectSet = document.getElementById('plcConnectSet');
-var protocolSet = document.getElementById('protocolSet');
-var plcDataLen = document.getElementById('plcDataLen');
-var plcDataMonit = document.getElementById('plcDataMonit');
-var administrator = document.getElementById('administrator');
-var maintenance = document.getElementById('maintenance');
-var operator = document.getElementById('operator');
-var pc = document.getElementById('pc');
-var internalApp = document.getElementById('internalApp');
-var container = document.getElementById('subPage');
-
-var childFrame;
-var parentFrame;
-
 function changePage(tag){
+  var beltButton = document.getElementById('beltButton');
+  var threadButton = document.getElementById('threadButton');
+  var carcassButton = document.getElementById('carcassButton');
+  var cpsButton = document.getElementById('cpsButton');
+  var asButton = document.getElementById('asButton');
+  var csButton = document.getElementById('csButton');
+  var plcConnectSet = document.getElementById('plcConnectSet');
+  var protocolSet = document.getElementById('protocolSet');
+  var plcDataLen = document.getElementById('plcDataLen');
+  var plcDataMonit = document.getElementById('plcDataMonit');
+  var administrator = document.getElementById('administrator');
+  var maintenance = document.getElementById('maintenance');
+  var operator = document.getElementById('operator');
+  var pc = document.getElementById('pc');
+  var internalApp = document.getElementById('internalApp');
+  var container = document.getElementById('subPage');
+
   switch (tag) {
     //belt.php
     case 'beltButton':
       beltButton.style.backgroundColor = '#1D1E21';
       threadButton.style.backgroundColor = '#45464d';
       carcassButton.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe id="subP1" src="./syssetting/beltSub.php" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
+      container.innerHTML = '<iframe id="subP1" src="./sysSetting/beltSub.php" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
     case 'threadButton':
       beltButton.style.backgroundColor = '#45464d';
       threadButton.style.backgroundColor = '#1D1E21';
       carcassButton.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./syssetting/subCon.html" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon.html" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
     case 'carcassButton':
       beltButton.style.backgroundColor = '#45464d';
       threadButton.style.backgroundColor = '#45464d';
       carcassButton.style.backgroundColor = '#1D1E21';
-      container.innerHTML = '<iframe src="./syssetting/subCon.html" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon.html" frameborder="0" scrolling="no" width="730" height="600"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
 
@@ -105,21 +102,21 @@ function changePage(tag){
       administrator.style.backgroundColor = '#1D1E21';
       maintenance.style.backgroundColor = '#45464d';
       operator.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
     case 'maintenance':
       administrator.style.backgroundColor = '#45464d';
       maintenance.style.backgroundColor = '#1D1E21';
       operator.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
     case 'operator':
       administrator.style.backgroundColor = '#45464d';
       maintenance.style.backgroundColor = '#45464d';
       operator.style.backgroundColor = '#1D1E21';
-      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
 
@@ -127,28 +124,37 @@ function changePage(tag){
     case 'pc':
       pc.style.backgroundColor = '#1D1E21';
       internalApp.style.backgroundColor = '#45464d';
-      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
     case 'internalApp':
       pc.style.backgroundColor = '#45464d';
       internalApp.style.backgroundColor = '#1D1E21';
-      container.innerHTML = '<iframe src="./syssetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
+      container.innerHTML = '<iframe src="./sysSetting/subCon1.html" frameborder="0" scrolling="no" width="745" height="584"></iframe>';
       localStorage.iFrameCnt = 1;
       break;
   }
-
 }
 
 function historyBack(){
   var cnt;
+  var browser = navigator.userAgent.toLowerCase();
+
   if(localStorage.iFrameCnt){
     cnt = parseInt(localStorage.iFrameCnt, 10)
     cnt = -(1 + cnt);
     history.go(cnt);
     localStorage.removeItem("iFrameCnt");
   }else{
-    window.history.back();
+    if(browser.indexOf("chrome") != -1){
+      var link = document.location.href;
+      if(link.indexOf("#") != -1){
+        history.go(-2);
+      }else{
+        history.back();
+      }
+    }else{
+      history.back();
+    }
   }
-  // location.href = document.referrer;
 }

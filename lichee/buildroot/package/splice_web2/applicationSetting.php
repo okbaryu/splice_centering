@@ -1,12 +1,12 @@
 <?php
-include('./loginChek.php')
+include('./loginChek.php');
  ?>
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <title>Application Setting</title>
-    <link rel="stylesheet" href="applicationsetting.css">
+    <link rel="stylesheet" href="applicationSetting.css">
   </head>
   <body>
     <div class="wrap">
@@ -20,7 +20,7 @@ include('./loginChek.php')
           <ul>
             <li>
               <a href="#">
-                <div class="inContainer" onclick="location.href='./systemsetting.php'">
+                <div class="inContainer" onclick="location.href='./systemSetting.php'">
                   <div id="ractangel" onmouseover="changeColor()" onmouseout="resetColor()">
                     <img id="account" class="linkImg" src="images/web_GUI/icon/systemSetting.png" width="100px" height="100px" style="position:relative; top:30px;">
                   </div><!-- -->

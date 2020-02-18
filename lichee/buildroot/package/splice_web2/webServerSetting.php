@@ -1,5 +1,5 @@
 <?php
-include('./loginChek.php')
+include('./loginChek.php');
  ?>
 <!DOCTYPE html>
 <html>

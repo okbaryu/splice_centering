@@ -4,7 +4,7 @@ body{
   position: absolute;
   margin: 0;
   padding: 0;
-  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-image: url('images/web_GUI/web_GUI/Background.jpg');
   background-repeat: no-repeat;
 }
 .wrap{
@@ -94,10 +94,6 @@ body{
   outline: none;
   text-decoration: none;
 }
-.sideButton{
-   position:relative;
-   top:5%;
-}
 .sideButton span{
   color:white;
   position:relative;
@@ -108,7 +104,9 @@ body{
 .sideButton .thumnail{
   position:relative;
   left:100%;
-  top:-48.5%
+  top:-48.5%;
+  width:122px;
+  height:72px;
 }
 .sideButton{
   width:122px;
@@ -124,8 +122,6 @@ body{
    height:30px;
 }
 .thumnail{
-  width:122px;
-  height:72px;
 }
 .subPage{
   position: absolute;

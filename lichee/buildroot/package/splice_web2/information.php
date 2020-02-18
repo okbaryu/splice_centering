@@ -6,7 +6,7 @@ include('./loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>Information</title>
-    <link rel="stylesheet" href="Information.css">
+    <link rel="stylesheet" href="information.css">
   </head>
   <body>
     <div class="wrap">

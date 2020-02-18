@@ -1,5 +1,5 @@
 <?php
-include('./loginChek.php')
+include('./loginChek.php');
  ?>
 <!DOCTYPE html>
 <html>
@@ -20,7 +20,7 @@ include('./loginChek.php')
           <ul>
             <li>
               <a href="#">
-                <table onclick="location.href='./applicationsetting.php'">
+                <table onclick="location.href='./applicationSetting.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/deviceSetting.png" width="100px" height="100px"></td>
                   </tr>

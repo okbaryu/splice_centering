@@ -1,5 +1,5 @@
 <?php
-include('./loginChek.php')
+include('./loginChek.php');
  ?>
 <!DOCTYPE html>
 <html>
@@ -12,7 +12,7 @@ include('./loginChek.php')
     <div class="wrap">
       <?php include('topMenu1.html') ?>
       <div class="menuTitle homeToolBar">
-        <img src="images/web_GUI/icon/systemsetting.png"  width="32px" height="32px" style="position:absolute;top:7.5%;left:30.5%;">
+        <img src="images/web_GUI/icon/systemSetting.png"  width="32px" height="32px" style="position:absolute;top:7.5%;left:30.5%;">
         SYSTEM SETTING</div>
       <?php include('topMenu2.html') ?>
       <div class="container">

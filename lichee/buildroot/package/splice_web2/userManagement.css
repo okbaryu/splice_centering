@@ -4,7 +4,7 @@ body{
   position: absolute;
   margin: 0;
   padding: 0;
-  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-image: url('images/web_GUI/web_GUI/Background.jpg');
   background-repeat: no-repeat;
 }
 .wrap{
@@ -64,13 +64,58 @@ body{
   border-top: solid gray 1px;
   grid-area: 3/1/16/17;
 }
+.regButton{
+  border: none;
+  color: white;
+  background-color: #D63E2E;
+  position: relative;
+  top:10px;
+  left:14px;
+  width: 100px;
+  height: 30px;
+  grid-area: 3/14/4/16;
+}
 .subPage{
   grid-area: 4/2/15/16;
-  background-color: rgba(0, 0, 0, 0.7);
+  background-color: rgba(0, 0, 0, 0.5);
 }
 .subTool{
   grid-area: 4/2/5/16;
-  background-color: rgba(0, 0, 0, 1);
+  background-color: #1d1e21;
+}
+.id{
+  width: 128px;
+  height: 48px;
+  color:white;
+  text-align:center;
+}
+.username{
+  width: 192px;
+  height: 48px;
+  color:white;
+  text-align:center;
+}
+.email{
+  width: 320px;
+  height: 48px;
+  color:white;
+  text-align:center;
+}
+.role{
+  width: 128px;
+  height: 48px;
+  color:white;
+  text-align:center;
+}
+.action{
+  width: 128px;
+  height: 48px;
+  color:white;
+  text-align:center;
+}
+.icon{
+  width: 128px;
+  height: 48px;
 }
 .foot{
   background-color: #e3e3e3;

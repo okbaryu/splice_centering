@@ -1,5 +1,5 @@
 <?php
-include('./loginChek.php')
+include('./loginChek.php');
  ?>
 <!DOCTYPE html>
 <html>
@@ -20,28 +20,28 @@ include('./loginChek.php')
           <ul>
             <li  id="beltButton"  onclick="changePage('beltButton')">
               <a href="#">
-                <div class="sideButton">
+                <div class="sideButton" style="position:relative; top: 6px;">
                   <img class="icon" src="images/web_GUI/icon/belt.png">
                   <span style="position:relative;right:10%;">Belt</span>
-                  <img class="thumnail" src="images/web_GUI/web_GUI/belt.bmp">
+                  <img class="thumnail" src="images/web_GUI/web_GUI/belt.png">
                 </div>
               </a>
             </li>
             <li id="threadButton" onclick="changePage('threadButton')">
               <a href="#">
-                <div class="sideButton">
+                <div class="sideButton" style="position:relative; top: 6px;">
                   <img class="icon" src="images/web_GUI/icon/thread.png">
                   <span>Thread</span>
-                  <img class="thumnail" src="images/web_GUI/web_GUI/thread.bmp" >
+                  <img class="thumnail" src="images/web_GUI/web_GUI/thread.png" >
                 </div>
               </a>
             </li>
             <li id="carcassButton" onclick="changePage('carcassButton')">
               <a href="#">
-                <div class="sideButton">
+                <div class="sideButton" style="position:relative; top: 6px;">
                   <img class="icon" src="images/web_GUI/icon/carcass.png">
                   <span>Carcass</span>
-                  <img class="thumnail" src="images/web_GUI/web_GUI/carcass.bmp">
+                  <img class="thumnail" src="images/web_GUI/web_GUI/carcass.png">
                 </div>
               </a>
             </li>
@@ -65,7 +65,7 @@ include('./loginChek.php')
           <img src="images/web_GUI/icon2/systemSetting.png" width="24px" height="24px" style="position:relative; top: 5px; margin: 0 5px 0 5px;">
           <span style="color:gray;">System Setting</span>
           <img src="images/web_GUI/icon2/arrow.png" width="24px" height="16px" style="position:relative; top: 0px; margin-left:5px;">
-          <img src="images/web_GUI/icon2/Belt.png" width="24px" height="24px" style="position:relative; top: 5px; margin: 0 5px 0 5px;">
+          <img src="images/web_GUI/icon2/belt.png" width="24px" height="24px" style="position:relative; top: 5px; margin: 0 5px 0 5px;">
           <span style="color:red;">2 Belt</span>
         </div>
       </div>

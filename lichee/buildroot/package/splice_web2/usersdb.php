@@ -1,1 +1,3 @@
-admin|21232f297a57a5a743894a0e4a801fc3|onekick@onekick.com|tester|1
+admin|21232f297a57a5a743894a0e4a801fc3|admin|admin|1
+test1|751ec45015a704a39dc403001c963e97|abc|abc|2
+test2|751ec45015a704a39dc403001c963e97|def|def|0
