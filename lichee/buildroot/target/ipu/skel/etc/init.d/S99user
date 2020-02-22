@@ -49,12 +49,12 @@ echo 1 > /sys/class/gpio/gpio139/value
 
 echo "(i) app start"
 /var/splice_web/lcd &
+boa
 
 sleep 10
 
 echo "splice_web start"
-/var/splice_web/splice_server &
-boa
+/var/splice_web/splice_server
 
 exit 1
 

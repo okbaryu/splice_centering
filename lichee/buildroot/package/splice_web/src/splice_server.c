@@ -19,6 +19,10 @@
 #include "actuator.h"
 #include "centering.h"
 #include "plc.h"
+#include "cmdtool.h"
+#include "osal_init.h"
+#include "cmd_parser_init.h"
+#include "sys_trace.h"
 
 #define MAXHOSTNAME                  80
 #define PERF_FILE_FULL_PATH_LEN      64
@@ -307,10 +311,8 @@ static int splice_computeIrqData(
 		PrintInfo( "mul %5.2f is %-5lu;    ", 1.0 /*uptimeDelta*/, pIrqData->irqTotal );
 		{
 			float             delta    = pIrqData->irqTotal;
-#ifdef DEBUG
 			float             oldAvg   = irqAvg;
 			unsigned long int oldCount = irqAvgCount;
-#endif
 
 			irqAvg = ( irqAvg*irqAvgCount ) + delta;
 			irqAvgCount++;
@@ -971,16 +973,17 @@ int main(
 
 	Splice_Server_InitMutex( &gSataUsbMutex );
 
+	OSAL_Init();
+	CMD_Init();
+	CMD_PI_Init();
+
+	SYS_TRACE_EnableLevel(TRACE_ERR | TRACE_WARN | TRACE_DEBUG | TRACE_INFO);
+
 	signal(SIGPIPE, handler);
 	plc_init();
 	actuator_init();
 	TASK_Sleep(1000);
 	centering_init();
-
-#if 1
-	PrintInfo( "sizeof(splice_overall_stats ) %ld; sizeof(splice_client_stats) %ld; sizeof(splice_cpu_irq) %ld; sizeof(splice_response) %ld (0x%lx); \n",
-			sizeof(splice_overall_stats), sizeof(splice_client_stats), sizeof(splice_cpu_irq), sizeof(splice_response), sizeof(splice_response) );
-#endif
 
 	if (pthread_create( &serverTaskId, NULL, startServer, (void *)NULL ))
 	{
