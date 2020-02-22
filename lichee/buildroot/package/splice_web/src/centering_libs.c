@@ -25,7 +25,7 @@
 #define BUF_SIZE 4096
 
 #define CENTERING_PORT 7076
-#define STREAM_ONOFF_SIZE 32
+#define JSON_STRING_SIZE 256
 
 #define MAX_TIP_DIRECTION_STRING 10
 #define FILE_TIP_DIRECTION "/data/tip_direction"
@@ -64,19 +64,75 @@ int setOffsetCoeff(int coeff)
 
 void enableReadPos(char onOff)
 {
-	char setStream[STREAM_ONOFF_SIZE];
+	char setStream[JSON_STRING_SIZE];
 
-	memset(setStream, 0, STREAM_ONOFF_SIZE);
+	memset(setStream, 0, JSON_STRING_SIZE);
 	if(onOff)
 	{
-		strncpy(setStream, "{\"setStreaming\":\"on\"}", STREAM_ONOFF_SIZE);
+		strncpy(setStream, "{\"setStreaming\":\"on\"}", JSON_STRING_SIZE);
 	}
 	else
 	{
-		strncpy(setStream, "{\"setStreaming\":\"off\"}", STREAM_ONOFF_SIZE);
+		strncpy(setStream, "{\"setStreaming\":\"off\"}", JSON_STRING_SIZE);
 	}
 
-	send(centering_fd, setStream, STREAM_ONOFF_SIZE, 0);
+	send(centering_fd, setStream, JSON_STRING_SIZE, 0);
+}
+
+void calibrationSetMode(unsigned char mode)
+{
+	char setCaliMode[JSON_STRING_SIZE];
+
+	memset(setCaliMode, 0, JSON_STRING_SIZE);
+	if(mode == MODE_CALIBRATION)
+	{
+		strncpy(setCaliMode, "{\"setMode\":\"calibration\"}", JSON_STRING_SIZE);
+	}
+	else if(mode == MODE_RUNNING)
+	{
+		strncpy(setCaliMode, "{\"setMode\":\"running\"}", JSON_STRING_SIZE);
+	}
+	else
+	{
+		PrintError("Invalid calibration mdoe %d\n", mode);
+	}
+
+	send(centering_fd, setCaliMode, JSON_STRING_SIZE, 0);
+}
+
+int calibrationSetCam(unsigned char cam)
+{
+	char setCam[JSON_STRING_SIZE];
+
+	if(cam > CAMALL)
+	{
+		PrintError("Invalid camera number %d\n", cam);
+		return -1;
+	}
+
+	memset(setCam, 0, JSON_STRING_SIZE);
+	if(cam == CAMALL)
+	{
+		snprintf(setCam, JSON_STRING_SIZE, "{\"setCamera\":\"all\"}");
+	}
+	else
+	{
+		snprintf(setCam, JSON_STRING_SIZE, "{\"setCamera\":\"cam%d\"}", cam);
+	}
+
+	send(centering_fd, setCam, JSON_STRING_SIZE, 0);
+
+	return 0;
+}
+
+void calibrationSave(void)
+{
+	char setCaliSave[JSON_STRING_SIZE];
+
+	memset(setCaliSave, 0, JSON_STRING_SIZE);
+	strncpy(setCaliSave, "{\"saveCalibrationData\":null}", JSON_STRING_SIZE);
+
+	send(centering_fd, setCaliSave, JSON_STRING_SIZE, 0);
 }
 
 char getTipDirection(void)
@@ -280,6 +336,8 @@ static void *readPosTask(void * data)
 
 		cam = json_tokener_parse(buf);
 		pos = json_object_object_get(cam, "Pos");
+
+		if(pos == NULL) continue;
 
 #ifdef VIEW_POS
 		printf("\n");

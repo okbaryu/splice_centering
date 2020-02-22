@@ -1,6 +1,6 @@
 
-#ifndef _CMD_PARSER_PI_INIT_H_	/* It's an example. It should be changed. */
-#define _CMD_PARSER_PI_INIT_H_
+#ifndef _CMD_PARSER_INIT_H_	/* It's an example. It should be changed. */
+#define _CMD_PARSER_INIT_H_
  
 /*
  * Header Files
@@ -18,6 +18,6 @@
 /*
  * Function Prototypes
  */
-void CMD_PI_Init(void);
+void CMD_HS_Init(void);
 
 #endif

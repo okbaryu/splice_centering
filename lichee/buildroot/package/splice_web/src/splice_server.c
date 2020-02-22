@@ -975,7 +975,7 @@ int main(
 
 	OSAL_Init();
 	CMD_Init();
-	CMD_PI_Init();
+	CMD_HS_Init();
 
 	SYS_TRACE_EnableLevel(TRACE_ERR | TRACE_WARN | TRACE_DEBUG | TRACE_INFO);
 

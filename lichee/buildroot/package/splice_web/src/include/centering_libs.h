@@ -11,6 +11,12 @@
 #define RPos01 2
 #define RPos02 3
 
+#define MODE_CALIBRATION 0
+#define MODE_RUNNING     1
+#define CAM0             0
+#define CAM1             1
+#define CAMALL           2
+
 int centering_libs_init(void);
 char getTipDirection(void);
 void readRRegister(char dump, RRegister *R);
@@ -21,3 +27,9 @@ void resetEncoder(void);
 void act_move(char direction, int pos);
 int setOffsetCoeff(int coeff);
 void setIsCentering(char status);
+
+/* Calibraion function */
+void calibrationSetMode(unsigned char mode);
+int calibrationSetCam(unsigned char cam);
+void calibrationSave(void);
+
