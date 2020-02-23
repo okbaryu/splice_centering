@@ -268,7 +268,7 @@ void readRRegister(char dump, RRegister *R)
 	R->OffsetOut /= EEP_Scale_Num_for_PLC;
 	R->POffset /= EEP_Scale_Num_for_PLC;
 	R->MOffset /= EEP_Scale_Num_for_PLC;
-	for(i=0; i<7; i++)
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 	{
 		R->LeadingOffset[i] /= EEP_Scale_Num_for_PLC;
 		R->TrailingOffset[i] /= EEP_Scale_Num_for_PLC;
@@ -291,11 +291,11 @@ void readRRegister(char dump, RRegister *R)
 		PrintDebug("R->MOffset= %ld\n", R->MOffset);
 		PrintDebug("R->LeadingOffsetEnable = %ld\n", R->LeadingOffsetEnable);
 		PrintDebug("R->TrailingOffsetEnable = %ld\n", R->TrailingOffsetEnable);
-		for(i=0; i<7; i++)
+		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 		{
 			PrintDebug("R->LeadingOffset[%d] = %ld\n", i, R->LeadingOffset[i]);
 		}
-		for(i=0; i<7; i++)
+		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 		{
 			PrintDebug("R->TrailingOffset[%d] = %ld\n", i, R->TrailingOffset[i]);
 		}
@@ -308,12 +308,12 @@ void readRRegister(char dump, RRegister *R)
 		if(R->OffsetIn > 0)
 		{
 			R->OffsetIn += offsetCoeff;
-			PrintDebug("OffsetIn is compensate by %d\n", R->OffsetIn);
+			PrintDebug("OffsetIn is compensate by %ld\n", R->OffsetIn);
 		}
 		else if(R->OffsetIn < 0)
 		{
 			R->OffsetIn += (offsetCoeff * -1);
-			PrintDebug("OffsetIn is compensate by %d\n", R->OffsetIn);
+			PrintDebug("OffsetIn is compensate by %ld\n", R->OffsetIn);
 		}
 	}
 }

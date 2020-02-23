@@ -1,3 +1,6 @@
+#ifndef __CENTERING_LIBS_H__
+#define __CENTERING_LIBS_H__
+
 #include "plc.h"
 
 #define TIP_LEFT 0x1
@@ -33,3 +36,4 @@ void calibrationSetMode(unsigned char mode);
 int calibrationSetCam(unsigned char cam);
 void calibrationSave(void);
 
+#endif

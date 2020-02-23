@@ -1,6 +1,8 @@
 #ifndef __PLC_H__
 #define __PLC_H__
 
+#include "centering.h"
+
 #define PLC_PORT 6000
 
 #define EEP_Data_Start_R_Register 8100
@@ -34,8 +36,8 @@ typedef struct{
 	long MOffset;
 	long LeadingOffsetEnable;
 	long TrailingOffsetEnable;
-	long LeadingOffset[7];
-	long TrailingOffset[7];
+	long LeadingOffset[TIP_OFFSET_DIVIDE_COUNT];
+	long TrailingOffset[TIP_OFFSET_DIVIDE_COUNT];
 	long ActReset;
 	float CPCStart;
 	float mm_per_pulse;

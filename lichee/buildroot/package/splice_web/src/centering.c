@@ -36,8 +36,6 @@
 #define RPos01_R_FLAG 0x4
 #define RPos02_R_FLAG 0x8
 
-#define TIP_OFFSET_DIVIDE_COUNT 5
-
 #define AUTO_MODE !(PLCIO & 0x1)
 #define MANUAL_MODE ((PLCIO & 0x7) == 0x7)
 #define PLC_RD_WIDTH ((PLCIO & 0x7) == 0x2)
