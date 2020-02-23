@@ -30,19 +30,19 @@
 /*
  * Global Functions
  */
-int CMD_PARSER_PI_Centering(void *arg)
+int CMD_PARSER_Centering(void *arg)
 {
 	GET_ARGS;
 
-	int coeff, ret;
+	int param, ret;
 
 	if (CMD_IS("coeff"))
 	{
 		iResult = CMD_OK;
 
-		READABLE_IN_DEC(HWTEST_PARAM1, coeff);
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
 
-		ret = setOffsetCoeff(coeff);
+		ret = setOffsetCoeff(param);
 		if (ret != PI_OK)
 		{
 			iResult = CMD_ERR;
@@ -51,6 +51,103 @@ int CMD_PARSER_PI_Centering(void *arg)
 		{
 			iResult = CMD_OK;
 		}
+	}
+	else if (CMD_IS("CPCRatio"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		ret = setCPCRatio(param);
+		if (ret != PI_OK)
+		{
+			iResult = CMD_ERR;
+		}
+		else
+		{
+			iResult = CMD_OK;
+		}
+	}
+	else if (CMD_IS("profileOn"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		ret = startProfile(param);
+		if (ret != PI_OK)
+		{
+			iResult = CMD_ERR;
+		}
+		else
+		{
+			iResult = CMD_OK;
+		}
+	}
+	else if (CMD_IS("profileView"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		viewProfile(param);
+	}
+
+	return iResult;
+}
+
+int CMD_PARSER_Calibration(void *arg)
+{
+	GET_ARGS;
+	int ret;
+
+	if (CMD_IS("start"))
+	{
+		calibrationSetMode(MODE_CALIBRATION);
+
+		iResult = CMD_OK;
+	}
+	if (CMD_IS("end"))
+	{
+		calibrationSetMode(MODE_RUNNING);
+
+		iResult = CMD_OK;
+	}
+	else if (CMD_IS("setCam0"))
+	{
+		iResult = CMD_OK;
+
+		ret = calibrationSetCam(CAM0);
+		if(ret < 0)
+		{
+			iResult = CMD_ERR;
+		}
+	}
+	else if (CMD_IS("setCam1"))
+	{
+		iResult = CMD_OK;
+
+		ret = calibrationSetCam(CAM1);
+		if(ret < 0)
+		{
+			iResult = CMD_ERR;
+		}
+	}
+	else if (CMD_IS("setCamAll"))
+	{
+		iResult = CMD_OK;
+
+		ret = calibrationSetCam(CAMALL);
+		if(ret < 0)
+		{
+			iResult = CMD_ERR;
+		}
+	}
+	else if (CMD_IS("save"))
+	{
+		calibrationSave();
+
+		iResult = CMD_OK;
 	}
 
 	return iResult;

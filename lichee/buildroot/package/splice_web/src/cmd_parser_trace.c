@@ -28,7 +28,7 @@
 /*
  * Global Functions
  */
-int CMD_PARSER_PI_Trace(void *arg)
+int CMD_PARSER_Trace(void *arg)
 {
 	GET_ARGS;
 	uint_t level = 0;
