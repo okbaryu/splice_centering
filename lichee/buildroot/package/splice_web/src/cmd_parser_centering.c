@@ -68,6 +68,30 @@ int CMD_PARSER_Centering(void *arg)
 			iResult = CMD_OK;
 		}
 	}
+	else if (CMD_IS("profileOn"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		ret = startProfile(param);
+		if (ret != PI_OK)
+		{
+			iResult = CMD_ERR;
+		}
+		else
+		{
+			iResult = CMD_OK;
+		}
+	}
+	else if (CMD_IS("profileView"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		viewProfile(param);
+	}
 
 	return iResult;
 }

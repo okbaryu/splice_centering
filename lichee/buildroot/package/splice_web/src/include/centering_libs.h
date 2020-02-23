@@ -14,6 +14,10 @@
 #define RPos01 2
 #define RPos02 3
 
+#define ALGORITHM1 1
+#define ALGORITHM2 2
+#define ALGORITHM3 3
+
 #define MODE_CALIBRATION 0
 #define MODE_RUNNING     1
 #define CAM0             0
@@ -21,6 +25,27 @@
 #define CAMALL           2
 
 #define DEFAULT_CPC_RATIO 90
+
+#define PROFILE_AREA_LEADING_DIVIDED 0
+#define PROFILE_AERA_WHOLE 1
+
+#define MAX_LEADING_PROFILE 1000
+#define MAX_WHOLE_PROFILE 3000
+
+struct leadingProfile
+{
+	char area;
+	float RWidth;
+	int enc_cnt;
+}leadingProfile;
+
+struct wholeProfile{
+	float rWidth[4];
+	float RWidth;
+	unsigned char current_section;
+	int encoder;
+	int tip_detect_cnt;
+}wholeProfile;
 
 int centering_libs_init(void);
 char getTipDirection(void);
@@ -32,7 +57,17 @@ void resetEncoder(void);
 void act_move(char direction, int pos);
 int setOffsetCoeff(int coeff);
 int setCPCRatio(int ratio);
+int getCPCRatio(void);
 void setIsCentering(char status);
+int getAlgorithm(void);
+
+int startProfile(char onOff);
+int isProfileOn(void);
+void resetProfile(void);
+void saveProfile(void);
+void viewProfile(char area);
+void wholeAreaProfile(char section, float RWidth, float *rWidth);
+void leadingOffsetProfile(float RWidth, float *leading_tip_width);
 
 /* Calibraion function */
 void calibrationSetMode(unsigned char mode);

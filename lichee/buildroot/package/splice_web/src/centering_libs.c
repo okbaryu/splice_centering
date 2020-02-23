@@ -29,7 +29,8 @@
 
 #define MAX_TIP_DIRECTION_STRING 10
 #define FILE_TIP_DIRECTION "/data/tip_direction"
-#define FILE_TIP_OFFSET_DIVICE "/data/offset_divide"
+#define FILE_WHOLE_PROFILE "/mnt/extsd/whole_area_profile"
+#define FILE_LEADING_PROFILE "/mnt/extsd/leading_area_profile"
 //#define VIEW_POS
 
 static int centering_fd;
@@ -39,6 +40,12 @@ static int CPCRatio = DEFAULT_CPC_RATIO;
 static volatile int cnt_enc;
 static act_status ACT;
 float rWidth[4];
+
+static struct leadingProfile lp[MAX_LEADING_PROFILE];
+static struct wholeProfile wp[MAX_WHOLE_PROFILE];
+static int leadingProfileCnt;
+static int wholeProfileCnt;
+static int profileOnOff=1;
 
 int getIsCentering(void)
 {
@@ -79,6 +86,173 @@ int setCPCRatio(int ratio)
 int getCPCRatio(void)
 {
 	return CPCRatio;
+}
+
+int startProfile(char onOff)
+{
+	profileOnOff = onOff;
+
+	return 0;
+}
+
+int isProfileOn(void)
+{
+	return profileOnOff;
+}
+
+void resetProfile(void)
+{
+	memset(lp, 0, sizeof(struct leadingProfile) * MAX_LEADING_PROFILE);
+	memset(wp, 0, sizeof(struct wholeProfile) * MAX_WHOLE_PROFILE);
+	leadingProfileCnt = 0;
+	wholeProfileCnt = 0;
+}
+
+void saveProfile(void)
+{
+	int fd_wp, fd_lp;
+
+	if(isProfileOn() == FALSE) return;
+
+	fd_wp = open(FILE_WHOLE_PROFILE, O_CREAT|O_RDWR);
+	if(fd_wp < 0)
+	{
+		perror("open whole profile error\n");
+		return;
+	}
+
+	fd_lp = open(FILE_LEADING_PROFILE, O_CREAT|O_RDWR);
+	if(fd_lp < 0)
+	{
+		perror("open leading profile error\n");
+		return;
+	}
+
+	write(fd_wp, (void *)&wholeProfileCnt, sizeof(int));
+	write(fd_wp, (void *)wp, sizeof(struct wholeProfile) * wholeProfileCnt);
+	write(fd_lp, (void *)&leadingProfileCnt, sizeof(int));
+	write(fd_lp, (void *)lp, sizeof(struct leadingProfile) * leadingProfileCnt);
+
+	close(fd_wp);
+	close(fd_lp);
+}
+
+void viewProfile(char area)
+{
+	int fd_wp, fd_lp, cnt, i;
+	float width = 0, prev_enc_cnt = 0, a_tangent;
+	struct leadingProfile p;
+	RRegister R;
+
+	if(isProfileOn() == FALSE)
+	{
+		printf("No profiling data to show\n");
+		return;
+	}
+
+	fd_wp = open(FILE_WHOLE_PROFILE, O_RDONLY);
+	if(fd_wp < 0)
+	{
+		perror("open whole profile error\n");
+		return;
+	}
+
+	fd_lp = open(FILE_LEADING_PROFILE, O_RDONLY);
+	if(fd_lp < 0)
+	{
+		perror("open leading profile error\n");
+		return;
+	}
+
+	readRRegister(FALSE, &R);
+
+	if(area == PROFILE_AREA_LEADING_DIVIDED && getAlgorithm() > ALGORITHM1)
+	{
+		read(fd_lp, (void *)&cnt, sizeof(int));
+		printf("total cnt=%d\n", cnt);
+		for(i=0; i<cnt; i++)
+		{
+			read(fd_lp, (void *)&p, sizeof(struct leadingProfile));
+			if(width != p.RWidth)
+			{
+				a_tangent = atanf((p.RWidth - width) / ((p.enc_cnt - prev_enc_cnt) * R.mm_per_pulse));
+				printf("Area %d : %f : %d : %f : %f\n", p.area, p.RWidth, p.enc_cnt, a_tangent, a_tangent * (180/3.14));
+				width = p.RWidth;
+				prev_enc_cnt = p.enc_cnt;
+			}
+		}
+	}
+
+	close(fd_wp);
+	close(fd_lp);
+}
+
+void wholeAreaProfile(char section, float RWidth, float *rWidth)
+{
+	if(section && wholeProfileCnt < MAX_WHOLE_PROFILE)
+	{
+		wp[wholeProfileCnt].rWidth[LPos02] = rWidth[LPos02];
+		wp[wholeProfileCnt].rWidth[LPos01] = rWidth[LPos01];
+		wp[wholeProfileCnt].rWidth[RPos01] = rWidth[RPos01];
+		wp[wholeProfileCnt].rWidth[RPos02] = rWidth[RPos02];
+		wp[wholeProfileCnt].RWidth = RWidth;
+		wp[wholeProfileCnt].current_section = section;
+		wp[wholeProfileCnt].encoder = getEncoderCnt();
+		wholeProfileCnt++;
+	}
+}
+
+void leadingOffsetProfile(float RWidth, float *leading_tip_width)
+{
+	if(leadingProfileCnt > MAX_LEADING_PROFILE) return;
+
+	if(leading_tip_width[0] <= RWidth && RWidth < leading_tip_width[1])
+	{
+		lp[leadingProfileCnt].area = 1;
+	}
+	else if(leading_tip_width[1] <= RWidth  && RWidth < leading_tip_width[2])
+	{
+		lp[leadingProfileCnt].area = 2;
+	}
+	else if(leading_tip_width[2] <= RWidth && RWidth < leading_tip_width[3])
+	{
+		lp[leadingProfileCnt].area = 3;
+	}
+	else if(leading_tip_width[3] <= RWidth && RWidth < leading_tip_width[4])
+	{
+		lp[leadingProfileCnt].area = 4;
+	}
+	else if(leading_tip_width[4] <= RWidth && RWidth < leading_tip_width[5])
+	{
+		lp[leadingProfileCnt].area = 5;
+	}
+	else if(leading_tip_width[5] <= RWidth && RWidth < leading_tip_width[6])
+	{
+		lp[leadingProfileCnt].area = 6;
+	}
+
+	lp[leadingProfileCnt].RWidth = RWidth;
+	lp[leadingProfileCnt].enc_cnt = getEncoderCnt();
+	leadingProfileCnt++;
+}
+
+int getAlgorithm(void)
+{
+	int i;
+	RRegister R;
+
+	readRRegister(FALSE, &R);
+
+	if(R.LeadingOffsetEnable)
+	{
+		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+		{
+			if(R.LeadingOffset[i]) return ALGORITHM2;
+		}
+		return ALGORITHM3;
+	}
+	
+	return ALGORITHM1;
 }
 
 void enableReadPos(char onOff)

@@ -434,51 +434,6 @@ static void tip_offset_divide(float RWidth, float *leading_tip_width, float *tra
 	}
 }
 
-static void divided_tip_guide(float RWidth, float *leading_tip_width, int *leading_tip_offset)
-{
-	if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
-	{
-		if(leading_tip_width[tip_offset_cnt] > RWidth)
-		{
-			if(tip_direction == TIP_LEFT && tip_offset_flag && R.OffsetIn != 0)
-			{
-				if(R.OffsetIn > 0)
-					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
-				else
-					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
-
-				tip_offset_flag = FALSE;
-				PrintDebug("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], RWidth);
-			}
-			else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetIn != 0)
-			{
-				if(R.OffsetIn > 0)
-					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
-				else
-					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
-
-				//tip_offset_flag = FALSE;
-				PrintDebug("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], RWidth);
-			}
-			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
-			{
-				tipEdgeCentering(TRUE, R.OffsetIn);
-				//tip_offset_flag = FALSE;
-				//printf("ledge\n");
-			}
-		}
-		else
-		{
-			tip_offset_cnt++;
-			tip_offset_flag = TRUE; //Used for move actuator once per each leading_tip_width
-		}
-	}
-	else
-	{
-		tipEdgeCentering(FALSE, 0);
-	}
-}
-
 static void leading_tip_guide(float RWidth, float *leading_tip_width, int *leading_tip_offset)
 {
 	if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
@@ -573,12 +528,11 @@ static void trailing_epc_tip_guide(float EPCWidth, float avgWidth, float *traili
 		}
 	}
 }
-
 void *centeringTask(void *data)
 {
 	float RWidth, avgWidth = 0;
 	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE;
-	int isCPC = FALSE, avgWidthCnt = 1;
+	int isCPC = FALSE, avgWidthCnt = 1, alg;
 	float leading_tip_width[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_width[TIP_OFFSET_DIVIDE_COUNT];
 	int leading_tip_offset[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_offset[TIP_OFFSET_DIVIDE_COUNT];
 
@@ -602,7 +556,14 @@ void *centeringTask(void *data)
 				sendPlcIO(PLC_WR_RESET);
 
 				rWidth[LPos02] = rWidth[LPos01] = rWidth[RPos01] = rWidth[RPos02] = 0;
+
 				current_section = 0;
+
+				if(isProfileOn())
+				{
+					saveProfile();
+					resetProfile();
+				}
 			}
 
 			isCPC = FALSE;
@@ -662,22 +623,40 @@ void *centeringTask(void *data)
 				tip_detect = TRUE;
 				resetEncoder();
 				tip_offset_cnt = 0;
-
-				tip_offset_divide(RWidth, leading_tip_width, trailing_tip_width, leading_tip_offset, trailing_tip_offset);
 				current_section = LEADING_TIP_SECTION;
+
+				alg = getAlgorithm();
+
+				if(alg > ALGORITHM1)
+				{
+					tip_offset_divide(RWidth, leading_tip_width, trailing_tip_width, leading_tip_offset, trailing_tip_offset);
+				}
 			}
 
 			//leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset); // alg1
 
-			if(RWidth < R.SWidthIn)
+			if(alg == ALGORITHM2)
 			{
-				current_section = LEADING_TIP_SECTION;
-				tipEdgeCentering(TRUE, R.OffsetIn);
+				if(isProfileOn())
+				{
+					leadingOffsetProfile(RWidth, leading_tip_width);
+				}
 			}
-			else
+			else if(alg == ALGORITHM3)
 			{
-				current_section = LEADING_EPC_SECTION;
-				tipEdgeCentering(FALSE, R.OffsetIn);
+			}
+			else // ALGORITHM1
+			{
+				if(RWidth < R.SWidthIn)
+				{
+					current_section = LEADING_TIP_SECTION;
+					tipEdgeCentering(TRUE, R.OffsetIn);
+				}
+				else
+				{
+					current_section = LEADING_EPC_SECTION;
+					tipEdgeCentering(FALSE, R.OffsetIn);
+				}
 			}
 		}
 		else if(PLC_RD_CPC) // masking PLC_RD_CPC_TO_EPC
@@ -706,6 +685,11 @@ void *centeringTask(void *data)
 		{
 			avgWidth += (rWidth[LPos01] + rWidth[RPos01]);
 			avgWidthCnt++;
+		}
+
+		if(isProfileOn())
+		{
+			wholeAreaProfile(current_section, RWidth, rWidth);
 		}
 
 		TASK_Sleep(10);
