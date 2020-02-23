@@ -34,15 +34,31 @@ int CMD_PARSER_Centering(void *arg)
 {
 	GET_ARGS;
 
-	int coeff, ret;
+	int param, ret;
 
 	if (CMD_IS("coeff"))
 	{
 		iResult = CMD_OK;
 
-		READABLE_IN_DEC(HWTEST_PARAM1, coeff);
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
 
-		ret = setOffsetCoeff(coeff);
+		ret = setOffsetCoeff(param);
+		if (ret != PI_OK)
+		{
+			iResult = CMD_ERR;
+		}
+		else
+		{
+			iResult = CMD_OK;
+		}
+	}
+	else if (CMD_IS("CPCRatio"))
+	{
+		iResult = CMD_OK;
+
+		READABLE_IN_DEC(HWTEST_PARAM1, param);
+
+		ret = setCPCRatio(param);
 		if (ret != PI_OK)
 		{
 			iResult = CMD_ERR;

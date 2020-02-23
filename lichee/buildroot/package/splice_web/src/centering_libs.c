@@ -35,6 +35,7 @@
 static int centering_fd;
 static int isCentering;
 static int offsetCoeff;
+static int CPCRatio = DEFAULT_CPC_RATIO;
 static volatile int cnt_enc;
 static act_status ACT;
 float rWidth[4];
@@ -53,13 +54,31 @@ int setOffsetCoeff(int coeff)
 {
 	if(coeff > 100 || coeff < -100)
 	{
-		PrintWarn("Seems look like abnormal coeff value %d\n", coeff);
-		return 0;
+		PrintError("Seems look like abnormal coeff value %d\n", coeff);
+		return -1;
 	}
 
 	offsetCoeff = coeff;
 
 	return 0;
+}
+
+int setCPCRatio(int ratio)
+{
+	if(ratio > 100 || ratio < 80)
+	{
+		PrintError("Seems look like abnormal ratio value %d\n", ratio);
+		return -1;
+	}
+
+	CPCRatio = ratio;
+
+	return 0;
+}
+
+int getCPCRatio(void)
+{
+	return CPCRatio;
 }
 
 void enableReadPos(char onOff)
@@ -275,7 +294,7 @@ void readRRegister(char dump, RRegister *R)
 	}
 
 	R->mm_per_pulse = 0.091993;
-	R->CPCStart = R->GetSWidth * 90 / 100; // if width is 90% of GetSWidth, assume CPC started
+	R->CPCStart = R->GetSWidth * CPCRatio / 100; // if width is CPCRatio% of GetSWidth, assume CPC started
 
 	if(dump == TRUE)
 	{

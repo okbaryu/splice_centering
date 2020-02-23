@@ -419,48 +419,18 @@ void trailingTipGuide(long OffsetOut)
 static void tip_offset_divide(float RWidth, float *leading_tip_width, float *trailing_tip_width, int *leading_tip_offset, int *trailing_tip_offset)
 {
 	int i;
+	float divide_factor = (float)(R.GetSWidth * getCPCRatio() / 100) / TIP_OFFSET_DIVIDE_COUNT;
 
 	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 	{
 		/* Divide leading tip offset area by TIP_OFFSET_DIVIDE_COUNT */
-		leading_tip_width[i] = RWidth + ((i+1) * R.SWidthIn/TIP_OFFSET_DIVIDE_COUNT);
-		if(R.OffsetIn != 0 && abs(R.OffsetIn) < TIP_OFFSET_DIVIDE_COUNT)
-		{
-			PrintDebug("OffsetIn is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
-			leading_tip_offset[i] = 1;
-		}
-		else if(R.OffsetIn == 0)
-		{
-			leading_tip_offset[i] = 0;
-		}
-		else
-		{
-			leading_tip_offset[i] = abs(R.OffsetIn) - (i * (abs(R.OffsetIn) / TIP_OFFSET_DIVIDE_COUNT));
-		}
-
-		PrintDebug("ltip %d : [%f][%d]\n", i, leading_tip_width[i], leading_tip_offset[i]);
-
+		leading_tip_width[i] = (i+1) * divide_factor;
+		leading_tip_offset[i] = R.LeadingOffset[i];
 		/* Divide trailing tip offset area by TIP_OFFSET_DIVIDE_COUNT */
-		trailing_tip_width[i] = R.SWidthOut - ((i+1) * R.SWidthOut/TIP_OFFSET_DIVIDE_COUNT);
-	}
+		trailing_tip_width[i] = R.GetSWidth - ((i+1) * divide_factor);
+		trailing_tip_offset[i] = R.TrailingOffset[i];
 
-	for(i=TIP_OFFSET_DIVIDE_COUNT-1; i >=0; i--)
-	{
-		if(R.OffsetOut != 0 && abs(R.OffsetOut) < TIP_OFFSET_DIVIDE_COUNT)
-		{
-			PrintDebug("OffsetOut is smaller than divide count(%d)\n", TIP_OFFSET_DIVIDE_COUNT);
-			trailing_tip_offset[i] = 1;
-		}
-		else if(R.OffsetOut == 0)
-		{
-			trailing_tip_offset[i] = 0;
-		}
-		else
-		{
-			trailing_tip_offset[i] = abs(R.OffsetOut) - (i * (abs(R.OffsetOut) / TIP_OFFSET_DIVIDE_COUNT));
-		}
-
-		PrintDebug("ttip %d : [%f][%d]\n", i, trailing_tip_width[i], trailing_tip_offset[i]);
+		PrintDebug("tip width %d : [%f][%f]\n", i, leading_tip_width[i], trailing_tip_width[i]);
 	}
 }
 

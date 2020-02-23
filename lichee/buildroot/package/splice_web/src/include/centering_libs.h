@@ -20,6 +20,8 @@
 #define CAM1             1
 #define CAMALL           2
 
+#define DEFAULT_CPC_RATIO 90
+
 int centering_libs_init(void);
 char getTipDirection(void);
 void readRRegister(char dump, RRegister *R);
@@ -29,6 +31,7 @@ int getEncoderCnt(void);
 void resetEncoder(void);
 void act_move(char direction, int pos);
 int setOffsetCoeff(int coeff);
+int setCPCRatio(int ratio);
 void setIsCentering(char status);
 
 /* Calibraion function */
