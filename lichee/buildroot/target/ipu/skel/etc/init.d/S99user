@@ -48,7 +48,7 @@ echo 1 > /sys/class/gpio/gpio138/value
 echo 1 > /sys/class/gpio/gpio139/value
 
 echo "(i) app start"
-/var/splice_web/lcd &
+/var/splice_web/gui_lcd &
 boa
 
 sleep 10
