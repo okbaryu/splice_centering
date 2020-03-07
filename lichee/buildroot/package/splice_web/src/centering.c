@@ -682,6 +682,7 @@ void *centeringTask(void *data)
 			{
 				PrintError("Width Error %f\n", RWidth);
 				sendPlcError(PLC_ERR_WIDTH_ERROR, RWidth);
+				width_err_cnt = 0;
 			}
 
 			CPCCentering(RWidth);
