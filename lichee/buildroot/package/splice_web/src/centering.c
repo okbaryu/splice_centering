@@ -605,7 +605,6 @@ void *centeringTask(void *data)
 		if((rWidth[LPos01] + rWidth[RPos01]) > R.CPCStart)
 		{
 			isCPC = TRUE;
-			current_section = CPC_SECTION;
 		}
 
 		/* Check whether if SWidthIn is in boundary of RWidth or not*/
@@ -689,6 +688,8 @@ void *centeringTask(void *data)
 		}
 		else if(PLC_RD_EPC)
 		{
+			RWidth = getRWidth(tip_direction, TRAILING_EPC_SECTION);
+
 			if(RWidth >= R.SWidthOut)
 			{
 				current_section = TRAILING_EPC_SECTION;

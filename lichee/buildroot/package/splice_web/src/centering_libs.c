@@ -48,6 +48,14 @@ static int leadingProfileCnt;
 static int wholeProfileCnt;
 static int profileOnOff=1;
 
+const char section_name[5][21] = {
+	"LEADING_TIP_SECTION\0",
+	"LEADING_EPC_SECTION\0",
+	"CPC_SECTION\0",
+	"TRAILING_EPC_SECTION\0",
+	"TRAILING_TIP_SECTION\0"
+};
+
 int getIsCentering(void)
 {
 	return isCentering;
@@ -143,6 +151,7 @@ void viewProfile(char area)
 	int fd_wp, fd_lp, cnt, i;
 	float width = 0, prev_enc_cnt = 0, a_tangent;
 	struct leadingProfile p;
+	struct wholeProfile w;
 	RRegister R;
 
 	if(isProfileOn() == FALSE)
@@ -183,6 +192,20 @@ void viewProfile(char area)
 			}
 		}
 	}
+	else if(area == PROFILE_AERA_WHOLE)
+	{
+		read(fd_wp, (void *)&cnt, sizeof(int));
+		printf("total cnt=%d\n", cnt);
+		for(i=0; i<cnt; i++)
+		{
+			read(fd_wp, (void *)&w, sizeof(struct wholeProfile));
+			if(width != w.RWidth)
+			{
+				printf("cnt %d : %f : %s : %d\n", i, w.RWidth, section_name[w.current_section], w.encoder);
+				width = w.RWidth;
+			}
+		}
+	}
 
 	close(fd_wp);
 	close(fd_lp);
@@ -190,7 +213,7 @@ void viewProfile(char area)
 
 void wholeAreaProfile(char section, float RWidth, float *rWidth)
 {
-	if(section && wholeProfileCnt < MAX_WHOLE_PROFILE)
+	if(wholeProfileCnt < MAX_WHOLE_PROFILE)
 	{
 		wp[wholeProfileCnt].rWidth[LPos02] = rWidth[LPos02];
 		wp[wholeProfileCnt].rWidth[LPos01] = rWidth[LPos01];
