@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <math.h>
 
 #include "json-c/json.h"
 #include "centering_libs.h"
@@ -417,6 +418,21 @@ void act_move(char direction, int pos)
 	{
 		PrintError("actuator set wrong direction\n");
 	}
+}
+
+int width_check(float width, RRegister *r)
+{
+	if(r->TolPos == 0 && r->TolNeg == 0)
+	{
+		return 0;
+	}
+
+	if(width > r->TolPos || width < r->TolNeg)
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 void readRRegister(char dump, RRegister *R)

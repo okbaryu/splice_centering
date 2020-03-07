@@ -102,5 +102,6 @@ enum {
 int plc_init(void);
 int sendPlc(unsigned int r_head_address, char *head_data_address, char size, char readCmd);
 void sendPlcIO(int data);
+void sendPlcError(int error, float width);
 
 #endif

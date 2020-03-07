@@ -60,6 +60,7 @@ int setCPCRatio(int ratio);
 int getCPCRatio(void);
 void setIsCentering(char status);
 int getAlgorithm(void);
+int width_check(float width, RRegister *r);
 
 int startProfile(char onOff);
 int isProfileOn(void);

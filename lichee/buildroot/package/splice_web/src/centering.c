@@ -42,6 +42,7 @@
 #define PLC_RD_EPC (!(PLCIO & 0x2))
 #define PLC_RD_CPC (isCPC && (PLCIO & 0x2))
 
+#define WIDTH_ERR_CNT_THRESHOLD 40 // depends on CPCRatio
 //#define VIEW_ENCODER_CNT
 
 extern unsigned char PLCIO;
@@ -50,6 +51,7 @@ static RRegister R;
 static int tip_offset_cnt, tip_offset_flag;
 static char tip_direction;
 static char current_section;
+static char width_err_cnt;
 static int RWidth_FLAG;
 
 float getRWidth(char tip_direction, char section)
@@ -77,6 +79,7 @@ float getRWidth(char tip_direction, char section)
 			{
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == CPC_SECTION)
@@ -91,6 +94,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == TRAILING_TIP_SECTION || section == TRAILING_EPC_SECTION)
@@ -110,6 +114,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 	}
@@ -137,6 +142,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == CPC_SECTION)
@@ -151,6 +157,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == TRAILING_TIP_SECTION || section == TRAILING_EPC_SECTION)
@@ -170,6 +177,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 	}
@@ -547,7 +555,7 @@ void *centeringTask(void *data)
 				act_need_reset_flag = FALSE;
 
 				PrintDebug("Actuator reset!\n");
-				PrintDebug("enc = %d, avgWidth=%f, cnt=%d\n", getEncoderCnt(), avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
+				PrintDebug("enc = %d, Trail EPC avgWidth=%f, width_err_cnt=%d\n", getEncoderCnt(), avgWidth/(avgWidthCnt-1), width_err_cnt);
 
 				avgWidthCnt = 1;
 				avgWidth = 0;
@@ -558,6 +566,7 @@ void *centeringTask(void *data)
 				rWidth[LPos02] = rWidth[LPos01] = rWidth[RPos01] = rWidth[RPos02] = 0;
 
 				current_section = 0;
+				width_err_cnt = 0;
 
 				if(isProfileOn())
 				{
@@ -663,6 +672,18 @@ void *centeringTask(void *data)
 		{
 			current_section = CPC_SECTION;
 			RWidth = getRWidth(tip_direction, current_section);
+
+			if(width_check(RWidth, &R))
+			{
+				width_err_cnt++;
+			}
+
+			if(width_err_cnt > WIDTH_ERR_CNT_THRESHOLD)
+			{
+				PrintError("Width Error %f\n", RWidth);
+				sendPlcError(PLC_ERR_WIDTH_ERROR, RWidth);
+			}
+
 			CPCCentering(RWidth);
 		}
 		else if(PLC_RD_EPC)
