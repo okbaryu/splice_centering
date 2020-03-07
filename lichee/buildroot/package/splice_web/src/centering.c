@@ -42,7 +42,7 @@
 #define PLC_RD_EPC (!(PLCIO & 0x2))
 #define PLC_RD_CPC (isCPC && (PLCIO & 0x2))
 
-#define WIDTH_ERR_CNT_THRESHOLD 65 // depends on CPCRatio
+#define WIDTH_ERR_CNT_THRESHOLD 100 // depends on CPCRatio
 //#define VIEW_ENCODER_CNT
 
 extern unsigned char PLCIO;
