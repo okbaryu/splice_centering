@@ -24,7 +24,7 @@
 #define CAM1             1
 #define CAMALL           2
 
-#define DEFAULT_CPC_RATIO 90
+#define DEFAULT_CPC_RATIO 95
 
 #define PROFILE_AREA_LEADING_DIVIDED 0
 #define PROFILE_AERA_WHOLE 1
