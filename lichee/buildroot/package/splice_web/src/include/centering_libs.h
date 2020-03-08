@@ -36,7 +36,7 @@
 #define TRAILING_EPC_SECTION 3
 #define TRAILING_TIP_SECTION 4
 
-#define MAX_TIP_PROFILE 1000
+#define MAX_TIP_PROFILE 3000
 #define MAX_WHOLE_PROFILE 3000
 
 struct tipProfile

@@ -526,6 +526,7 @@ void *centeringTask(void *data)
 
 				avgWidthCnt = 1;
 				avgWidth = 0;
+				flag = TRUE;
 
 				enableReadPos(FALSE); //need to call only once per centering process
 				sendPlcIO(PLC_WR_RESET);
