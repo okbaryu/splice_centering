@@ -676,6 +676,11 @@ void *centeringTask(void *data)
 				if(RWidth < trailing_tip_width[0])
 				{
 					trailing_tip_guide(RWidth, trailing_tip_width, trailing_tip_offset);
+
+					if(isProfileOn())
+					{
+						trailingOffsetProfile(RWidth, trailing_tip_width);
+					}
 				}
 				else
 				{
@@ -683,6 +688,7 @@ void *centeringTask(void *data)
 					 * is smaller than trailing_tip_width[0] or not. If this time is too long, it needs
 					 * tune EPC transfer timing in PLC */
 				}
+
 			}
 			else if(alg == ALGORITHM3)
 			{

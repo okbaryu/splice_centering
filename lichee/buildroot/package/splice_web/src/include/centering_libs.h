@@ -28,16 +28,17 @@
 
 #define PROFILE_AREA_LEADING_DIVIDED 0
 #define PROFILE_AERA_WHOLE 1
+#define PROFILE_AREA_TRAILING_DIVIDED 2
 
-#define MAX_LEADING_PROFILE 1000
+#define MAX_TIP_PROFILE 1000
 #define MAX_WHOLE_PROFILE 3000
 
-struct leadingProfile
+struct tipProfile
 {
 	char area;
 	float RWidth;
 	int enc_cnt;
-}leadingProfile;
+}tipProfile;
 
 struct wholeProfile{
 	float rWidth[4];
@@ -69,6 +70,7 @@ void saveProfile(void);
 void viewProfile(char area);
 void wholeAreaProfile(char section, float RWidth, float *rWidth);
 void leadingOffsetProfile(float RWidth, float *leading_tip_width);
+void trailingOffsetProfile(float RWidth, float *trailing_tip_width);
 
 /* Calibraion function */
 void calibrationSetMode(unsigned char mode);
