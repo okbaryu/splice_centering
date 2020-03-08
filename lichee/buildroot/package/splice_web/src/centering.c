@@ -724,7 +724,7 @@ int centering_init(void)
 {
 	pthread_t centeringTaskId;
 
-	printf("Centering 0.70\n");
+	printf("Centering 0.71\n");
 
 	/* do not remove since CPCStart in centering task should be calculated R.GetSWidth. */
 	readRRegister(FALSE, &R);
