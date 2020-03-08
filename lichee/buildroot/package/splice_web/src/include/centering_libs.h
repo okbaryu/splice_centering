@@ -30,6 +30,12 @@
 #define PROFILE_AERA_WHOLE 1
 #define PROFILE_AREA_TRAILING_DIVIDED 2
 
+#define LEADING_TIP_SECTION  0
+#define LEADING_EPC_SECTION  1
+#define CPC_SECTION          2
+#define TRAILING_EPC_SECTION 3
+#define TRAILING_TIP_SECTION 4
+
 #define MAX_TIP_PROFILE 1000
 #define MAX_WHOLE_PROFILE 3000
 
@@ -60,7 +66,7 @@ int setOffsetCoeff(int coeff);
 int setCPCRatio(int ratio);
 int getCPCRatio(void);
 void setIsCentering(char status);
-int getAlgorithm(void);
+int getAlgorithm(unsigned char section);
 int width_check(float width, RRegister *r);
 
 int startProfile(char onOff);

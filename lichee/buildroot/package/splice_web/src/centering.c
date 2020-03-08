@@ -25,12 +25,6 @@
 #include "plc.h"
 #include "sys_trace.h"
 
-#define LEADING_TIP_SECTION  0
-#define LEADING_EPC_SECTION  1
-#define CPC_SECTION          2
-#define TRAILING_EPC_SECTION 3
-#define TRAILING_TIP_SECTION 4
-
 #define LPos02_R_FLAG 0x1
 #define LPos01_R_FLAG 0x2
 #define RPos01_R_FLAG 0x4
@@ -513,7 +507,7 @@ void *centeringTask(void *data)
 {
 	float RWidth, avgWidth = 0;
 	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE;
-	int isCPC = FALSE, avgWidthCnt = 1, alg;
+	int isCPC = FALSE, avgWidthCnt = 1, leading_alg, trailing_alg;
 	float leading_tip_width[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_width[TIP_OFFSET_DIVIDE_COUNT];
 	int leading_tip_offset[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_offset[TIP_OFFSET_DIVIDE_COUNT];
 
@@ -607,17 +601,16 @@ void *centeringTask(void *data)
 				ttip_offset_cnt = 0;
 				current_section = LEADING_TIP_SECTION;
 
-				alg = getAlgorithm();
+				leading_alg = getAlgorithm(LEADING_TIP_SECTION);
+				trailing_alg = getAlgorithm(TRAILING_TIP_SECTION);
 
-				if(alg > ALGORITHM1)
+				if(leading_alg > ALGORITHM1 || trailing_alg > ALGORITHM1)
 				{
 					tip_offset_divide(RWidth, leading_tip_width, trailing_tip_width, leading_tip_offset, trailing_tip_offset);
 				}
 			}
 
-			//leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset); // alg1
-
-			if(alg == ALGORITHM2)
+			if(leading_alg == ALGORITHM2)
 			{
 				current_section = LEADING_TIP_SECTION;
 				RWidth = getRWidth(tip_direction, current_section);
@@ -628,7 +621,7 @@ void *centeringTask(void *data)
 					leadingOffsetProfile(RWidth, leading_tip_width);
 				}
 			}
-			else if(alg == ALGORITHM3)
+			else if(leading_alg == ALGORITHM3)
 			{
 			}
 			else // ALGORITHM1
@@ -668,8 +661,7 @@ void *centeringTask(void *data)
 		{
 			RWidth = getRWidth(tip_direction, TRAILING_EPC_SECTION);
 
-			alg = getAlgorithm();
-			if(alg == ALGORITHM2)
+			if(trailing_alg == ALGORITHM2)
 			{
 				current_section = TRAILING_TIP_SECTION;
 				RWidth = getRWidth(tip_direction, current_section);
@@ -690,7 +682,7 @@ void *centeringTask(void *data)
 				}
 
 			}
-			else if(alg == ALGORITHM3)
+			else if(trailing_alg == ALGORITHM3)
 			{
 			}
 			else // ALGORITHM 1

@@ -199,7 +199,7 @@ void viewProfile(char area)
 
 	readRRegister(FALSE, &R);
 
-	if(area == PROFILE_AREA_LEADING_DIVIDED && getAlgorithm() > ALGORITHM1)
+	if(area == PROFILE_AREA_LEADING_DIVIDED && getAlgorithm(LEADING_TIP_SECTION) > ALGORITHM1)
 	{
 		read(fd_lp, (void *)&cnt, sizeof(int));
 		printf("total cnt=%d\n", cnt);
@@ -229,7 +229,7 @@ void viewProfile(char area)
 			}
 		}
 	}
-	else if(area == PROFILE_AREA_TRAILING_DIVIDED && getAlgorithm() > ALGORITHM1)
+	else if(area == PROFILE_AREA_TRAILING_DIVIDED && getAlgorithm(TRAILING_TIP_SECTION) > ALGORITHM1)
 	{
 		read(fd_tp, (void *)&cnt, sizeof(int));
 		printf("total cnt=%d\n", cnt);
@@ -338,18 +338,26 @@ void trailingOffsetProfile(float RWidth, float *trailing_tip_width)
 	trailingProfileCnt++;
 }
 
-int getAlgorithm(void)
+int getAlgorithm(unsigned char section)
 {
 	int i;
 	RRegister R;
 
 	readRRegister(FALSE, &R);
 
-	if(R.LeadingOffsetEnable)
+	if(section == LEADING_TIP_SECTION && R.LeadingOffsetEnable)
 	{
 		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 		{
 			if(R.LeadingOffset[i]) return ALGORITHM2;
+		}
+		return ALGORITHM3;
+	}
+	else if(section == TRAILING_TIP_SECTION && R.TrailingOffsetEnable)
+	{
+		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+		{
+			if(R.TrailingOffset[i]) return ALGORITHM2;
 		}
 		return ALGORITHM3;
 	}
