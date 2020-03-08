@@ -51,6 +51,10 @@ static int trailingProfileCnt;
 static int wholeProfileCnt;
 static int profileOnOff=1;
 
+static float first_width[TIP_OFFSET_DIVIDE_COUNT], last_width[TIP_OFFSET_DIVIDE_COUNT];
+static int first_enc_cnt[TIP_OFFSET_DIVIDE_COUNT], last_enc_cnt[TIP_OFFSET_DIVIDE_COUNT];
+static char flag[TIP_OFFSET_DIVIDE_COUNT];
+
 const char section_name[5][21] = {
 	"LEADING_TIP_SECTION\0",
 	"LEADING_EPC_SECTION\0",
@@ -114,19 +118,28 @@ int isProfileOn(void)
 
 void resetProfile(void)
 {
+	int i;
+
 	memset(lp, 0, sizeof(struct tipProfile) * MAX_TIP_PROFILE);
 	memset(tp, 0, sizeof(struct tipProfile) * MAX_TIP_PROFILE);
 	memset(wp, 0, sizeof(struct wholeProfile) * MAX_WHOLE_PROFILE);
 	leadingProfileCnt = 0;
 	trailingProfileCnt = 0;
 	wholeProfileCnt = 0;
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		first_width[i] = 0;
+		last_width[i] = 0;
+		first_enc_cnt[i] = 0;
+		last_enc_cnt[i] = 0;
+		flag[i] = 0;
+	}
 }
 
 void saveProfile(void)
 {
 	int fd_wp, fd_lp, fd_tp;
-
-	if(isProfileOn() == FALSE) return;
 
 	fd_wp = open(FILE_WHOLE_PROFILE, O_CREAT|O_RDWR);
 	if(fd_wp < 0)
@@ -169,12 +182,6 @@ void viewProfile(char area)
 	struct wholeProfile w;
 	RRegister R;
 
-	if(isProfileOn() == FALSE)
-	{
-		printf("No profiling data to show\n");
-		return;
-	}
-
 	fd_wp = open(FILE_WHOLE_PROFILE, O_RDONLY);
 	if(fd_wp < 0)
 	{
@@ -195,7 +202,6 @@ void viewProfile(char area)
 		perror("open trailing profile error\n");
 		return;
 	}
-
 
 	readRRegister(FALSE, &R);
 
@@ -266,33 +272,151 @@ void wholeAreaProfile(char section, float RWidth, float *rWidth)
 	}
 }
 
+void calLeadingProfile(int *offset)
+{
+	int i;
+	float angle[TIP_OFFSET_DIVIDE_COUNT], average_angle = 0;
+	RRegister R;
+
+	readRRegister(FALSE, &R);
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		angle[i] = atanf((last_width[i] - first_width[i]) / ((last_enc_cnt[i] - first_enc_cnt[i]) * R.mm_per_pulse)) * (180/3.14);
+		average_angle += angle[i];
+		PrintDebug("area %d : %f, %f, %d, %f\n", i, first_width[i], last_width[i], last_enc_cnt[i] - first_enc_cnt[i], angle[i]);
+	}
+
+	average_angle /= TIP_OFFSET_DIVIDE_COUNT;
+	PrintDebug("Average angle for whole area : %f\n", average_angle);
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		if(angle[i] < average_angle)
+		{
+			offset[i] = 1;
+		}
+		else if(angle[i] > average_angle)
+		{
+			offset[i] = -1;
+		}
+		else
+		{
+			offset[i] = 0;
+		}
+	}
+}
+
 void leadingOffsetProfile(float RWidth, float *leading_tip_width)
 {
+	int area;
+
 	if(leadingProfileCnt > MAX_TIP_PROFILE) return;
 
-	if(leading_tip_width[0] <= RWidth && RWidth < leading_tip_width[1])
+	if(RWidth < leading_tip_width[0])
+	{
+		lp[leadingProfileCnt].area = 0;
+		area = 0;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
+	}
+	else if(leading_tip_width[0] <= RWidth && RWidth < leading_tip_width[1])
 	{
 		lp[leadingProfileCnt].area = 1;
+		area = 1;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[1] <= RWidth  && RWidth < leading_tip_width[2])
 	{
 		lp[leadingProfileCnt].area = 2;
+		area = 2;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[2] <= RWidth && RWidth < leading_tip_width[3])
 	{
 		lp[leadingProfileCnt].area = 3;
+		area = 3;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[3] <= RWidth && RWidth < leading_tip_width[4])
 	{
 		lp[leadingProfileCnt].area = 4;
+		area = 4;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[4] <= RWidth && RWidth < leading_tip_width[5])
 	{
 		lp[leadingProfileCnt].area = 5;
+		area = 5;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[5] <= RWidth && RWidth < leading_tip_width[6])
 	{
 		lp[leadingProfileCnt].area = 6;
+		area = 6;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 
 	lp[leadingProfileCnt].RWidth = RWidth;

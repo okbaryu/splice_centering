@@ -506,7 +506,7 @@ static void trailing_tip_guide(float RWidth, float *trailing_tip_width, int *tra
 void *centeringTask(void *data)
 {
 	float RWidth, avgWidth = 0;
-	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE;
+	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE, flag = TRUE;
 	int isCPC = FALSE, avgWidthCnt = 1, leading_alg, trailing_alg;
 	float leading_tip_width[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_width[TIP_OFFSET_DIVIDE_COUNT];
 	int leading_tip_offset[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_offset[TIP_OFFSET_DIVIDE_COUNT];
@@ -535,11 +535,8 @@ void *centeringTask(void *data)
 				current_section = 0;
 				width_err_cnt = 0;
 
-				if(isProfileOn())
-				{
-					saveProfile();
-					resetProfile();
-				}
+				saveProfile();
+				resetProfile();
 			}
 
 			isCPC = FALSE;
@@ -616,13 +613,11 @@ void *centeringTask(void *data)
 				RWidth = getRWidth(tip_direction, current_section);
 				leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset);
 
-				if(isProfileOn())
-				{
-					leadingOffsetProfile(RWidth, leading_tip_width);
-				}
+				leadingOffsetProfile(RWidth, leading_tip_width);
 			}
 			else if(leading_alg == ALGORITHM3)
 			{
+				leadingOffsetProfile(RWidth, leading_tip_width);
 			}
 			else // ALGORITHM1
 			{
@@ -669,10 +664,7 @@ void *centeringTask(void *data)
 				{
 					trailing_tip_guide(RWidth, trailing_tip_width, trailing_tip_offset);
 
-					if(isProfileOn())
-					{
-						trailingOffsetProfile(RWidth, trailing_tip_width);
-					}
+					trailingOffsetProfile(RWidth, trailing_tip_width);
 				}
 				else
 				{
@@ -684,6 +676,20 @@ void *centeringTask(void *data)
 			}
 			else if(trailing_alg == ALGORITHM3)
 			{
+				if(flag)
+				{
+					calLeadingProfile(trailing_tip_offset);
+					flag = FALSE;
+				}
+
+				current_section = TRAILING_TIP_SECTION;
+				RWidth = getRWidth(tip_direction, current_section);
+				if(RWidth < trailing_tip_width[0])
+				{
+					trailing_tip_guide(RWidth, trailing_tip_width, trailing_tip_offset);
+
+					trailingOffsetProfile(RWidth, trailing_tip_width);
+				}
 			}
 			else // ALGORITHM 1
 			{
@@ -708,10 +714,7 @@ void *centeringTask(void *data)
 			avgWidthCnt++;
 		}
 
-		if(isProfileOn())
-		{
-			wholeAreaProfile(current_section, RWidth, rWidth);
-		}
+		wholeAreaProfile(current_section, RWidth, rWidth);
 
 		TASK_Sleep(10);
 	}

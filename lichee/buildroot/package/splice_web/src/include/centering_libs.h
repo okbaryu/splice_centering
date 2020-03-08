@@ -77,6 +77,7 @@ void viewProfile(char area);
 void wholeAreaProfile(char section, float RWidth, float *rWidth);
 void leadingOffsetProfile(float RWidth, float *leading_tip_width);
 void trailingOffsetProfile(float RWidth, float *trailing_tip_width);
+void calLeadingProfile(int *offset);
 
 /* Calibraion function */
 void calibrationSetMode(unsigned char mode);
