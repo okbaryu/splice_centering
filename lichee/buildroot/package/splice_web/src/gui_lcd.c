@@ -225,8 +225,13 @@ void putPixelRGB(Uint8 * framebuffer, int x, int y, int pitch, char r, char g, c
 
 void drawImage(HDC hdc, int x,int y,int w, int h, int indexImage)
 {
+<<<<<<< HEAD
 	printf("(i) drawImage called: x=%d, y=%d, w=%d, h=%d, index=%d\n",
 		x, y, w, h, indexImage);
+=======
+//	printf("(i) drawImage called: x=%d, y=%d, w=%d, h=%d, index=%d\n",
+//		x, y, w, h, indexImage);
+>>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
 	FillBoxWithBitmap (hdc, x, y, w, h, &bitmap[indexImage]);
 }
 
@@ -692,7 +697,11 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 				putPixel(framebuffer, x, y, pitch, 0xFF);
 
 			if(gSetCam==SET_CAM_0)
+<<<<<<< HEAD
 				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6),pitch, 255, 255, 0);
+=======
+				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6), pitch, 255, 255, 0);
+>>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
 			else if(gSetCam==SET_CAM_1) 
 				putPixelRGB(framebuffer, x, baseLine-(gThreshold1*0.6), pitch, 170, 170, 0);
 			else {
@@ -878,7 +887,11 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
 			}
 		}
+<<<<<<< HEAD
 		//for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
+=======
+		for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
+>>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
 				
 	    }
 	    else if(gSetCam==SET_CAM_1)
