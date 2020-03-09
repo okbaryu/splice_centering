@@ -5,10 +5,8 @@ SERVER_OBJS = ${SPLICE_WEB_DIR}/splice_server.c ${SPLICE_WEB_DIR}/actuator.c ${S
 			  ${SPLICE_WEB_DIR}/centering_libs.c ${SPLICE_WEB_DIR}/cmd_parser_init.c ${SPLICE_WEB_DIR}/cmd_parser_trace.c ${SPLICE_WEB_DIR}/cmd_parser_centering.c
 EXTRA_OBJS += ${SPLICE_WEB_DIR}/splice_libs.c
 
-MINIGUI_OBJS += ${SPLICE_WEB_DIR}/gui_lcd.c
+MINIGUI_OBJS += ${SPLICE_WEB_DIR}/gui_lcd.c ${SPLICE_WEB_DIR}/serial.c
 MINIGUI_LD += -lminigui_ths -lfreetype -lpthread -ljpeg 
-
-SERIAL_OBJS = ${SPLICE_WEB_DIR}/serial.c
 
 CFLAGS += -I${SPLICE_WEB_DIR}/include
 CFLAGS += -Wimplicit-function-declaration -Wall -lm
@@ -38,9 +36,9 @@ ${SPLICE_WEB_DIR}/splice_server: $(SERVER_OBJS)
 	@echo [Building ... $@]
 	$(TARGET_CC) -o $@ $(SERVER_OBJS) $(EXTRA_OBJS) $(CFLAGS) $(LDFLAGS)
 
-${SPLICE_WEB_DIR}/gui_lcd: $(MINIGUI_OBJS) $(SERIAL_OBJS)
+${SPLICE_WEB_DIR}/gui_lcd: $(MINIGUI_OBJS)
 	@echo [Building ... $@]
-	$(TARGET_CC) -o $@ $(MINIGUI_OBJS) $(SERIAL_OBJS) $(MINIGUI_LD) -I$(STAGING_DIR)/usr/include -L$(TARGET_DIR)/usr/lib $(CFLAGS) $(LDFLAGS)
+	$(TARGET_CC) -o $@ $(MINIGUI_OBJS) $(MINIGUI_LD) -I$(STAGING_DIR)/usr/include -L$(TARGET_DIR)/usr/lib $(CFLAGS) $(LDFLAGS)
 
 splice_web : $(SPLICE_WEB_DIR)/.configured ${SPLICE_WEB_DIR}/splice.cgi ${SPLICE_WEB_DIR}/splice_server ${SPLICE_WEB_DIR}/gui_lcd
 	install -d -m 755 $(TARGET_DIR)/var/splice_web/
