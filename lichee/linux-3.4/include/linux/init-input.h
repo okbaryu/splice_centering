@@ -25,7 +25,20 @@ enum input_sensor_type{
 	IR_TYPE,
 	THS_TYPE,
 	MOTOR_TYPE,
-	BAT_TYPE
+	BAT_TYPE,
+	ENCODER
+};
+
+struct encoder_config_info{
+	enum input_sensor_type input_type;
+	int encoder_used;
+	int steps;
+	struct gpio_config irq_gpio_a;
+	struct gpio_config irq_gpio_b;
+	int axis;
+	int axis_relative;
+	int rollover;
+	int encoder_half_period;
 };
 
 struct sensor_config_info{

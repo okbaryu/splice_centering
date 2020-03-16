@@ -28,8 +28,8 @@
 #include <pthread.h>
 
 #define BUF_SIZE        4096
-#define WIDTH_SCREEN    800
-#define HEIGHT_SCREEN   480
+#define WIDTH_SCREEN	480
+#define HEIGHT_SCREEN   272
 #define WIDTH_IMAGE     1920
 
 #define DEV_CAM_0	"/dev/ttyS0"
@@ -42,6 +42,11 @@ extern void  uart_close( int fd );
 #define MODE_CALIBRATION 	1
 #define STR_RUN_MODE		"0"
 #define STR_CAL_MODE		"1"
+
+#define true	1
+#define false	0
+#define EDGE_BLACK_TO_WHITE	0
+#define EDGE_WHITE_TO_BLACK	1
 
 char * gFb = NULL;
 int gMode = MODE_RUNNING;
@@ -128,7 +133,6 @@ int gSetCam = SET_CAM_ALL;
 
 int gStreamMode = STREAM_MODE_STOP;
 
-
 #define BUF_CAM_SIZE	1920
 char bufCamAll[BUF_CAM_SIZE] = {0};
 char bufCam0[BUF_CAM_SIZE] = {0};
@@ -166,12 +170,12 @@ struct {
 void setMode(int uartPort, int mode, int threshold);
 int getPositions(int sock, int LPos, int RPos, int center);
 
-int min(int a, int b) { return a<b?a:b; }
+int min(int a, int b) { return a<b?a:b;}
 int max(int a, int b) { return a>b?a:b;}
 
 void clearScreen()
 {
-	memset(gFb, 0, 800*480*4);// clear screen
+	memset(gFb, 0, 480*272*4);// clear screen
 }
 
 long long GetNowUs() {
@@ -188,9 +192,9 @@ void fetchFrameCalibration(char * vf, const char * buf, int size)
 
 void putPixelRGB(char * framebuffer, int x, int y, char r, char g, char b)
 {
-	int offset = (WIDTH_SCREEN * y + x)*4;
+	int offset = (WIDTH_SCREEN * x - y)*4;
 
-	if(offset<0 || (offset+3)>=800*480*4) return;
+	if(offset<0 || (offset+3)>=480*272*4) return;
 
 	framebuffer[offset]  =b;//B
 	framebuffer[offset+1]=g;//G
@@ -201,15 +205,15 @@ void putPixelRGB(char * framebuffer, int x, int y, char r, char g, char b)
 void drawVLine(char * framebuffer, int x, char r, char g , char b )
 {
 	int i=0;
-	for(i=0; i<480; i++)
+	for(i=156; i<324; i++)
 	{
-		putPixelRGB(framebuffer, x, i, r, g, b);
+		putPixelRGB(framebuffer, x, i-480, r, g, b);
 	}
 }
 
 void putPixel(char * framebuffer, int x, int y, char grey)
 {
-	int offset = (WIDTH_SCREEN * y + x)*4;
+	int offset = (WIDTH_SCREEN * x - y)*4;
 	framebuffer[offset]  =grey;//B
 	framebuffer[offset+1]=grey;//G
 	framebuffer[offset+2]=grey;//R
@@ -272,7 +276,7 @@ void removeNoise(char * bin, int size)
 	
 int getGridSize(const char* buf, int size, int threshold)
 {
-	int i = 0, j=0;
+	int i=0, j=0;
 	for(i=0; i<size; i++)
 		if(buf[i]>threshold) bin[i] = 1;
 		else bin[i] = 0;
@@ -373,7 +377,7 @@ int getCenter(int gridSize, char threshold)
 	else {}
 
 	//printf("(i) Trim left=%d, right=%d\n", leftTrim, rightTrim);
-	
+
 	for(i=leftTrim; i<rightTrim; i++)
 	{
 		char value = bin[i];
@@ -401,16 +405,44 @@ int getCenter(int gridSize, char threshold)
 	return minIndex-centerWidth/2;
 }
 
-int comboTable[1920]; 
-void generateComboTable(int center)
+
+int haveToMakeBorder(int current, int next, int edge )
+{
+	if(edge==EDGE_BLACK_TO_WHITE)
+	{
+		if(current==0 && next==1) return true;
+		else return false;
+	}
+	else // white to black
+	{
+		if(current==1 && next==0) return true;
+		else return false;
+	}
+}
+
+
+int comboTable[1920];
+void generateComboTable(int center, int edge)
 {
 	int i = 0;
 	int combo = 1;
 	memset(comboTable,0,1920*sizeof(int));
+
 	while(i<1919)
 	{
-		char color = bin[i];
-		if(color==bin[i+1] || (color==1&&bin[i+1]==0) ) // skip changing from white(1) to black(0)
+		char currentColor = bin[i];
+		char nextColor = bin[i+1];
+		//printf("[%d] curr = %d    next = %d\n", i , currentColor, nextColor);
+
+		// skip to make border by the edge and the direction.
+		// white(1), black(0)
+		if(i==center)
+		{
+			comboTable[i] = combo;
+			combo=1;
+			//printf("comboTable = %d,  i = %d\n", comboTable[i], i);
+		}	
+		if(currentColor==nextColor || !haveToMakeBorder(currentColor, nextColor, edge) )
 		{
 			combo++;
 		}
@@ -421,34 +453,60 @@ void generateComboTable(int center)
 		}
 		i++;
 	}
-
+	//printf("center = %d\n", center);	
+/*	for(i=0;i<1920;i++) {
+		if(comboTable[i]>0) printf("comboTable[%d] = %d\n", i, comboTable[i]); } 
+*/
+		
 	// center bar has double size width on the others. 
 	int centerBarSize = 0;
 	int indexCenterBar = 0;
-	for(i=center; i<1920; i++)
+	
+	if(gSetCam==SET_CAM_0)
 	{
-		if(comboTable[i]>0) 
+		for(i=center+1; i<1920; i++)
 		{
-			centerBarSize=comboTable[i];
-			indexCenterBar = i;
-			break;
+			if(comboTable[i]>0) 
+			{
+				centerBarSize=comboTable[i];
+				indexCenterBar = i;
+				//printf("0comboTable[%d] = %d\n", i, comboTable[i]);
+				break;
+			}
+		}
+	}
+	if(gSetCam==SET_CAM_1)
+	{
+		for(i=center; i>0; i--)
+		{
+			if(comboTable[i]>0)
+			{
+				centerBarSize=comboTable[i];
+				indexCenterBar = i;
+				//printf("1camboTable[%d] = %d\n", i, comboTable[i]);
+				break;
+			}
 		}
 	}
 	
-	int halfSize = (int)(centerBarSize/2.0);
-	comboTable[center] = halfSize;
-	comboTable[indexCenterBar] = halfSize;
+	//int halfSize = (int)(centerBarSize/2.0);
+	comboTable[center] = (int)centerBarSize;
+	comboTable[indexCenterBar] = (int)centerBarSize;
+	//printf("centerBarSize = %d\n", centerBarSize);
+
 /*
 	printf("(i)comboTable:");
-	for(i=0; i<1920; i++) printf("%d,", comboTable[i]);
+	for(i=0; i<1920; i++){ if(comboTable[i]>0) printf("%d,", comboTable[i]); }
 	printf("\n");
+	exit(0);
 */
+
 }
 
 void printNumber1(int baseX, int baseY, int n, char * fb)
 {
 	int x=0, y=0;
-	for(y=0; y<FONT_HEIGHT; y++)
+	for(y=0; y<FONT_HEIGHT; y++) 
 	{
 		for(x=0; x<FONT_WIDTH; x++)
 		{
@@ -489,20 +547,20 @@ void printDouble(int x, int y, double d, char * fb)
 	int q100 = (int)((quotient%1000)/100);
 
 	int decimal = ((int)(d*1000))%1000;
-	int d1 = decimal%10;
+	//int d1 = decimal%10;
 	int d10 = (int)((decimal%100)/10);
 	int d100 = (int)((decimal%1000)/100);
 
 	//if(q100>0) 
-	printNumber1(x-16*3-8, y, q100, fb);
-	printNumber1(x-16*2-8, y, q10, fb);
-	printNumber1(x-16*1-8, y, q1, fb);
+	printNumber1(x-16*3-16, y, q100, fb);
+	printNumber1(x-16*2-16, y, q10, fb);
+	printNumber1(x-16*1-16, y, q1, fb);
 
-	printDot(x-8, y, fb);
+	printDot(x-16, y, fb);
 	
-	printNumber1(x+8, y, d100, fb);
-	printNumber1(x+16*1+8, y, d10, fb);
-	printNumber1(x+16*2+8, y, d1, fb);
+	printNumber1(x, y, d100, fb);
+	printNumber1(x+16*1, y, d10, fb);
+	//printNumber1(x+16*2, y, d1, fb);
 }
 
 void drawLine(char * fb, int x1, int y1, int x2, int y2, char red, char green, char blue)
@@ -554,7 +612,7 @@ void drawLine(char * fb, int x1, int y1, int x2, int y2, char red, char green, c
 
 void render(char * framebuffer, const char * buf, int size)
 {
-	int baseLine = 368;
+	int baseLine = 312;
 	if(gMode==MODE_RUNNING) baseLine = 280;
 
 	int gridSize = 0;
@@ -571,7 +629,7 @@ void render(char * framebuffer, const char * buf, int size)
 		center = getCenter(gridSize, threshold);
 		//printf("(i) center = %d\n", center);
 	}
-
+	
 	int x, y;
 	char prev = 0;
 	int maxHighWidth = 0;
@@ -580,9 +638,9 @@ void render(char * framebuffer, const char * buf, int size)
 	int maxRisingEdge=0;
 	int maxFallingEdge=0;
 
-	for(x=0; x<WIDTH_SCREEN; x++)
+	for(x=0; x<HEIGHT_SCREEN; x++)
 	{
-		int index = (int)(x*2.4);
+		int index = (int)(x*7.0588);
 		if(index+1>=size) break;
 
 		char value1 = buf[index];
@@ -591,17 +649,18 @@ void render(char * framebuffer, const char * buf, int size)
 
 		if(gMode==MODE_CALIBRATION)
 		{
-			for(y=baseLine; y>baseLine-average; y--)
+			for(y=baseLine; y>baseLine-(average*0.6); y--)
 				putPixel(framebuffer, x, y, 0xFF);
 
 			if(gSetCam==SET_CAM_0)
-				putPixelRGB(framebuffer, x, baseLine-gThreshold0, 255, 255, 0);
-			else if(gSetCam==SET_CAM_1)
-				putPixelRGB(framebuffer, x, baseLine-gThreshold1, 170, 170, 0);
+				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6), 255, 255, 0);
+			else if(gSetCam==SET_CAM_1) 
+				putPixelRGB(framebuffer, x, baseLine-(gThreshold1*0.6), 170, 170, 0);
 			else {
-				putPixelRGB(framebuffer, x, baseLine-gThreshold0, 255, 255, 0);
-				putPixelRGB(framebuffer, x, baseLine-gThreshold1, 170, 170, 0);
+				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6), 255, 255, 0);
+				putPixelRGB(framebuffer, x, baseLine-(gThreshold1*0.6), 170, 170, 0);
 			}
+
 		}
 		else // running mode screen rendering
 		{
@@ -609,7 +668,6 @@ void render(char * framebuffer, const char * buf, int size)
 			{
 				for(y=baseLine; y>baseLine-80; y--)
 					putPixel(framebuffer, x, y, 0xFF);
-
 			}
 			else if(average>128) // draw bottom line
 			{
@@ -623,13 +681,14 @@ void render(char * framebuffer, const char * buf, int size)
 					if(y==baseLine-80+1) putPixel(framebuffer, x, y, 0xFF);
 					else putPixel(framebuffer, x, y, 0x0);
 			}
-			
 			if(x==0) {} // do nothing
 			else if(prev>average) // rising(light has to be bottom line)
 			{
+				//printf("risingEdge = %d, counter = %d\n", risingEdge, counter);
 				risingEdge = x; 
 				counter=1;
 			}
+
 			else if(prev==average)
 				counter++;
 			else // falling edge
@@ -661,11 +720,11 @@ void render(char * framebuffer, const char * buf, int size)
 		// get material size in mm  
 		double widthMaterial = 0;
 		int i=0;
-		int risingEdge1920 = (int)(maxRisingEdge*2.4);
-		int fallingEdge1920 = (int)(maxFallingEdge*2.4);
+		int risingEdge1920 = (int)(maxRisingEdge*7.0588);
+		int fallingEdge1920 = (int)(maxFallingEdge*7.0588);
 
 //		printf("(i) risingEdge1920:%d, fallingEdge1920:%d\n", risingEdge1920, fallingEdge1920);
-
+	
 		for(i=risingEdge1920; i<fallingEdge1920; i++)
 		{
 			double len=gCalibrationData.pixelLen[i*2];
@@ -682,7 +741,6 @@ void render(char * framebuffer, const char * buf, int size)
 		// draw material size in mm  on the arrow line upside center
 		int centerArrow = (maxFallingEdge-maxRisingEdge)/2+maxRisingEdge;
 		printDouble(centerArrow, arrowY-5-21, widthMaterial, framebuffer);
-
 
 		/*
 		int risingEdge1920 = -1;
@@ -707,8 +765,8 @@ void render(char * framebuffer, const char * buf, int size)
 		}
 
 		// convert to 800pixel width
-		int risingEdge = (int)(risingEdge1920/2.4);
-		int fallingEdge = (int)(fallingEdge1920/2.4);
+		int risingEdge = (int)(risingEdge1920/4);
+		int fallingEdge = (int)(fallingEdge1920/4);
 
 		// draw signal line in white color
 		drawLine(framebuffer,0, baseLine, risingEdge, baseLine, 0xFF, 0xFF, 0xFF);
@@ -734,7 +792,7 @@ void render(char * framebuffer, const char * buf, int size)
 
 		
 		// draw material size in mm  on the arrow line upside center
-		printNumber(800-20-16*2, baseLine+20, gCount0, framebuffer);
+		printNumber(480-20-16*2, baseLine+20, gCount0, framebuffer);
 		*/
 	}
 
@@ -743,10 +801,10 @@ void render(char * framebuffer, const char * buf, int size)
 	{
 	    if(gSetCam==SET_CAM_0)
 	    {
-		x = (int)(gLeftTrim0/2.4);
+		x = (int)(gLeftTrim0/7.0588);
 		drawVLine(framebuffer, x, 0, 0, 255);
 
-		x = (int)(gRightTrim0/2.4);
+		x = (int)(gRightTrim0/7.0588);
 		drawVLine(framebuffer, x, 0, 0, 255);
 
 		gCalibrationData.cam0Center = center;
@@ -755,7 +813,8 @@ void render(char * framebuffer, const char * buf, int size)
 		gCalibrationData.cam0Threshold = gThreshold0;
 
 		// generate combo table
-		generateComboTable(center);
+		
+		generateComboTable(center, EDGE_BLACK_TO_WHITE);
 
 		// right side of merged image.
 		int from = center;
@@ -763,23 +822,32 @@ void render(char * framebuffer, const char * buf, int size)
 		int combo = 0;
 		int i=0;
 		//printf("(i) setcam0 center=%d\n", center);
+		int flagSetMinusArea= true;
 		for(i=to; i>=from; i--)
 		{
-			if(comboTable[i]>0) combo = comboTable[i];
+			
+			if(flagSetMinusArea)
+				gCalibrationData.pixelLen[1920+i-center]=-1;
+			
+			if(comboTable[i]>0)
+			{
+				combo = comboTable[i];
+				flagSetMinusArea = false;
+			}
 			if(combo>0)
 			{
 				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
 			}
 		}
-		for(i=0; i<center; i++) gCalibrationData.pixelLen[3839+i-center] = -1;
+		//for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
 				
 	    }
 	    else if(gSetCam==SET_CAM_1)
 	    {
-		x = (int)(gLeftTrim1/2.4);
+		x = (int)(gLeftTrim1/7.0588);
 		drawVLine(framebuffer, x, 0, 0, 255);
 
-		x = (int)(gRightTrim1/2.4);
+		x = (int)(gRightTrim1/7.0588);
 		drawVLine(framebuffer, x, 0, 0, 255);
 
 		gCalibrationData.cam1Center = center;
@@ -788,36 +856,47 @@ void render(char * framebuffer, const char * buf, int size)
 		gCalibrationData.cam1Threshold = gThreshold1;
 
 		// generate combo table
-		generateComboTable(center);
+		generateComboTable(center, EDGE_WHITE_TO_BLACK);
 
 		// left side of merged image.
 		int from = center; 
 		int to = 0; 
 		int combo = 0;
 		int i=0;
+		int comboCount=0;
+		//printf("center = %d\n", center); 
+	
 		for(i=from; i>=to; i--)
 		{
-			if(comboTable[i]>0) combo = comboTable[i];
+			if(comboTable[i]>0)
+			{
+				combo = comboTable[i];
+				comboCount++;
+			}
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[i+(1920-center)]=10.0/combo; // 1cell = 5mm
+				if(comboCount>20)
+					gCalibrationData.pixelLen[i+(1919-center)]=-1;
+				else 
+					gCalibrationData.pixelLen[i+(1919-center)]=10.0/combo; // 1cell = 5mm
 			}
 		}
-		for(i=0; i<1920-center; i++) gCalibrationData.pixelLen[i] = -1;
+		for(i=0; i<1919-center; i++){
+			gCalibrationData.pixelLen[i] = -1;
+		}
 	    }
 	    else 
 	    {
-		drawVLine(framebuffer, 400, 255, 0, 0);
+		drawVLine(framebuffer, 135, 255, 0, 0);
 	    }
-
-	    x = (int)(center/2.4);
-	    drawVLine(framebuffer, x, 255, 0, 0);
+	    x = (int)(center/7.0588);
+	   	drawVLine(framebuffer, x, 255, 0, 0);
 	}
 
 	if(gMode==MODE_CALIBRATION)
 	{
 		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_0)
-			printNumber(800-20-16*2, baseLine+20, gCount0, framebuffer);
+			printNumber(272-20-16*2, baseLine+20, gCount0, framebuffer);
 
 		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_1)
 			printNumber(20, baseLine+20, gCount1, framebuffer);
@@ -834,7 +913,7 @@ void fetchFrameRunning(char * vf,
 
     if(*pIndex>0 && startOfFrame==0x02)
     {
-        //printf("(i) frame will be rendered\n");
+        //printf("(i) frame will be rendereomboTable
         memcpy(vf, frame, 1920);
         *pIndex=0;
 	//int i=0;
@@ -1097,7 +1176,7 @@ void receiveFrame(char* fb)
 
 			filterNoise(vf0, 1920);
 			gCount0 = countBar(vf0, 0, 1919, gThreshold0);
-		
+			
 			render(fb, vf0, 1920);
 		}
 		else if( gSetCam == SET_CAM_1 )
@@ -1109,7 +1188,7 @@ void receiveFrame(char* fb)
 			filterNoise(vf1, 1920);
 			gCount1 = countBar(vf1, 0, 1919, gThreshold1);
 
-			render(fb, gVf1, 1920);
+			render(fb, vf1, 1920);
 		}
 		else
 		{
@@ -1223,7 +1302,7 @@ void receiveFrame(char* fb)
 
 void setMode(int uartPort, int mode, int threshold)
 {
-	memset(gFb, 0, 800*480*4);// clear screen
+	memset(gFb, 0, 480*272*4);// clear screen
 
 	printf("(i) setMode function called(%d).\n", mode);
 	int len = 0;

@@ -25,6 +25,7 @@
 
 #include "splice_libs.h"
 #include "splice_utils.h"
+#include "sys_trace.h"
 
 static splice_cpu_percent g_cpuData;
 
