@@ -1,0 +1,87 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  width: 744px;
+  height: 620px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+.container{
+  position: relative;
+  left: -22px;
+  top: 70px;
+}
+table tr td{
+  color: white;
+}
+input{
+  color: white;
+  background-color: #313131;
+  border:none;
+  margin-left: 20px;
+  padding-left: 5px;
+}
+ul{
+  list-style: none;
+}
+ul li{
+  background-color: #202020;
+  width: 694px;
+  margin-bottom: 4px;
+}
+span{
+  color: white;
+  margin-left: 10px;
+}
+.ethernet{
+  height: 189px;
+}
+.serial{
+  height: 198px;
+}
+.dataLenght{
+  height: 117px;
+}
+.cb{
+  display: none;
+}
+.cb + label{
+  margin: auto;
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  background: #45464d;
+  cursor:pointer;
+  border: 1px solid white;
+}
+.cb:checked +label{
+  background: #D63E2E;
+}
+ul li select{
+  color: white;
+  background-color: black;
+}
+.protoSelect{
+  width: 216px;
+  padding: .8em .5em;
+  border: none;
+  font-family: inherit;
+  background: url('../../../images/web_GUI/icon/dropdown.png') no-repeat 95% 50%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.serialSelect{
+  width: 68px;
+  height: 22px;
+  border: none;
+  color: white;
+  font-size: 12px;
+  font-family: inherit;
+  background: url('../../../images/web_GUI/icon/dropdown2.png') no-repeat 95% 50%;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+.serialSelect option{
+  padding-left: 5px;
+}

@@ -1,0 +1,42 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  width: 744px;
+  height: 620px;
+  background-color: rgba(0, 0, 0, 0.3);
+  margin: 60px 0px 0px 50px;
+}
+.title{
+  color:white;
+  font-size: 24px;
+  margin-bottom: 30px;
+}
+.log{
+  margin-bottom: 10px;
+  background-color: black;
+  colro:white;
+  padding: 10px 10px 0px 0px;
+  width: 630px;
+  height: 360px;
+}
+.button{
+  width: 155px;
+  height: 70px;
+  float: left;
+}
+.icon{
+  width:65px;
+  height:69px;
+  background-color: #131315;
+}
+.text{
+  position: relative;
+  left: 75px;
+  top: -60px;
+  width: 85px;
+  height: 66px;
+  color: white;
+}
+.button{
+  cursor:pointer;
+}

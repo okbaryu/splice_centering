@@ -1,0 +1,98 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  width: 744px;
+  height: 620px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+.table1{
+  position: relative;
+  top: 80px;
+  left: 120px;
+  border-spacing: 20px;
+}
+.cb{
+  display: none;
+}
+.cb + label{
+  margin: auto;
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  background: #45464d;
+  cursor:pointer;
+  border: 1px solid white;
+}
+.cb:checked +label{
+  background: #D63E2E;
+}
+.checkBox_lable{
+  border: none;
+  text-align: center;
+  background-color: #c0c0c0;
+  color: white;
+  font-size: 20px;
+  width: 204px;
+  height: 30px;
+}
+.box{
+  position: relative;
+  top: 150px;
+  left: 35px;
+  background-color: rgba(32, 35, 41, 1);
+  width: 650px;
+  height: 200px;
+}
+.box_label{
+  background-color: rgba(19, 19, 21, 1);
+  padding-left: 30px;
+  width: 650px
+  height: 40px;
+  line-height: 40px;
+  color: white;
+  font-size: 24px;
+}
+.box_table{
+  position: relative;
+  top: 25px;
+  left: 150px;
+  width: 400px;
+  height: 80px;
+}
+.box_table tr{
+  height: 40px;
+  margin-bottom: 10px;
+}
+.box_table tr td{
+  height: 40px;
+  padding: 0px 40px 10px 0px;
+}
+.table_input{
+  border: none;
+  text-align: center;
+  background-color: #c0c0c0;
+  color: white;
+  font-size: 20px;
+  width: 204px;
+  height: 30px;
+}
+table tr td{
+  color: white;
+  font-size: 20px;
+}
+
+#applyButton{
+  position: relative;
+  left: 40%;
+  top: 200px;
+  outline: 0px;
+  font-weight: bold;
+  color: white;
+  border: none;
+  width: 102px;
+  height: 34px;
+  background-color: black;
+}
+#applyButton:hover{
+  background-color: #D63E2E;
+}

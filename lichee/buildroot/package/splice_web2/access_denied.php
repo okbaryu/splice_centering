@@ -30,7 +30,7 @@
       <div class="footMenu foot">
       </div>
       <div class="footLogo foot">
-        <?php include("footlogo.html") ?>
+        <?php include("footlogo.php") ?>
       </div>
     </div>
   </body>

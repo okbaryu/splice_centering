@@ -1,0 +1,15 @@
+body{
+  width: 720px;
+  height: 550px;
+  margin: 0;
+  padding: 0;
+}
+.container{
+  position: relative;
+  top: 150px;
+  width: 710px;
+  height: 550px;
+}
+.container table tr td{
+  color: white;
+}

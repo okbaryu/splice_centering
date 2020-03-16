@@ -5,10 +5,6 @@
   }
   if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['form_name']) && $_POST['form_name'] == 'logoutform')
   {
-     if (session_id() == "")
-     {
-        session_start();
-     }
      unset($_SESSION['username']);
      unset($_SESSION['is_logged']);
      header('Location: ./login.php');
@@ -61,7 +57,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>SPWGC Home</title>
+    <title>1SPWGC Home</title>
     <link rel="stylesheet" href="login.css">
   </head>
   <body>
@@ -100,6 +96,8 @@
             </ul>
           </div>
         </form>
+        <input type="button" value="hello" onclick="location.href='../../mnt/extsd/hello.html'">
+        <input type="button" value="offsset" onclick="location.href='../../mnt/extsd/7offset.php'">
       </div>
         <div class="footClock foot">
           <?php include("clock.html") ?>
@@ -107,7 +105,7 @@
         <div class="footMenu foot">
         </div>
         <div class="footLogo foot">
-          <?php include("footlogo.html") ?>
+          <?php include("footlogo.php") ?>
         </div>
     </div>
     <script type="text/javascript" src="./close.js"></script>
