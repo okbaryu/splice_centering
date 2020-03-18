@@ -12,6 +12,17 @@
       <div class="homeTitle">
         Access Denied<br>Back to Login page.
       </div>
+      <!-- <div style="width:600px;height:400px;background-color:white;">
+        <?php
+          // $database = './usersdb.php';
+          // $items = file($database, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+          // foreach($items as $line)
+          // {
+          //    list($username, $password, $email, $name, $permission) = explode('|', trim($line));
+          //    echo "$username, $password, $email, $name, $permission";
+          // }
+         ?>
+      </div> -->
       <input class="back" type="button" value="Ok" onclick="location.href='./login.php'">
       <div class="footClock foot">
         <?php include("clock.html") ?>
@@ -19,7 +30,7 @@
       <div class="footMenu foot">
       </div>
       <div class="footLogo foot">
-        <?php include("footlogo.html") ?>
+        <?php include("footlogo.php") ?>
       </div>
     </div>
   </body>

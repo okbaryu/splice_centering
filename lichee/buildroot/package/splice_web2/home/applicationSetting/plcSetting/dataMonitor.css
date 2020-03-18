@@ -1,0 +1,90 @@
+@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
+body{
+  font-family: "Noto Sans KR", sans-serif;
+  width: 744px;
+  height: 620px;
+  background-color: rgba(0, 0, 0, 0.3);
+}
+ul{
+  list-style: none;
+}
+li{
+  color:white;
+  float: left;
+}
+table tr td{
+  font-size: 13px;
+}
+span{
+  color: white;
+  font-weight: bold;
+  font-size: 20px;
+}
+.dataTable{
+  width: 694px;
+  height: 407px;
+  background-color: #14181b;
+}
+.labelU{
+  margin: 0;
+  padding: 0;
+  width: 330px;
+  height: 27px;
+  list-style: none;
+}
+.label{
+  text-align: center;
+  float: left;
+  background-color: #313538;
+  color: white;
+}
+.labelData{
+  margin-right: 4px;
+  width: 102px;
+  height:27px;
+}
+.labelValue{
+  width: 222px;
+  height: 27px;
+}
+.line{
+  width: 2px;
+  height: 360px;
+  border-left: 2px solid #303437;
+}
+.tableLi{
+  margin-right: 15px;
+}
+.dataCell{
+  margin: 0;
+  padding: 0;
+  width: 116px;
+  height: 20px;
+  color:white;
+  text-align: center;
+}
+.hexCell{
+  margin: 0;
+  padding: 0 0 0 5px;
+  width: 42px;
+  height: 20px;
+  background-color: #252a30;
+  color:white;
+}
+.decCell{
+  margin: 0;
+  padding: 0 5px 0 0;
+  width: 36px;
+  height: 20px;
+  background-color: #252a30;
+  color:white;
+  text-align: right;
+}
+.binCell{
+  margin: 0;
+  padding: 0px 5px 0px 5px;
+  width: 115px;
+  height: 20px;
+  background-color: #252a30;
+  color:white;
+}

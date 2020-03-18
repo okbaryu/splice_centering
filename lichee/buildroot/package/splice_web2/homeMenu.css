@@ -4,7 +4,7 @@ body{
   position: absolute;
   margin: 0;
   padding: 0;
-  background-image: url('images/web_GUI/web_GUI/Background.bmp');
+  background-image: url('images/web_GUI/web_GUI/Background.jpg');
   background-repeat: no-repeat;
 }
 .wrap{
@@ -23,11 +23,11 @@ body{
 }
 .mainTitle{
   height: 48px;
-  line-height: 48px;
-  font-size: 36px;
+  line-height: 54px;
+  font-size: 30px;
   font-weight: bold;
   grid-area: 1/2/2/16;
-  color: #d2d2d2;
+  color: #636468;
 }
 .menuButton{
   grid-area: 1/16/2/17;

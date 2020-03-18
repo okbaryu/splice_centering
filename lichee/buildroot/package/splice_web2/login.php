@@ -5,10 +5,6 @@
   }
   if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['form_name']) && $_POST['form_name'] == 'logoutform')
   {
-     if (session_id() == "")
-     {
-        session_start();
-     }
      unset($_SESSION['username']);
      unset($_SESSION['is_logged']);
      header('Location: ./login.php');
@@ -27,14 +23,15 @@
         $items = file($database, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
         foreach($items as $line)
         {
-           list($username, $password, $email, $name, $active) = explode('|', trim($line));
-           if ($username == $_POST['username'] && $active != "0" && $password == $crypt_pass)
+           list($username, $password, $email, $name, $permission) = explode('|', trim($line));
+           if ($username == $_POST['username'] && $password == $crypt_pass)
            {
+             $_SESSION['permission'] = $permission;
               $found = true;
            }
         }
      }else{
-       echo "string";
+       echo "cannot open database";
      }
      if($found == false)
      {
@@ -60,7 +57,7 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>SPWGC Home</title>
+    <title>1SPWGC Home</title>
     <link rel="stylesheet" href="login.css">
   </head>
   <body>
@@ -99,6 +96,8 @@
             </ul>
           </div>
         </form>
+        <input type="button" value="hello" onclick="location.href='../../mnt/extsd/hello.html'">
+        <input type="button" value="offsset" onclick="location.href='../../mnt/extsd/7offset.php'">
       </div>
         <div class="footClock foot">
           <?php include("clock.html") ?>
@@ -106,7 +105,7 @@
         <div class="footMenu foot">
         </div>
         <div class="footLogo foot">
-          <?php include("footlogo.html") ?>
+          <?php include("footlogo.php") ?>
         </div>
     </div>
     <script type="text/javascript" src="./close.js"></script>

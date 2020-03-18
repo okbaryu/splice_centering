@@ -1,26 +1,29 @@
 <?php
-include('./loginChek.php')
+  include('./loginChek.php');
+  $server_addr =  $_SERVER['SERVER_ADDR'];
+  setcookie('server_addr', $server_addr, time() + 86400);
+
  ?>
 <!DOCTYPE html>
 <html>
   <head>
     <meta charset="utf-8">
     <title>Home Menu</title>
-    <link rel="stylesheet" href="homeMenu.css">
+    <link rel="stylesheet" href="./homeMenu.css">
   </head>
   <body>
     <div class="wrap">
-      <?php include('topMenu1.html') ?>
+      <?php include('./topMenu1.php') ?>
       <div class="menuTitle homeToolBar">
         <img src="images/web_GUI/icon/home.png"  width="32px" height="32px" style="position:absolute;top:7.5%;left:33.5%;">
         HOME MENU</div>
-        <?php include('topMenu2.html') ?>
+        <?php include('./topMenu2.php') ?>
       <div class="container">
         <div class="container1">
           <ul>
             <li>
               <a href="#">
-                <table onclick="location.href='./applicationsetting.php'">
+                <table onclick="location.href='./home/applicationSetting.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/deviceSetting.png" width="100px" height="100px"></td>
                   </tr>
@@ -32,7 +35,7 @@ include('./loginChek.php')
             </li>
             <li>
               <a href="#">
-                <table onclick="location.href='./account.php'">
+                <table onclick="location.href='./home/account.php'">
                   <tr>
                     <td><img id="account" class="linkImg" src="images/web_GUI/icon/account.png" width="100px" height="100px"></td>
                   </tr>
@@ -44,7 +47,7 @@ include('./loginChek.php')
             </li>
             <li>
               <a href="#">
-                <table onclick="location.href='./information.php'">
+                <table onclick="location.href='./home/information.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/information.png" width="100px" height="100px"></td>
                   </tr>
@@ -56,7 +59,7 @@ include('./loginChek.php')
             </li>
             <li>
               <a href="#">
-                <table  onclick="location.href='./webServerSetting.php'">
+                <table  onclick="location.href='./home/webServerSetting.php'">
                   <tr>
                     <td><img class="linkImg" src="images/web_GUI/icon/webServerSetting.png" width="100px" height="100px"></td>
                   </tr>
@@ -79,7 +82,7 @@ include('./loginChek.php')
         </div>
       </div>
       <div class="footLogo foot">
-        <?php include("footlogo.html") ?>
+        <?php include("footlogo.php") ?>
       </div>
     </div>
     <script src="./subPageControl.js"></script>
