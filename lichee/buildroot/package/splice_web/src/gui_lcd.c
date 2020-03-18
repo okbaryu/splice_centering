@@ -32,8 +32,8 @@
 #include <minigui/window.h>
 
 #define BUF_SIZE        4096
-#define WIDTH_SCREEN	480
-#define HEIGHT_SCREEN   272
+#define WIDTH_SCREEN	272
+#define HEIGHT_SCREEN	480
 #define WIDTH_IMAGE     1920
 
 #define DEV_CAM_0	"/dev/ttyS0"
@@ -68,7 +68,7 @@ BITMAP bitmap[IMAGE_SIZE];
 #define EDGE_BLACK_TO_WHITE	0
 #define EDGE_WHITE_TO_BLACK	1
 
-int gMode = MODE_RUNNING;
+int gMode = MODE_LOADING;
 char gVf0[BUF_SIZE] = "";
 char gVf1[BUF_SIZE] = "";
 
@@ -92,6 +92,10 @@ int gRightTrim1 = 1919;
 
 int gLeftPosition = 0;
 int gRightPosition = 0;
+
+double widthmaterial =0;
+int centerarrow=0;
+int arrow_Y=0;
 
 #define FONT_WIDTH	16
 #define FONT_HEIGHT	21
@@ -187,7 +191,7 @@ struct {
 }; // Create an anonymous struct, instanciate an array and fill it
 
 
-void drawImage(HDC hdc, int x,int y,int w, int h, int indexImage);
+void drawImage(HDC vdc, int x,int y,int w, int h, int indexImage);
 
 void setMode(int uartPort, int mode, int threshold);
 int getPositions(int sock, int LPos, int RPos, int center);
@@ -195,9 +199,9 @@ int getPositions(int sock, int LPos, int RPos, int center);
 int min(int a, int b) { return a<b?a:b;}
 int max(int a, int b) { return a>b?a:b;}
 
-void clearScreen(HDC hdc)
+void clearScreen(HDC vdc, int w, int h)
 {
-	drawImage(hdc, 0,0,480, 272, IMAGE_BG);
+	drawImage(vdc, 0, 0, w, h, IMAGE_BG);
 }
 
 long long GetNowUs() {
@@ -212,6 +216,31 @@ void fetchFrameCalibration(char * vf, const char * buf, int size)
 	memcpy(vf, buf, size);
 }
 
+Uint8 getPixelR(Uint8 * framebuffer, int x, int y, int pitch)
+{
+        int row = y*pitch;
+        int offset = row+x*4;
+
+        return framebuffer[offset+2];//R
+}
+
+Uint8 getPixelG(Uint8 * framebuffer, int x, int y, int pitch)
+{
+        int row = y*pitch;
+        int offset = row+x*4;
+
+        return framebuffer[offset+1];//G
+}
+
+
+Uint8 getPixelB(Uint8 * framebuffer, int x, int y, int pitch)
+{
+        int row = y*pitch;
+        int offset = row+x*4;
+
+        return framebuffer[offset];//B
+}
+
 void putPixelRGB(Uint8 * framebuffer, int x, int y, int pitch, char r, char g, char b)
 {
 	int row = y*pitch;
@@ -223,16 +252,11 @@ void putPixelRGB(Uint8 * framebuffer, int x, int y, int pitch, char r, char g, c
 	framebuffer[offset+3]=255;//A
 }
 
-void drawImage(HDC hdc, int x,int y,int w, int h, int indexImage)
+void drawImage(HDC vdc, int x,int y,int w, int h, int indexImage)
 {
-<<<<<<< HEAD
-	printf("(i) drawImage called: x=%d, y=%d, w=%d, h=%d, index=%d\n",
-		x, y, w, h, indexImage);
-=======
-//	printf("(i) drawImage called: x=%d, y=%d, w=%d, h=%d, index=%d\n",
-//		x, y, w, h, indexImage);
->>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
-	FillBoxWithBitmap (hdc, x, y, w, h, &bitmap[indexImage]);
+	//printf("(i) drawImage called: x=%d, y=%d, w=%d, h=%d, index=%d\n",
+	//		x, y, w, h, indexImage);
+	FillBoxWithBitmap(vdc, x, y, w, h, &bitmap[indexImage]);
 }
 
 void drawVLine(Uint8 * framebuffer, int x, int pitch, char r, char g , char b )
@@ -240,7 +264,7 @@ void drawVLine(Uint8 * framebuffer, int x, int pitch, char r, char g , char b )
 	int i=0;
 	for(i=156; i<324; i++)
 	{
-		putPixelRGB(framebuffer, x, i-480, pitch, r, g, b);
+		putPixelRGB(framebuffer, x, i, pitch, r, g, b);
 	}
 }
 
@@ -489,9 +513,6 @@ void generateComboTable(int center, int edge)
 		i++;
 	}
 	//printf("center = %d\n", center);	
-/*	for(i=0;i<1920;i++) {
-		if(comboTable[i]>0) printf("comboTable[%d] = %d\n", i, comboTable[i]); } 
-*/
 		
 	// center bar has double size width on the others. 
 	int centerBarSize = 0;
@@ -515,7 +536,7 @@ void generateComboTable(int center, int edge)
 		for(i=center; i>0; i--)
 		{
 			if(comboTable[i]>0)
-			{
+			{	
 				centerBarSize=comboTable[i];
 				indexCenterBar = i;
 				//printf("1camboTable[%d] = %d\n", i, comboTable[i]);
@@ -655,9 +676,9 @@ void drawLine(Uint8 * fb, int x1, int y1, int x2, int y2, int pitch, char red, c
 
 void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 {
-	printf("(i) render called~~\n");
-	int baseLine = 312;
-	if(gMode==MODE_RUNNING) baseLine = 280;
+//	printf("(i) render called~~\n");
+	int baseLine = 312; //312
+	if(gMode==MODE_RUNNING) baseLine = 280; //280
 
 	int gridSize = 0;
 	int center = 0;
@@ -682,7 +703,7 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 	int maxRisingEdge=0;
 	int maxFallingEdge=0;
 
-	for(x=0; x<HEIGHT_SCREEN; x++)
+	for(x=0; x<WIDTH_SCREEN; x++)
 	{
 		int index = (int)(x*7.0588);
 		if(index+1>=size) break;
@@ -693,15 +714,12 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 
 		if(gMode==MODE_CALIBRATION)
 		{
-			for(y=baseLine; y>baseLine-(average*0.6); y--)
+			for(y=baseLine; y>baseLine-(average*0.6); y--) {
 				putPixel(framebuffer, x, y, pitch, 0xFF);
+			}
 
 			if(gSetCam==SET_CAM_0)
-<<<<<<< HEAD
-				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6),pitch, 255, 255, 0);
-=======
 				putPixelRGB(framebuffer, x, baseLine-(gThreshold0*0.6), pitch, 255, 255, 0);
->>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
 			else if(gSetCam==SET_CAM_1) 
 				putPixelRGB(framebuffer, x, baseLine-(gThreshold1*0.6), pitch, 170, 170, 0);
 			else {
@@ -714,20 +732,24 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 		{
 			if(x!=0 && prev != average) // draw an edge line
 			{
-				for(y=baseLine; y>baseLine-80; y--)
-					putPixel(framebuffer, x, y, pitch,0xFF);
+				for(y=baseLine; y>baseLine-80; y--) {
+					putPixel(framebuffer, x, y, pitch, 0xFF);
+				}
+				
 			}
 			else if(average>128) // draw bottom line
 			{
-				for(y=baseLine; y>baseLine-80; y--)
-					if(y==baseLine) putPixel(framebuffer, x, y, pitch,0xFF);
-					else putPixel(framebuffer, x, y, pitch,0x0);
+				for(y=baseLine; y>baseLine-80; y--) {
+					if(y==baseLine) putPixel(framebuffer, x, y, pitch, 0xFF);
+					else putPixel(framebuffer, x, y, pitch, 0x0);
+				}
 			}
 			else	// draw top line
 			{
-				for(y=baseLine; y>baseLine-80; y--)
-					if(y==baseLine-80+1) putPixel(framebuffer, x, y, pitch,0xFF);
-					else putPixel(framebuffer, x, y, pitch,0x0);
+				for(y=baseLine; y>baseLine-80; y--) {
+					if(y==baseLine-80+1) putPixel(framebuffer, x, y, pitch, 0xFF);
+					else putPixel(framebuffer, x, y, pitch, 0x0);
+				}
 			}
 			if(x==0) {} // do nothing
 			else if(prev>average) // rising(light has to be bottom line)
@@ -746,6 +768,7 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 					maxHighWidth = counter;
 					maxRisingEdge = risingEdge;
 					maxFallingEdge = x;
+
 				}
 				counter = 0;
 			}
@@ -785,10 +808,14 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 		}
 
 //		printf("(i) widthMaterial:%lf\n", widthMaterial);
+		widthmaterial =	widthMaterial;
 
 		// draw material size in mm  on the arrow line upside center
 		int centerArrow = (maxFallingEdge-maxRisingEdge)/2+maxRisingEdge;
 		printDouble(centerArrow, arrowY-5-21, widthMaterial, framebuffer);
+		centerarrow = centerArrow;
+		arrow_Y = arrowY-5-21;
+		
 
 		/*
 		int risingEdge1920 = -1;
@@ -887,11 +914,7 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
 			}
 		}
-<<<<<<< HEAD
-		//for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
-=======
 		for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
->>>>>>> fe74868ffda54d768ee09a55301a539a17a6361a
 				
 	    }
 	    else if(gSetCam==SET_CAM_1)
@@ -939,20 +962,22 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 	    }
 	    else 
 	    {
-		drawVLine(framebuffer, 135, pitch, 255, 0, 0);
+		drawVLine(framebuffer, 136, pitch, 255, 0, 0); //calibration center line
 	    }
 	    x = (int)(center/7.0588);
 	   	drawVLine(framebuffer, x, pitch, 255, 0, 0);
 	}
-
+	/*		
 	if(gMode==MODE_CALIBRATION)
 	{
-		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_0)
+		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_0) {
 			printNumber(272-20-16*2, baseLine+20, gCount0, framebuffer);
+		}
 
 		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_1)
 			printNumber(20, baseLine+20, gCount1, framebuffer);
 	}
+	*/
 }
 
 
@@ -1173,10 +1198,60 @@ void filterNoise(char * vf, int size)
 	dilationGrey(vf, size);
 	
 	erosionGrey(vf, size);
+}
 
-	erosionGrey(vf, size);
-	
-	dilationGrey(vf, size);
+void outputDc(HDC dstDc, HDC srcDc)
+{
+        int widthSrc, heightSrc, pitchSrc;
+        RECT rcSrc = {0, 0, 272, 480};
+        int bppSrc = GetGDCapability (srcDc, GDCAP_BPP);
+
+        Uint8* srcBuf = LockDC (srcDc, &rcSrc, &widthSrc, &heightSrc, &pitchSrc);
+        Uint8 r, g, b;
+        int x = 0;
+        int y = 0;
+
+        static Uint8 table[480][272][4];
+
+        for(y = 0; y<heightSrc; y++)
+        {
+                for (x = 0; x < widthSrc; x++)
+                {
+                        r = getPixelR(srcBuf, x, y, pitchSrc);
+                        g = getPixelG(srcBuf, x, y, pitchSrc);
+                        b = getPixelB(srcBuf, x, y, pitchSrc);
+                        table[y][x][0] = r;
+                        table[y][x][1] = g;
+                        table[y][x][2] = b;
+                }
+        }
+        UnlockDC (srcDc);
+
+        int widthDst, heightDst, pitchDst;
+        RECT rcDst = {0, 0, 480, 272};
+        int bppDst = GetGDCapability (dstDc, GDCAP_BPP);
+
+        Uint8* dstBuf = LockDC (dstDc, &rcDst, &widthDst, &heightDst, &pitchDst);
+        int xDst = 0;
+        int yDst = 0;
+        int row = 0;
+
+        // Copy the pixels from srcDc to dstDc with clockwise 90 degree rotation
+        for(y = 0; y<480; y++)
+        {
+                for (x = 0; x < 272; x++)
+                {
+                        r = table[y][x][0];
+                        g = table[y][x][1];
+                        b = table[y][x][2];
+
+                        yDst = x;
+                        xDst = 479-y;
+
+                        putPixelRGB(dstBuf, xDst, yDst, pitchDst, r, g, b);
+                }
+        }
+        UnlockDC (dstDc);
 }
 
 void receiveFrame(HWND hWnd)
@@ -1217,14 +1292,25 @@ void receiveFrame(HWND hWnd)
     SetBkMode(hdc, BM_TRANSPARENT);
     SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 
+    // Create mem DC
+    HDC vdc = CreateMemDC(272, 480, 32, MEMDC_FLAG_HWSURFACE | MEMDC_FLAG_SRCALPHA,
+        0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
+
+    SetBkMode(vdc, BM_TRANSPARENT);
+    SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
+
     int width, height, pitch;
-    RECT rc = {0, 0, 480, 272};
-//    int bpp = GetGDCapability (hdc, GDCAP_BPP); // 32bit
+    RECT rc = {0, 0, 272, 480};
+    int bpp = GetGDCapability (vdc, GDCAP_BPP);
+	int baseLine = 312;
+	char buf_count[255];
+	char buf_widthmaterial[255];
 
     while(1)
     {
 	current = GetNowUs();
 	elapsedTime = current - prev;
+
 	if(	(gMode==MODE_RUNNING	&& elapsedTime>16667)	||
 		(gMode==MODE_CALIBRATION&& elapsedTime>1000000)	||
 		(gMode==MODE_LOADING	&& elapsedTime>1000000)	)
@@ -1233,7 +1319,8 @@ void receiveFrame(HWND hWnd)
 
 		if( gMode == MODE_LOADING)
 		{
-    			drawImage(hdc, 0,0,480, 272, IMAGE_LOADING);
+    			drawImage(vdc, 0, 0, 272, 480, IMAGE_LOADING);
+			outputDc(hdc, vdc);
 			UpdateWindow(hWnd, FALSE);
 			loadingCounter++;
 			if(loadingCounter>2) gMode = MODE_RUNNING;
@@ -1253,10 +1340,16 @@ void receiveFrame(HWND hWnd)
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
 				renderingCounter=0;
-				clearScreen(hdc);
-				Uint8* frame_buffer = LockDC (hdc, &rc, &width, &height, &pitch);
+				clearScreen(vdc, 272, 480);
+				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf0, 1920, pitch);
-				UnlockDC (hdc);
+				UnlockDC (vdc);
+				if(gMode==MODE_CALIBRATION){
+					memset(buf_count,0,255);
+					sprintf(buf_count,"%d",gCount0);
+					TextOut(vdc, 272-20-16, baseLine+20, buf_count);
+				}
+				outputDc(hdc, vdc);
 			}
 		}
 		else if( gSetCam == SET_CAM_1 )
@@ -1272,10 +1365,16 @@ void receiveFrame(HWND hWnd)
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
 				renderingCounter=0;
-				clearScreen(hdc);
-				Uint8* frame_buffer = LockDC (hdc, &rc, &width, &height, &pitch);
+				clearScreen(vdc, 272, 480);
+				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf1, 1920, pitch);
-				UnlockDC (hdc);
+				UnlockDC (vdc);
+				if( gMode == MODE_CALIBRATION){
+					memset(buf_count,0,255);	
+					sprintf(buf_count,"%d",gCount1);
+					TextOut(vdc, 20, baseLine+20, buf_count);
+				}
+				outputDc(hdc, vdc);
 			}
 		}
 		else
@@ -1362,16 +1461,28 @@ void receiveFrame(HWND hWnd)
 			gCount1 = countBar(vfResized, 0, 1920/2-1, gThreshold1);
 
 			//printf("(i) render function will be called\n");
-
-
 			if(gMode==MODE_RUNNING) renderingCounter++;
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
 				renderingCounter=0;
-				clearScreen(hdc);
-				Uint8* frame_buffer = LockDC (hdc, &rc, &width, &height, &pitch);
+				clearScreen(vdc, 272, 480);
+				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vfResized, 1920, pitch);
-				UnlockDC (hdc);
+				UnlockDC (vdc);
+				if(gMode==MODE_CALIBRATION){
+					memset(buf_count,0,255);
+					sprintf(buf_count,"%d",gCount0);
+					TextOut(vdc, 272-20-16, baseLine+20, buf_count); //cam0 count
+					memset(buf_count,0,255);
+					sprintf(buf_count,"%d",gCount1);
+					TextOut(vdc, 20, baseLine+20, buf_count); //cam1 count
+				}
+				else if(gMode==MODE_RUNNING){
+					memset(buf_widthmaterial,0,255);
+					sprintf(buf_widthmaterial,"%.3lfmm", widthmaterial);
+					TextOut(vdc, centerarrow-30, arrow_Y, buf_widthmaterial);
+				}
+				outputDc(hdc, vdc);
 			}
 		}
 	}
@@ -2327,8 +2438,8 @@ static void InitCreateInfo (PMAINWINCREATE pCreateInfo)
     pCreateInfo->MainWindowProc = LcdWinProc;
     pCreateInfo->lx = 0; 
     pCreateInfo->ty = 0; 
-    pCreateInfo->rx = 480;
-    pCreateInfo->by = 272;
+    pCreateInfo->rx = 480; 
+    pCreateInfo->by = 272; 
     pCreateInfo->iBkColor = PIXEL_black; 
     pCreateInfo->dwAddData = 0;
     pCreateInfo->hHosting = HWND_DESKTOP;
