@@ -53,13 +53,15 @@ extern void  uart_close( int fd );
 #define IMAGE_LOADING	0
 #define IMAGE_ALERT_0	1
 #define IMAGE_ALERT_1	2
-#define IMAGE_BG	3	
-#define IMAGE_SIZE	4
+#define IMAGE_BG	3
+#define IMAGE_AFACHE	4
+#define IMAGE_SIZE	5
 
 #define FILE_PATH_IMAGE_LOADING		"./images/loading.bmp"
 #define FILE_PATH_IMAGE_ALERT_0		"./images/alert0.bmp"
 #define FILE_PATH_IMAGE_ALERT_1		"./images/alert1.bmp"
 #define FILE_PATH_IMAGE_BG		"./images/bg.bmp"
+#define FILE_PATH_IMAGE_AFACHE		"./images/afache.bmp"
 
 BITMAP bitmap[IMAGE_SIZE];
 
@@ -259,7 +261,7 @@ void drawImage(HDC vdc, int x,int y,int w, int h, int indexImage)
 	FillBoxWithBitmap(vdc, x, y, w, h, &bitmap[indexImage]);
 }
 
-void drawVLine(Uint8 * framebuffer, int x, int pitch, char r, char g , char b )
+void drawVLine(Uint8 * framebuffer, int x, int pitch, char r, char g, char b )
 {
 	int i=0;
 	for(i=156; i<324; i++)
@@ -278,6 +280,7 @@ void putPixel(Uint8 * framebuffer, int x, int y, int pitch, char grey)
 	framebuffer[offset+2]=grey;//R
 	framebuffer[offset+3]=255;//A
 }
+
 
 char temp[1920];
 void dilation(char * bin, int size)
@@ -481,7 +484,7 @@ int haveToMakeBorder(int current, int next, int edge )
 
 
 int comboTable[1920];
-void generateComboTable(int center, int edge)
+void generateComboTable(int center)
 {
 	int i = 0;
 	int combo = 1;
@@ -489,22 +492,14 @@ void generateComboTable(int center, int edge)
 
 	while(i<1919)
 	{
-		char currentColor = bin[i];
-		char nextColor = bin[i+1];
-		//printf("[%d] curr = %d    next = %d\n", i , currentColor, nextColor);
+		//char currentColor = bin[i];
+		//char nextColor = bin[i+1];
+		char color = bin[i];
 
-		// skip to make border by the edge and the direction.
-		// white(1), black(0)
-		if(i==center)
-		{
-			comboTable[i] = combo;
-			combo=1;
-			//printf("comboTable = %d,  i = %d\n", comboTable[i], i);
-		}	
-		if(currentColor==nextColor || !haveToMakeBorder(currentColor, nextColor, edge) )
+		if(color==bin[i+1])
 		{
 			combo++;
-		}
+		}	
 		else
 		{
 			comboTable[i] = combo;
@@ -512,49 +507,30 @@ void generateComboTable(int center, int edge)
 		}
 		i++;
 	}
-	//printf("center = %d\n", center);	
+	//printf("center = %d\n", center);
 		
 	// center bar has double size width on the others. 
 	int centerBarSize = 0;
 	int indexCenterBar = 0;
 	
-	if(gSetCam==SET_CAM_0)
+	for(i=center; i<1920; i++)
 	{
-		for(i=center+1; i<1920; i++)
+		if(comboTable[i]>0) 
 		{
-			if(comboTable[i]>0) 
-			{
-				centerBarSize=comboTable[i];
-				indexCenterBar = i;
-				//printf("0comboTable[%d] = %d\n", i, comboTable[i]);
-				break;
-			}
-		}
-	}
-	if(gSetCam==SET_CAM_1)
-	{
-		for(i=center; i>0; i--)
-		{
-			if(comboTable[i]>0)
-			{	
-				centerBarSize=comboTable[i];
-				indexCenterBar = i;
-				//printf("1camboTable[%d] = %d\n", i, comboTable[i]);
-				break;
-			}
+			centerBarSize=comboTable[i];
+			indexCenterBar = i;
+			break;
 		}
 	}
 	
-	//int halfSize = (int)(centerBarSize/2.0);
-	comboTable[center] = (int)centerBarSize;
-	comboTable[indexCenterBar] = (int)centerBarSize;
-	//printf("centerBarSize = %d\n", centerBarSize);
+	int halfSize = (int)(centerBarSize/2.0);
+	comboTable[center] = halfSize;
+	comboTable[indexCenterBar] = halfSize;
 
 /*
 	printf("(i)comboTable:");
 	for(i=0; i<1920; i++){ if(comboTable[i]>0) printf("%d,", comboTable[i]); }
 	printf("\n");
-	exit(0);
 */
 
 }
@@ -674,7 +650,7 @@ void drawLine(Uint8 * fb, int x1, int y1, int x2, int y2, int pitch, char red, c
 
 }
 
-void render(Uint8* framebuffer, const char * buf, int size, int pitch)
+void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 {
 //	printf("(i) render called~~\n");
 	int baseLine = 312; //312
@@ -877,7 +853,7 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 	    if(gSetCam==SET_CAM_0)
 	    {
 		x = (int)(gLeftTrim0/7.0588);
-		drawVLine(framebuffer, x, pitch,  0, 0, 255);
+		drawVLine(framebuffer, x, pitch, 0, 0, 255);
 
 		x = (int)(gRightTrim0/7.0588);
 		drawVLine(framebuffer, x, pitch, 0, 0, 255);
@@ -888,8 +864,7 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 		gCalibrationData.cam0Threshold = gThreshold0;
 
 		// generate combo table
-		
-		generateComboTable(center, EDGE_BLACK_TO_WHITE);
+		generateComboTable(center);
 
 		// right side of merged image.
 		int from = center;
@@ -897,24 +872,15 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 		int combo = 0;
 		int i=0;
 		//printf("(i) setcam0 center=%d\n", center);
-		int flagSetMinusArea= true;
 		for(i=to; i>=from; i--)
 		{
-			
-			if(flagSetMinusArea)
-				gCalibrationData.pixelLen[1920+i-center]=-1;
-			
-			if(comboTable[i]>0)
-			{
-				combo = comboTable[i];
-				flagSetMinusArea = false;
-			}
+			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				gCalibrationData.pixelLen[1920+i-center]=10.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[1920+i-center]=5.0/combo; // 1cell = 5mm
 			}
 		}
-		for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1; 
+		for(i=0; i<center; i++) gCalibrationData.pixelLen[3840+i-center] = -1;
 				
 	    }
 	    else if(gSetCam==SET_CAM_1)
@@ -931,34 +897,22 @@ void render(Uint8* framebuffer, const char * buf, int size, int pitch)
 		gCalibrationData.cam1Threshold = gThreshold1;
 
 		// generate combo table
-		generateComboTable(center, EDGE_WHITE_TO_BLACK);
+		generateComboTable(center);
 
 		// left side of merged image.
 		int from = center; 
 		int to = 0; 
 		int combo = 0;
 		int i=0;
-		int comboCount=0;
-		//printf("center = %d\n", center); 
-	
 		for(i=from; i>=to; i--)
 		{
-			if(comboTable[i]>0)
-			{
-				combo = comboTable[i];
-				comboCount++;
-			}
+			if(comboTable[i]>0) combo = comboTable[i];
 			if(combo>0)
 			{
-				if(comboCount>20)
-					gCalibrationData.pixelLen[i+(1919-center)]=-1;
-				else 
-					gCalibrationData.pixelLen[i+(1919-center)]=10.0/combo; // 1cell = 5mm
+				gCalibrationData.pixelLen[i+(1919-center)]=5.0/combo; // 1cell = 5mm
 			}
 		}
-		for(i=0; i<1919-center; i++){
-			gCalibrationData.pixelLen[i] = -1;
-		}
+		for(i=0; i<1919-center; i++) gCalibrationData.pixelLen[i] = -1;
 	    }
 	    else 
 	    {
@@ -1254,6 +1208,103 @@ void outputDc(HDC dstDc, HDC srcDc)
         UnlockDC (dstDc);
 }
 
+void current_time(char * buff)
+{
+	struct tm *t;
+	time_t now = time(NULL);
+	t = localtime(&now);
+	sprintf(buff, "%d/%d/%d %d:%d:%d", t->tm_year+1900, t->tm_mon+1, t->tm_mday,
+			t->tm_hour, t->tm_min, t->tm_sec);
+
+/*
+	time_t tm_time;
+	struct tm *st_time;
+	
+	time(&tm_time);
+	st_time = localtime(&tm_time);
+	strftime(buff, 255, "%Y/%m/%d %l:%M:%S",st_time);
+*/	
+}
+
+void gettextout(HDC hdc, HDC vdc)
+{
+	char buf_count[255];
+    	char buf_widthmaterial[255];
+	char buff[255];
+	
+	if(gMode==MODE_CALIBRATION)
+	{
+		if(gSetCam==SET_CAM_0)
+		{
+			memset(buf_count,0,255);
+			sprintf(buf_count,"%d", gCount0);
+			TextOut(vdc, 272-20-16, 312+20, buf_count);
+
+			TextOut(vdc, 90, 30, "CALIBRATION");
+			TextOut(vdc, 10, 90, "IP:                  cam:0");
+
+			current_time(buff);
+			TextOut(vdc, 10, 455, buff);
+		}
+		else if(gSetCam==SET_CAM_1)
+		{
+			memset(buf_count,0,255);
+			sprintf(buf_count,"%d", gCount1);
+			TextOut(vdc, 20, 312+20, buf_count);
+
+			TextOut(vdc, 90, 30, "CALIBRATION");
+			TextOut(vdc, 10, 90, "IP:                  cam:1");
+
+			current_time(buff);
+			TextOut(vdc, 10, 455, buff);
+		}
+		else 
+		{
+			memset(buf_count,0,255);
+			sprintf(buf_count,"%d", gCount0);
+			TextOut(vdc, 272-20-16, 312+20, buf_count);
+
+			memset(buf_count,0,255);
+			sprintf(buf_count,"%d", gCount1);
+			TextOut(vdc, 20, 312+20, buf_count);
+
+			TextOut(vdc, 90, 30, "CALIBRATION");
+			TextOut(vdc, 10, 90, "IP:                  cam:ALL");
+
+			current_time(buff);
+			TextOut(vdc, 10, 455, buff);
+		}
+	}
+	else if(gMode==MODE_RUNNING)
+	{
+		memset(buf_widthmaterial,0,255);
+		sprintf(buf_widthmaterial,"%.3lfmm", widthmaterial);
+		TextOut(vdc, centerarrow-30, arrow_Y, buf_widthmaterial);
+
+		TextOut(vdc, 90, 30, "RUNNING");
+		TextOut(vdc, 10, 90, "IP:       ");
+
+		current_time(buff);
+		TextOut(vdc, 10, 455, buff);
+	}
+}
+ 
+void getfillbox(HDC hdc, HDC vdc)
+{
+	char buff[255];
+	memset(buff,0,255);
+
+	SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));	
+	FillBox(vdc, 0, 0, 272, 80);
+	SetBrushColor(vdc, RGBA2Pixel(hdc, 0x6C, 0x6C, 0x6C, 0xFF));	
+	FillBox(vdc, 0, 80, 272, 40);
+	FillBox(vdc, 0, 480-35, 272-98, 480);
+	
+	//FillBoxWithBitmap(vdc, 272-98, 480-35, 272, 480, IMAGE_AFACHE);
+
+	SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));	
+}
+
 void receiveFrame(HWND hWnd)
 {
 
@@ -1291,6 +1342,7 @@ void receiveFrame(HWND hWnd)
     HDC hdc = CreatePrivateDC(hWnd);
     SetBkMode(hdc, BM_TRANSPARENT);
     SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
+    SetBrushColor(hdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 
     // Create mem DC
     HDC vdc = CreateMemDC(272, 480, 32, MEMDC_FLAG_HWSURFACE | MEMDC_FLAG_SRCALPHA,
@@ -1298,13 +1350,11 @@ void receiveFrame(HWND hWnd)
 
     SetBkMode(vdc, BM_TRANSPARENT);
     SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
+    SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 
     int width, height, pitch;
     RECT rc = {0, 0, 272, 480};
     int bpp = GetGDCapability (vdc, GDCAP_BPP);
-	int baseLine = 312;
-	char buf_count[255];
-	char buf_widthmaterial[255];
 
     while(1)
     {
@@ -1327,7 +1377,7 @@ void receiveFrame(HWND hWnd)
 			continue;
 		}
 
-		if( gSetCam == SET_CAM_0 )
+		if( gSetCam == SET_CAM_0 && MODE_CALIBRATION )
 		{
 			pthread_mutex_lock(&gMutex0);
 			memcpy(vf0, gVf0, 1920);
@@ -1344,15 +1394,12 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf0, 1920, pitch);
 				UnlockDC (vdc);
-				if(gMode==MODE_CALIBRATION){
-					memset(buf_count,0,255);
-					sprintf(buf_count,"%d",gCount0);
-					TextOut(vdc, 272-20-16, baseLine+20, buf_count);
-				}
+				getfillbox(hdc, vdc);
+				gettextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
-		else if( gSetCam == SET_CAM_1 )
+		else if( gSetCam == SET_CAM_1 && gMode == MODE_CALIBRATION )
 		{
 			pthread_mutex_lock(&gMutex1);
 			memcpy(vf1, gVf1, 1920);
@@ -1369,11 +1416,8 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf1, 1920, pitch);
 				UnlockDC (vdc);
-				if( gMode == MODE_CALIBRATION){
-					memset(buf_count,0,255);	
-					sprintf(buf_count,"%d",gCount1);
-					TextOut(vdc, 20, baseLine+20, buf_count);
-				}
+				getfillbox(hdc, vdc);
+				gettextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -1469,19 +1513,8 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vfResized, 1920, pitch);
 				UnlockDC (vdc);
-				if(gMode==MODE_CALIBRATION){
-					memset(buf_count,0,255);
-					sprintf(buf_count,"%d",gCount0);
-					TextOut(vdc, 272-20-16, baseLine+20, buf_count); //cam0 count
-					memset(buf_count,0,255);
-					sprintf(buf_count,"%d",gCount1);
-					TextOut(vdc, 20, baseLine+20, buf_count); //cam1 count
-				}
-				else if(gMode==MODE_RUNNING){
-					memset(buf_widthmaterial,0,255);
-					sprintf(buf_widthmaterial,"%.3lfmm", widthmaterial);
-					TextOut(vdc, centerarrow-30, arrow_Y, buf_widthmaterial);
-				}
+				getfillbox(hdc, vdc); 
+				gettextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -2401,7 +2434,7 @@ void* thread_function_receiver(void * arg)
     return 0;
 }
 
-void startReceiverThread(void * arg) // start Serial Receiver on a thread.	
+int startReceiverThread(void * arg) // start Serial Receiver on a thread.	
 {
 	pthread_t t_id;
 
@@ -2410,6 +2443,8 @@ void startReceiverThread(void * arg) // start Serial Receiver on a thread.
 
 	// detach the thread
 	pthread_detach(t_id);
+	
+	return 0;
 }
 
 static int LcdWinProc (HWND hWnd, int message, WPARAM wParam, LPARAM lParam)
@@ -2453,6 +2488,7 @@ int loadBitmap(HWND hWnd)
 	if(LoadBitmap(hdc, &bitmap[IMAGE_ALERT_0], FILE_PATH_IMAGE_ALERT_0)) return -1;
 	if(LoadBitmap(hdc, &bitmap[IMAGE_ALERT_1], FILE_PATH_IMAGE_ALERT_1)) return -1;
 	if(LoadBitmap(hdc, &bitmap[IMAGE_BG], FILE_PATH_IMAGE_BG)) return -1;
+	if(LoadBitmap(hdc, &bitmap[IMAGE_AFACHE], FILE_PATH_IMAGE_AFACHE)) return -1;
 
 	ReleaseDC(hdc);
 	
@@ -2464,6 +2500,7 @@ void unloadBitmap(HWND hWnd)
 	UnloadBitmap(&bitmap[IMAGE_LOADING]);
 	UnloadBitmap(&bitmap[IMAGE_ALERT_0]);
 	UnloadBitmap(&bitmap[IMAGE_ALERT_1]);
+	UnloadBitmap(&bitmap[IMAGE_AFACHE]);
 }
 
 int MiniGUIMain(int args, const char* arg[])
@@ -2501,8 +2538,8 @@ int MiniGUIMain(int args, const char* arg[])
     }
 
     startServerThread();	// start TCP Server on a thread
-    startReceiverThread((void*)&hMainWnd); // start Serial Receiver on a thread  
-
+    startReceiverThread((void*)&hMainWnd); // start Serial Receiver on a thread 
+ 
     while (GetMessage (&Msg, hMainWnd)) {
         DispatchMessage (&Msg);
     }
