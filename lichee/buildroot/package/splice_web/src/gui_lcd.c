@@ -75,9 +75,6 @@ BITMAP bitmap[IMAGE_SIZE];
 int gMode = MODE_LOADING;
 int gPrevMode = MODE_LOADING;
 
-int nomalInputCounter0 = 0;
-int nomalInputCounter1 = 0;
-
 char gVf0[BUF_SIZE] = "";
 char gVf1[BUF_SIZE] = "";
 
@@ -89,6 +86,9 @@ int g_index1 = 0;
 
 int gUartPort0=0;
 int gUartPort1=0;
+
+int gInputCounterCam0 = 0;
+int gInputCounterCam1 = 0;
 
 char gThreshold0 = 128;
 char gThreshold1 = 128;
@@ -1002,17 +1002,19 @@ void * thread_function_uart0(void* arg)
 
     while(1)
     {
-	//printf("uart0\n");
+	if(gUartPort0 == 0) {
+       		 gUartPort0 = uart_open(DEV_CAM_0, 115200);
+	}
 	ssize_t len = read(gUartPort0, temp, BUF_SIZE);
-	//printf("len = %d\n", len);
         if(len==-1) {
             fprintf(stderr,"Fail to read serial port0\n");
-	    //printf("Serial port0 error!\n");
-   	    //nomalInputCounter0 = 0;
-            break;
+            uart_close(gUartPort0);
+	    gUartPort0 = 0;	
+	    usleep(2000);
+	    continue;
         }
-	//else nomalInputCounter0 = 1; 
-	//printf("nomal = %d\n", nomalInputCounter0);
+
+	gInputCounterCam0++;
 
         for(i=0; i<len; i++)
         {
@@ -1064,13 +1066,19 @@ void * thread_function_uart1(void* arg)
 
     while(1)
     {
+	if(gUartPort1 == 0) {
+       		 gUartPort1 = uart_open(DEV_CAM_1, 115200);
+	}
 	ssize_t len = read(gUartPort1, temp, BUF_SIZE);
         if(len==-1) {
             fprintf(stderr,"Fail to read serial port1\n");
-   	    nomalInputCounter1 = 0;	
-            //break;
+            uart_close(gUartPort1);
+	    gUartPort1 = 0;	
+	    usleep(2000);
+	    continue;
         }
-	else nomalInputCounter1 = 1; 
+
+	gInputCounterCam1++;
 
         for(i=0; i<len; i++)
         {
@@ -1255,6 +1263,7 @@ void getTextout(HDC hdc, HDC vdc)
 	{
 		if(gSetCam==SET_CAM_0)
 		{
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 			memset(buf_count,0,255);
 			sprintf(buf_count,"%d", gCount0);
 			TextOut(vdc, 272-20-16, 312+20, buf_count);
@@ -1269,6 +1278,7 @@ void getTextout(HDC hdc, HDC vdc)
 		}
 		else if(gSetCam==SET_CAM_1)
 		{
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 			memset(buf_count,0,255);
 			sprintf(buf_count,"%d", gCount1);
 			TextOut(vdc, 20, 312+20, buf_count);
@@ -1283,6 +1293,7 @@ void getTextout(HDC hdc, HDC vdc)
 		}
 		else 
 		{
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 			memset(buf_count,0,255);
 			sprintf(buf_count,"%d", gCount0);
 			TextOut(vdc, 272-20-16, 312+20, buf_count);
@@ -1330,6 +1341,22 @@ void getFillbox(HDC hdc, HDC vdc)
 	SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));	
 }
 */
+
+// 0: false
+int isSerialInput(int camNumber) 
+{
+	if(camNumber==0)
+	{
+		if(gInputCounterCam0==0) return 0;
+		else return 1;
+	}
+	else if(camNumber==1)
+	{
+		if(gInputCounterCam1==0) return 0;
+		else return 1;
+	}
+	else printf("(!) cam number is not valid:camNumber\n", camNumber);
+}
 
 void receiveFrame(HWND hWnd)
 {
@@ -1382,6 +1409,8 @@ void receiveFrame(HWND hWnd)
     int width, height, pitch;
     RECT rc = {0, 0, 272, 480};
 
+    int inputCheckCounter = 0; // be used for a serial input check.
+
     while(1)
     {
 	current = GetNowUs();
@@ -1393,6 +1422,27 @@ void receiveFrame(HWND hWnd)
 		(gMode==MODE_ALERT      && elapsedTime>1000000) )
 	{
 		prev = current;
+
+		// input signal check by every 3 seconds.
+		inputCheckCounter++;
+		if( (gMode == MODE_RUNNING && inputCheckCounter>=60*3) ||
+			(gMode == MODE_CALIBRATION && inputCheckCounter>=1*3) || 
+			(gMode == MODE_ALERT && inputCheckCounter>=1*3) )
+		{
+			//printf("gmode = %d, InputCountercam0 = %d, cam1=%d\n", gMode, gInputCounterCam0, gInputCounterCam1);
+			inputCheckCounter = 0;
+			if( (!isSerialInput(0) || !isSerialInput(1)) && gMode != MODE_ALERT )
+			{
+				gPrevMode = gMode;
+				gMode = MODE_ALERT;
+			}
+			else if( (isSerialInput(0) && isSerialInput(1)) && gMode == MODE_ALERT )
+			{
+				gMode = gPrevMode;
+			}
+			gInputCounterCam0 = 0;
+			gInputCounterCam1 = 0;
+		}
 
 		if( gMode == MODE_LOADING)
 		{
@@ -1422,7 +1472,7 @@ void receiveFrame(HWND hWnd)
 			continue;
 		}
 
-		if( gSetCam == SET_CAM_0 && MODE_CALIBRATION )
+		if( gSetCam == SET_CAM_0 && gMode == MODE_CALIBRATION )
 		{
 			pthread_mutex_lock(&gMutex0);
 			memcpy(vf0, gVf0, 1920);
@@ -1431,7 +1481,6 @@ void receiveFrame(HWND hWnd)
 			filterNoise(vf0, 1920);
 			gCount0 = countBar(vf0, 0, 1919, gThreshold0);
 			
-			if(gMode==MODE_RUNNING) renderingCounter++;
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
 				renderingCounter=0;
@@ -1452,7 +1501,6 @@ void receiveFrame(HWND hWnd)
 			filterNoise(vf1, 1920);
 			gCount1 = countBar(vf1, 0, 1919, gThreshold1);
 
-			if(gMode==MODE_RUNNING) renderingCounter++;
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
 				renderingCounter=0;
