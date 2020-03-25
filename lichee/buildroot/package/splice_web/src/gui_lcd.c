@@ -54,14 +54,16 @@ extern void  uart_close( int fd );
 #define IMAGE_ALERT_0	1
 #define IMAGE_ALERT_1	2
 #define IMAGE_BG	3
-#define IMAGE_AFACHE	4
-#define IMAGE_SIZE	5
+#define IMAGE_BG_CALI	4
+#define IMAGE_BG_RUN	5
+#define IMAGE_SIZE	6	
 
 #define FILE_PATH_IMAGE_LOADING		"./images/loading.bmp"
 #define FILE_PATH_IMAGE_ALERT_0		"./images/alert0.bmp"
 #define FILE_PATH_IMAGE_ALERT_1		"./images/alert1.bmp"
 #define FILE_PATH_IMAGE_BG		"./images/bg.bmp"
-#define FILE_PATH_IMAGE_AFACHE		"./images/afache.bmp"
+#define FILE_PATH_IMAGE_BG_CALI		"./images/bg_cali.bmp"
+#define FILE_PATH_IMAGE_BG_RUN		"./images/bg_run.bmp"
 
 BITMAP bitmap[IMAGE_SIZE];
 
@@ -71,6 +73,11 @@ BITMAP bitmap[IMAGE_SIZE];
 #define EDGE_WHITE_TO_BLACK	1
 
 int gMode = MODE_LOADING;
+int gPrevMode = MODE_LOADING;
+
+int nomalInputCounter0 = 0;
+int nomalInputCounter1 = 0;
+
 char gVf0[BUF_SIZE] = "";
 char gVf1[BUF_SIZE] = "";
 
@@ -194,16 +201,20 @@ struct {
 
 
 void drawImage(HDC vdc, int x,int y,int w, int h, int indexImage);
-
+int loadCalibrationData();
 void setMode(int uartPort, int mode, int threshold);
 int getPositions(int sock, int LPos, int RPos, int center);
+int getIpParse(char * buf);
 
 int min(int a, int b) { return a<b?a:b;}
 int max(int a, int b) { return a>b?a:b;}
 
 void clearScreen(HDC vdc, int w, int h)
 {
-	drawImage(vdc, 0, 0, w, h, IMAGE_BG);
+	//drawImage(vdc, 0, 0, w, h, IMAGE_BG);
+	if(gMode==MODE_CALIBRATION) drawImage(vdc, 0, 0, w, h, IMAGE_BG_CALI);
+	else if(gMode==MODE_RUNNING) drawImage(vdc, 0, 0, w, h, IMAGE_BG_RUN);
+
 }
 
 long long GetNowUs() {
@@ -991,11 +1002,17 @@ void * thread_function_uart0(void* arg)
 
     while(1)
     {
-        ssize_t len = read(gUartPort0, temp, BUF_SIZE);
+	//printf("uart0\n");
+	ssize_t len = read(gUartPort0, temp, BUF_SIZE);
+	//printf("len = %d\n", len);
         if(len==-1) {
             fprintf(stderr,"Fail to read serial port0\n");
+	    //printf("Serial port0 error!\n");
+   	    //nomalInputCounter0 = 0;
             break;
         }
+	//else nomalInputCounter0 = 1; 
+	//printf("nomal = %d\n", nomalInputCounter0);
 
         for(i=0; i<len; i++)
         {
@@ -1047,11 +1064,13 @@ void * thread_function_uart1(void* arg)
 
     while(1)
     {
-        ssize_t len = read(gUartPort1, temp, BUF_SIZE);
+	ssize_t len = read(gUartPort1, temp, BUF_SIZE);
         if(len==-1) {
             fprintf(stderr,"Fail to read serial port1\n");
-            break;
+   	    nomalInputCounter1 = 0;	
+            //break;
         }
+	else nomalInputCounter1 = 1; 
 
         for(i=0; i<len; i++)
         {
@@ -1158,7 +1177,6 @@ void outputDc(HDC dstDc, HDC srcDc)
 {
         int widthSrc, heightSrc, pitchSrc;
         RECT rcSrc = {0, 0, 272, 480};
-        int bppSrc = GetGDCapability (srcDc, GDCAP_BPP);
 
         Uint8* srcBuf = LockDC (srcDc, &rcSrc, &widthSrc, &heightSrc, &pitchSrc);
         Uint8 r, g, b;
@@ -1183,12 +1201,10 @@ void outputDc(HDC dstDc, HDC srcDc)
 
         int widthDst, heightDst, pitchDst;
         RECT rcDst = {0, 0, 480, 272};
-        int bppDst = GetGDCapability (dstDc, GDCAP_BPP);
 
         Uint8* dstBuf = LockDC (dstDc, &rcDst, &widthDst, &heightDst, &pitchDst);
         int xDst = 0;
         int yDst = 0;
-        int row = 0;
 
         // Copy the pixels from srcDc to dstDc with clockwise 90 degree rotation
         for(y = 0; y<480; y++)
@@ -1208,7 +1224,7 @@ void outputDc(HDC dstDc, HDC srcDc)
         UnlockDC (dstDc);
 }
 
-void current_time(char * buff)
+void current_Time(char * buff)
 {
 	struct tm *t;
 	time_t now = time(NULL);
@@ -1226,11 +1242,14 @@ void current_time(char * buff)
 */	
 }
 
-void gettextout(HDC hdc, HDC vdc)
+void getTextout(HDC hdc, HDC vdc)
 {
 	char buf_count[255];
     	char buf_widthmaterial[255];
 	char buff[255];
+	char bufIp[255];
+	int len = getIpParse(bufIp);
+	//printf("ip(%d):%s\n",len, bufIp);
 	
 	if(gMode==MODE_CALIBRATION)
 	{
@@ -1239,11 +1258,13 @@ void gettextout(HDC hdc, HDC vdc)
 			memset(buf_count,0,255);
 			sprintf(buf_count,"%d", gCount0);
 			TextOut(vdc, 272-20-16, 312+20, buf_count);
-
-			TextOut(vdc, 90, 30, "CALIBRATION");
-			TextOut(vdc, 10, 90, "IP:                  cam:0");
-
-			current_time(buff);
+			
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0xFF));
+			TextOut(vdc, 10, 75, bufIp);
+			TextOut(vdc, 200, 75, "cam:0");
+			
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
+			current_Time(buff);
 			TextOut(vdc, 10, 455, buff);
 		}
 		else if(gSetCam==SET_CAM_1)
@@ -1252,10 +1273,12 @@ void gettextout(HDC hdc, HDC vdc)
 			sprintf(buf_count,"%d", gCount1);
 			TextOut(vdc, 20, 312+20, buf_count);
 
-			TextOut(vdc, 90, 30, "CALIBRATION");
-			TextOut(vdc, 10, 90, "IP:                  cam:1");
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0xFF));
+			TextOut(vdc, 10, 75, bufIp);
+			TextOut(vdc, 200, 75, "cam:1");
 
-			current_time(buff);
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
+			current_Time(buff);
 			TextOut(vdc, 10, 455, buff);
 		}
 		else 
@@ -1267,11 +1290,13 @@ void gettextout(HDC hdc, HDC vdc)
 			memset(buf_count,0,255);
 			sprintf(buf_count,"%d", gCount1);
 			TextOut(vdc, 20, 312+20, buf_count);
-
-			TextOut(vdc, 90, 30, "CALIBRATION");
-			TextOut(vdc, 10, 90, "IP:                  cam:ALL");
-
-			current_time(buff);
+			
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0xFF));
+			TextOut(vdc, 10, 75, bufIp);
+			TextOut(vdc, 200, 75, "cam:all");
+			
+			SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
+			current_Time(buff);
 			TextOut(vdc, 10, 455, buff);
 		}
 	}
@@ -1279,17 +1304,17 @@ void gettextout(HDC hdc, HDC vdc)
 	{
 		memset(buf_widthmaterial,0,255);
 		sprintf(buf_widthmaterial,"%.3lfmm", widthmaterial);
+		SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 		TextOut(vdc, centerarrow-30, arrow_Y, buf_widthmaterial);
 
-		TextOut(vdc, 90, 30, "RUNNING");
-		TextOut(vdc, 10, 90, "IP:       ");
-
-		current_time(buff);
+		SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
+		current_Time(buff);
 		TextOut(vdc, 10, 455, buff);
 	}
 }
- 
-void getfillbox(HDC hdc, HDC vdc)
+
+/* 
+void getFillbox(HDC hdc, HDC vdc)
 {
 	char buff[255];
 	memset(buff,0,255);
@@ -1304,6 +1329,7 @@ void getfillbox(HDC hdc, HDC vdc)
 
 	SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));	
 }
+*/
 
 void receiveFrame(HWND hWnd)
 {
@@ -1313,6 +1339,7 @@ void receiveFrame(HWND hWnd)
     unsigned long elapsedTime		= 0;	
     unsigned long renderingCounter	= 0;
     unsigned long loadingCounter	= 0;
+    unsigned long alertCounter		= 0;
 
     // Create Mutex for shared image buffer
     pthread_t t_id0, t_id1;
@@ -1341,7 +1368,7 @@ void receiveFrame(HWND hWnd)
 
     HDC hdc = CreatePrivateDC(hWnd);
     SetBkMode(hdc, BM_TRANSPARENT);
-    SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
+    SetTextColor(hdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
     SetBrushColor(hdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 
     // Create mem DC
@@ -1349,12 +1376,11 @@ void receiveFrame(HWND hWnd)
         0xFF000000, 0x00FF0000, 0x0000FF00, 0x000000FF);
 
     SetBkMode(vdc, BM_TRANSPARENT);
-    SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
+    SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
     SetBrushColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 
     int width, height, pitch;
     RECT rc = {0, 0, 272, 480};
-    int bpp = GetGDCapability (vdc, GDCAP_BPP);
 
     while(1)
     {
@@ -1363,7 +1389,8 @@ void receiveFrame(HWND hWnd)
 
 	if(	(gMode==MODE_RUNNING	&& elapsedTime>16667)	||
 		(gMode==MODE_CALIBRATION&& elapsedTime>1000000)	||
-		(gMode==MODE_LOADING	&& elapsedTime>1000000)	)
+		(gMode==MODE_LOADING	&& elapsedTime>1000000)	||
+		(gMode==MODE_ALERT      && elapsedTime>1000000) )
 	{
 		prev = current;
 
@@ -1373,7 +1400,25 @@ void receiveFrame(HWND hWnd)
 			outputDc(hdc, vdc);
 			UpdateWindow(hWnd, FALSE);
 			loadingCounter++;
-			if(loadingCounter>2) gMode = MODE_RUNNING;
+			if(loadingCounter>2) {
+				gMode = MODE_RUNNING;
+			  	if(loadCalibrationData()<0)
+      				{
+   			        	gMode = MODE_CALIBRATION;
+           				gSetCam = SET_CAM_1;
+   	    			}
+			}
+			continue;
+		}
+
+		if( gMode == MODE_ALERT)
+		{
+    			if(alertCounter==0) drawImage(vdc, 0, 0, 272, 480, IMAGE_ALERT_0);
+    			else drawImage(vdc, 0, 0, 272, 480, IMAGE_ALERT_1);
+			outputDc(hdc, vdc);
+			UpdateWindow(hWnd, FALSE);
+			alertCounter++;
+			if(alertCounter>1) alertCounter = 0;
 			continue;
 		}
 
@@ -1394,8 +1439,7 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf0, 1920, pitch);
 				UnlockDC (vdc);
-				getfillbox(hdc, vdc);
-				gettextout(hdc, vdc);
+				getTextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -1416,8 +1460,7 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vf1, 1920, pitch);
 				UnlockDC (vdc);
-				getfillbox(hdc, vdc);
-				gettextout(hdc, vdc);
+				getTextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -1513,8 +1556,7 @@ void receiveFrame(HWND hWnd)
 				Uint8* frame_buffer = LockDC (vdc, &rc, &width, &height, &pitch);
 				render(frame_buffer, vfResized, 1920, pitch);
 				UnlockDC (vdc);
-				getfillbox(hdc, vdc); 
-				gettextout(hdc, vdc);
+				getTextout(hdc, vdc);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -2462,6 +2504,7 @@ static int LcdWinProc (HWND hWnd, int message, WPARAM wParam, LPARAM lParam)
     return DefaultMainWinProc(hWnd, message, wParam, lParam);
 }
 
+
 static void InitCreateInfo (PMAINWINCREATE pCreateInfo)
 {
     pCreateInfo->dwStyle = WS_VISIBLE;
@@ -2488,11 +2531,43 @@ int loadBitmap(HWND hWnd)
 	if(LoadBitmap(hdc, &bitmap[IMAGE_ALERT_0], FILE_PATH_IMAGE_ALERT_0)) return -1;
 	if(LoadBitmap(hdc, &bitmap[IMAGE_ALERT_1], FILE_PATH_IMAGE_ALERT_1)) return -1;
 	if(LoadBitmap(hdc, &bitmap[IMAGE_BG], FILE_PATH_IMAGE_BG)) return -1;
-	if(LoadBitmap(hdc, &bitmap[IMAGE_AFACHE], FILE_PATH_IMAGE_AFACHE)) return -1;
+	if(LoadBitmap(hdc, &bitmap[IMAGE_BG_CALI], FILE_PATH_IMAGE_BG_CALI)) return -1;
+	if(LoadBitmap(hdc, &bitmap[IMAGE_BG_RUN], FILE_PATH_IMAGE_BG_RUN)) return -1;
 
 	ReleaseDC(hdc);
 	
 	return 0;
+}
+
+int getIpParse(char * buf)
+{
+	FILE* fp = popen("ifconfig", "r");
+
+	if(fp==NULL)
+	{
+		printf("(i)ifconfig error\n");
+	}
+
+	char temp[1024];
+	int len = fread( temp, 1, 1024, fp );
+
+	pclose(fp);
+
+	char *start = strstr(temp, "inet addr:");
+	if(start==NULL) {
+		printf("(i)IP address not found!\n");
+		return 0;
+	}
+	
+	start+=10;
+	char *end = strstr(start, "  ");
+	*end = 0;
+
+	strcpy(buf,start);
+	
+	//printf("(getIpPsrase)IP:%s\n", buf);
+
+	return len;
 }
 
 void unloadBitmap(HWND hWnd)
@@ -2500,20 +2575,21 @@ void unloadBitmap(HWND hWnd)
 	UnloadBitmap(&bitmap[IMAGE_LOADING]);
 	UnloadBitmap(&bitmap[IMAGE_ALERT_0]);
 	UnloadBitmap(&bitmap[IMAGE_ALERT_1]);
-	UnloadBitmap(&bitmap[IMAGE_AFACHE]);
+	UnloadBitmap(&bitmap[IMAGE_BG_CALI]);
+	UnloadBitmap(&bitmap[IMAGE_BG_RUN]);
+	UnloadBitmap(&bitmap[IMAGE_BG]);
 }
 
-int MiniGUIMain(int args, const char* arg[])
+int MiniGUIMain(int args, const char* argp[])
 {  
     memset(&gCalibrationData, 0, sizeof(CalibrationData));
-
+/*
     if(loadCalibrationData()<0)
     {
 	gMode = MODE_CALIBRATION;
 	gSetCam = SET_CAM_1;
     }
-
-
+*/
     // init GUI Window  
 
     MSG Msg;
