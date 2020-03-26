@@ -1466,11 +1466,13 @@ void printBarPixelCount(HDC hdc, int x, int y, char * buf, int center, int maxBa
 	int avgW = 0;
 	getBinImage(gBufBin, buf, 1920, threshold);
 
+/*
 	int i=0;
 	printf("\nCenter=%d\n",center);
 	for(i=0; i<1920; i++)
 		printf("%d",gBufBin[i]);
 	printf("\n");
+*/
 
 	minW = getMinCount(gBufBin, 1920, 1, center, maxBarCount);
 	maxW = getMaxCount(gBufBin, 1920, 1, center, maxBarCount);
