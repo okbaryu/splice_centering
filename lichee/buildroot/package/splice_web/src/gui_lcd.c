@@ -102,9 +102,9 @@ int gRightTrim1 = 1919;
 int gLeftPosition = 0;
 int gRightPosition = 0;
 
-double widthmaterial =0;
-int centerarrow=0;
-int arrow_Y=0;
+double gwidthMaterial =0;
+int gcenterArrow=0;
+int garrowY=0;
 
 #define FONT_WIDTH	16
 #define FONT_HEIGHT	21
@@ -778,30 +778,26 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 		// get material size in mm  
 		double widthMaterial = 0;
 		int i=0;
-		int risingEdge1920 = (int)(maxRisingEdge*7.0588);
-		int fallingEdge1920 = (int)(maxFallingEdge*7.0588);
+		int risingEdge3840 = gLeftPosition;
+		int fallingEdge3840 = gRightPosition;
 
 //		printf("(i) risingEdge1920:%d, fallingEdge1920:%d\n", risingEdge1920, fallingEdge1920);
 	
-		for(i=risingEdge1920; i<fallingEdge1920; i++)
+		for(i=risingEdge3840; i<fallingEdge3840; i++)
 		{
-			double len=gCalibrationData.pixelLen[i*2];
+			double len=gCalibrationData.pixelLen[i];
 			if(len>0) widthMaterial+=len;
-			if(i*2+1<3840)
-			{
-				len = gCalibrationData.pixelLen[i*2+1];
-				if(len>0) widthMaterial+=len;
-			}
 		}
 
 //		printf("(i) widthMaterial:%lf\n", widthMaterial);
-		widthmaterial =	widthMaterial;
+		gwidthMaterial = widthMaterial;
+	//	printf("widthMaterial =%lf,   gLeftPosition =%d   gRightPosition=%d\n", widthMaterial , gLeftPosition ,gRightPosition);
 
 		// draw material size in mm  on the arrow line upside center
 		int centerArrow = (maxFallingEdge-maxRisingEdge)/2+maxRisingEdge;
 		printDouble(centerArrow, arrowY-5-21, widthMaterial, framebuffer);
-		centerarrow = centerArrow;
-		arrow_Y = arrowY-5-21;
+		gcenterArrow = centerArrow;
+		garrowY = arrowY-5-21;
 		
 
 		/*
@@ -1314,9 +1310,9 @@ void getTextout(HDC hdc, HDC vdc)
 	else if(gMode==MODE_RUNNING)
 	{
 		memset(buf_widthmaterial,0,255);
-		sprintf(buf_widthmaterial,"%.3lfmm", widthmaterial);
+		sprintf(buf_widthmaterial,"%.3lfmm", gwidthMaterial);
 		SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
-		TextOut(vdc, centerarrow-30, arrow_Y, buf_widthmaterial);
+		TextOut(vdc, gcenterArrow-30, garrowY, buf_widthmaterial);
 
 		SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 		current_Time(buff);
