@@ -72,7 +72,7 @@ BITMAP bitmap[IMAGE_SIZE];
 #define EDGE_BLACK_TO_WHITE	0
 #define EDGE_WHITE_TO_BLACK	1
 
-int gMode = MODE_CALIBRATION;
+int gMode = MODE_LOADING;
 int gPrevMode = MODE_LOADING;
 
 char gVf0[BUF_SIZE] = "";
@@ -157,7 +157,7 @@ pthread_mutex_t gMutex1;
 #define KEY_CAM1_THRESHOLD  	"cam1Threshold"
 #define KEY_PIXEL_LEN	 	"pixelLen"
 
-int gSetCam = SET_CAM_0;
+int gSetCam = SET_CAM_ALL;
 
 #define STREAM_MODE_INFINITE	0
 #define STREAM_MODE_ONESHOT	1
@@ -426,7 +426,7 @@ int getGridSize(const char* buf, int size, int threshold)
 	return sum/4;
 }
 
-int getCenter(char *buf , int gridSize)
+int getCenter(int gridSize, char threshold)
 {
 	int i=0;
 	int combo = 0;
@@ -453,7 +453,7 @@ int getCenter(char *buf , int gridSize)
 
 	for(i=leftTrim; i<rightTrim; i++)
 	{
-		char value = buf[i];
+		char value = bin[i];
 		if(value==1)
 		{
 			combo++;
@@ -678,7 +678,7 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 		gridSize = getGridSize(buf, size, threshold);
 		//printf("(i) grid size = %d\n", gridSize);
 	
-		center = getCenter(bin,gridSize);
+		center = getCenter(gridSize, threshold);
 		//printf("(i) center = %d\n", center);
 	}
 	
@@ -1256,7 +1256,7 @@ void getTextout(HDC hdc, HDC vdc)
     	char buf_widthmaterial[255];
 	char buff[255];
 	char bufIp[255];
-	getIpParse(bufIp);
+	int len = getIpParse(bufIp);
 	//printf("ip(%d):%s\n",len, bufIp);
 	
 	if(gMode==MODE_CALIBRATION)
@@ -1355,171 +1355,11 @@ int isSerialInput(int camNumber)
 		if(gInputCounterCam1==0) return 0;
 		else return 1;
 	}
-	else printf("(!) cam number is not valid:%d\n", camNumber);
-}
-
-void flipHorizontal(char * bufDst, char * bufSrc, int size)
-{
-	int i = 0;
-	for(i = 0; i<size; i++)
-	{
-		bufDst[i] = bufSrc[size-i-1];
-	}
-}
-
-int getMinCount(char * buf, int size, char value, int center, int maxBarCount)
-{
-	int i=0;
-	int countBar = 0;
-	int count = 0;
-	int min = 999;
-	
-	for(i=center; i<size; i++)
-	{
-		if(buf[i]==value)
-		{
-			count++;		
-		}
-		else  
-		{
-			if(count>0)
-			{
-				if(count<min) min = count;
-				countBar++;
-				if(countBar>=maxBarCount) return min;
-				count = 0;
-			}
-		}
-	}
-}
-
-int getMaxCount(char* buf, int size, char value, int center, int maxBarCount)
-{
-	int i=0;
-	int countBar = 0;
-	int count = 0;
-	int max = -1;
-	
-	for(i=center; i<size; i++)
-	{
-		if(buf[i]==value)
-		{
-			count++;		
-		}
-		else  
-		{
-			if(count>0)
-			{
-				if(count>max) max = count;
-				countBar++;
-				if(countBar>=maxBarCount) return max;
-				count = 0;
-			}
-		}
-	}
-}
-
-int getAvgCount(char* buf, int size, char value, int center, int maxBarCount)
-{
-	int i=0;
-	int countBar = 0;
-	int count = 0;
-	int sum = 0;
-	
-	for(i=center; i<size; i++)
-	{
-		if(buf[i]==value)
-		{
-			count++;		
-		}
-		else  
-		{
-			if(count>0)
-			{
-				sum+=count;
-				countBar++;
-				if(countBar>=maxBarCount) return sum/countBar;
-				count = 0;
-			}
-		}
-	}
-}
-
-void getBinImage(char * bufDst, char * bufSrc, int size, int threshold)
-{
-	int i = 0;
-	for(i=0; i<size; i++)
-	{
-		if(bufSrc[i]>=threshold) bufDst[i] = 1;
-		else bufDst[i] = 0;
-	}
-}
-
-char gBufBin[1920];
-void printBarPixelCount(HDC hdc, int x, int y, char * buf, int center, int maxBarCount, int threshold)
-{
-	memset(gBufBin, 0, 1920);
-	char str[20];
-
-	int minW = 0;
-	int maxW = 0;
-	int avgW = 0;
-	getBinImage(gBufBin, buf, 1920, threshold);
-
-	int i=0;
-	printf("\nCenter=%d\n",center);
-	for(i=0; i<1920; i++)
-		printf("%d",gBufBin[i]);
-	printf("\n");
-
-	minW = getMinCount(gBufBin, 1920, 1, center, maxBarCount);
-	maxW = getMaxCount(gBufBin, 1920, 1, center, maxBarCount);
-	avgW = getAvgCount(gBufBin, 1920, 1, center, maxBarCount);
-
-	int minB = 0;
-	int maxB = 0;
-	int avgB = 0;
-	minB = getMinCount(gBufBin, 1920, 0, center, maxBarCount);
-	maxB = getMaxCount(gBufBin, 1920, 0, center, maxBarCount);
-	avgB = getAvgCount(gBufBin, 1920, 0, center, maxBarCount);
-	
-	
-	SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0x00)); // ARGB
-	TextOut(hdc, x, y, "min");
-	TextOut(hdc, x+20*2, y, "max");
-	TextOut(hdc, x+20*2*2, y, "avg");
-
-	// White Bar Count Pixels
-	SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0xFF)); // ARGB
-
-	sprintf(str,"%d", minW);
-	TextOut(hdc, x, y+15*1, str);
-
-	sprintf(str,"%d", maxW);
-	TextOut(hdc, x+20*2, y+15*1, str);
-
-	sprintf(str,"%d", avgW);
-	TextOut(hdc, x+20*2*2, y+15*1, str);
-
-	// Black Bar Count Pixels
-	SetTextColor(hdc, RGBA2Pixel(hdc, 0xFF, 0x00, 0x00, 0x00)); // ARGB
-
-	sprintf(str,"%d", minB);
-	TextOut(hdc, x, y+15*2, str);
-
-	sprintf(str,"%d", maxB);
-	TextOut(hdc, x+20*2, y+15*2, str);
-
-	sprintf(str,"%d", avgB);
-	TextOut(hdc, x+20*2*2, y+15*2, str);
-
+	else printf("(!) cam number is not valid:camNumber\n", camNumber);
 }
 
 void receiveFrame(HWND hWnd)
 {
-    int xPixelCount1 = 20;
-    int xPixelCount0 = 236-20*4;
-    int yPixelCount = 332+15*2;
 
     unsigned long current		= GetNowUs();
     unsigned long prev			= current;
@@ -1543,14 +1383,12 @@ void receiveFrame(HWND hWnd)
 
     char vf0[1920];
     char vf1[1920];
-    char vfFliped[1920];
     char vfCombined[3840];
     char vfBin[3840];
     char vfResized[1920];
 
     memset(vf0, 0, 1920);
     memset(vf1, 0, 1920);
-    memset(vfFliped, 0, 1920);
     memset(vfCombined, 0 ,3840);
     memset(vfBin, 0 ,3840);
     memset(vfResized, 0 ,1920);
@@ -1641,12 +1479,7 @@ void receiveFrame(HWND hWnd)
 			pthread_mutex_unlock(&gMutex0);
 
 			filterNoise(vf0, 1920);
-
-			getBinImage(vfBin, vf0, 1920, gCalibrationData.cam0Threshold);
-			int gridSize = getGridSize(vf0, 1920,  gCalibrationData.cam0Threshold);
-			int center = getCenter(vfBin,  gridSize);
-
-			gCount0 = countBar(vf0, center, 1919, gThreshold0);
+			gCount0 = countBar(vf0, 0, 1919, gThreshold0);
 			
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
@@ -1656,7 +1489,6 @@ void receiveFrame(HWND hWnd)
 				render(frame_buffer, vf0, 1920, pitch);
 				UnlockDC (vdc);
 				getTextout(hdc, vdc);
-				printBarPixelCount(vdc, xPixelCount0, yPixelCount, vf0, center, 16, gCalibrationData.cam0Threshold);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -1667,13 +1499,7 @@ void receiveFrame(HWND hWnd)
 			pthread_mutex_unlock(&gMutex1);
 
 			filterNoise(vf1, 1920);
-			flipHorizontal(vfFliped, vf1, 1920);
-
-			getBinImage(vfBin, vfFliped, 1920, gCalibrationData.cam1Threshold);
-			int gridSize = getGridSize(vf1, 1920,  gCalibrationData.cam1Threshold);
-			int center = getCenter(vfBin,  gridSize);
-
-			gCount1 = countBar(vfFliped, center, 1919, gThreshold1);
+			gCount1 = countBar(vf1, 0, 1919, gThreshold1);
 
 			if( gMode==MODE_CALIBRATION || (gMode==MODE_RUNNING&&renderingCounter>=6) )
 			{
@@ -1683,7 +1509,6 @@ void receiveFrame(HWND hWnd)
 				render(frame_buffer, vf1, 1920, pitch);
 				UnlockDC (vdc);
 				getTextout(hdc, vdc);
-				printBarPixelCount(vdc, xPixelCount1, yPixelCount, vfFliped, center, 16, gCalibrationData.cam1Threshold);
 				outputDc(hdc, vdc);
 			}
 		}
@@ -1693,19 +1518,9 @@ void receiveFrame(HWND hWnd)
 			memcpy(vf0, gVf0, 1920);
 			pthread_mutex_unlock(&gMutex0);
 
-			filterNoise(vf0, 1920);
-			int center0 = gCalibrationData.cam0Center; 
-			gCount0 = countBar(vf0, center0, 1919, gThreshold0);
-
 			pthread_mutex_lock(&gMutex1);
 			memcpy(vf1, gVf1, 1920);
 			pthread_mutex_unlock(&gMutex1);
-
-			filterNoise(vf1, 1920);
-			flipHorizontal(vfFliped, vf1, 1920);
-			int center1 = 1920 - gCalibrationData.cam1Center; 
-			gCount1 = countBar(vfFliped, center1, 1919, gThreshold1);
-
 
 			// generate combined image from vf0 and vf1
 
@@ -1777,8 +1592,8 @@ void receiveFrame(HWND hWnd)
 
 			//printf("(i) vf resized\n");
 			
-			//gCount0 = countBar(vfResized, 1920/2 + center0, 1919, gThreshold0);
-			//gCount1 = countBar(vfResized, 0, 1920/2-1, gThreshold1);
+			gCount0 = countBar(vfResized, 1920/2, 1919, gThreshold0);
+			gCount1 = countBar(vfResized, 0, 1920/2-1, gThreshold1);
 
 			//printf("(i) render function will be called\n");
 			if(gMode==MODE_RUNNING) renderingCounter++;
@@ -1790,11 +1605,6 @@ void receiveFrame(HWND hWnd)
 				render(frame_buffer, vfResized, 1920, pitch);
 				UnlockDC (vdc);
 				getTextout(hdc, vdc);
-				if( gMode==MODE_CALIBRATION )
-				{
-					printBarPixelCount(vdc, xPixelCount0, yPixelCount, vf0, center0, 16, gCalibrationData.cam0Threshold);
-					printBarPixelCount(vdc, xPixelCount1, yPixelCount, vfFliped, center1, 16, gCalibrationData.cam1Threshold);
-				}
 				outputDc(hdc, vdc);
 			}
 		}
