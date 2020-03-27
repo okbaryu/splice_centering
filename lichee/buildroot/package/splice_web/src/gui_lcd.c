@@ -72,7 +72,7 @@ BITMAP bitmap[IMAGE_SIZE];
 #define EDGE_BLACK_TO_WHITE	0
 #define EDGE_WHITE_TO_BLACK	1
 
-int gMode = MODE_CALIBRATION;
+int gMode = MODE_LOADING;
 int gPrevMode = MODE_LOADING;
 
 char gVf0[BUF_SIZE] = "";
@@ -157,7 +157,7 @@ pthread_mutex_t gMutex1;
 #define KEY_CAM1_THRESHOLD  	"cam1Threshold"
 #define KEY_PIXEL_LEN	 	"pixelLen"
 
-int gSetCam = SET_CAM_0;
+int gSetCam = SET_CAM_ALL;
 
 #define STREAM_MODE_INFINITE	0
 #define STREAM_MODE_ONESHOT	1
