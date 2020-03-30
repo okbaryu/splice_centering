@@ -999,7 +999,8 @@ void * thread_function_uart0(void* arg)
     while(1)
     {
 	if(gUartPort0 == 0) {
-       		 gUartPort0 = uart_open(DEV_CAM_0, 115200);
+       		gUartPort0 = uart_open(DEV_CAM_0, 115200);
+    		setMode(gUartPort0, gMode, gThreshold0);
 	}
 	ssize_t len = read(gUartPort0, temp, BUF_SIZE);
         if(len==-1) {
@@ -1064,6 +1065,7 @@ void * thread_function_uart1(void* arg)
     {
 	if(gUartPort1 == 0) {
        		 gUartPort1 = uart_open(DEV_CAM_1, 115200);
+    		setMode(gUartPort1, gMode, gThreshold1);
 	}
 	ssize_t len = read(gUartPort1, temp, BUF_SIZE);
         if(len==-1) {
@@ -1352,6 +1354,8 @@ int isSerialInput(int camNumber)
 		else return 1;
 	}
 	else printf("(!) cam number is not valid:%d\n", camNumber);
+
+	return 0;
 }
 
 void flipHorizontal(char * bufDst, char * bufSrc, int size)
@@ -1387,6 +1391,7 @@ int getMinCount(char * buf, int size, char value, int center, int maxBarCount)
 			}
 		}
 	}
+	return 0;
 }
 
 int getMaxCount(char* buf, int size, char value, int center, int maxBarCount)
@@ -1413,6 +1418,7 @@ int getMaxCount(char* buf, int size, char value, int center, int maxBarCount)
 			}
 		}
 	}
+	return 0;
 }
 
 int getAvgCount(char* buf, int size, char value, int center, int maxBarCount)
@@ -1439,6 +1445,7 @@ int getAvgCount(char* buf, int size, char value, int center, int maxBarCount)
 			}
 		}
 	}
+	return 0;
 }
 
 void getBinImage(char * bufDst, char * bufSrc, int size, int threshold)
@@ -1571,6 +1578,7 @@ void receiveFrame(HWND hWnd)
 
     int inputCheckCounter = 0; // be used for a serial input check.
 
+
     while(1)
     {
 	current = GetNowUs();
@@ -1617,6 +1625,17 @@ void receiveFrame(HWND hWnd)
    			        	gMode = MODE_CALIBRATION;
            				gSetCam = SET_CAM_1;
    	    			}
+
+				if(gMode==MODE_RUNNING)
+				{
+					setMode(gUartPort0, MODE_RUNNING, gThreshold0);
+					setMode(gUartPort1, MODE_RUNNING, gThreshold1);
+				}
+				else
+				{
+					setMode(gUartPort0, MODE_CALIBRATION, gThreshold0);
+					setMode(gUartPort1, MODE_CALIBRATION, gThreshold1);
+				}
 			}
 			continue;
 		}
@@ -1703,7 +1722,7 @@ void receiveFrame(HWND hWnd)
 			flipHorizontal(vfFliped, vf1, 1920);
 			int center1 = 1920 - gCalibrationData.cam1Center; 
 			gCount1 = countBar(vfFliped, center1, 1919, gThreshold1);
-
+			
 
 			// generate combined image from vf0 and vf1
 
