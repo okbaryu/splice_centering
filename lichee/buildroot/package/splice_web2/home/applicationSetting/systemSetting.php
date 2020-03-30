@@ -6,7 +6,8 @@ include('../../loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>System Setting</title>
-    <link rel="stylesheet" href="systemSetting.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting.css">
   </head>
   <body>
     <div class="wrap">
@@ -142,7 +143,7 @@ include('../../loginChek.php');
         </div>
       </div>
       <div class="footLogo foot">
-        <?php include("../../footlogo.htmphp") ?>
+        <?php include("../../footlogo.php") ?>
       </div>
     </div>
     <script src="./checkBoxControl.js"></script>

@@ -6,7 +6,8 @@
   <head>
     <meta charset="utf-8">
     <title>Account</title>
-    <link rel="stylesheet" href="./account.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/account.css">
   </head>
   <body>
     <div class="wrap">

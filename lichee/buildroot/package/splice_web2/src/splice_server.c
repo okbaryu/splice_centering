@@ -984,7 +984,7 @@ int main(
 
 	signal(SIGPIPE, handler);
 	plc_init();
-	actuator_init("192.168.0.170");
+	actuator_init("192.168.29.181");
 	TASK_Sleep(1000);
 	centering_init();
 
@@ -1004,3 +1004,4 @@ int main(
 
 	return( 0 );
 }
+

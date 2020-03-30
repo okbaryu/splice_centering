@@ -4,7 +4,8 @@
  <html>
    <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="./connection.css">
+     <link rel="stylesheet" type="text/css" href="/font.css">
+     <link rel="stylesheet" href="/home/applicationSetting/plcSetting/connection.css">
      <title></title>
    </head>
    <body>
@@ -121,7 +122,7 @@
                <td><input type="text" name="" value=""></td>
              </tr>
            </table>
-           <table style="position:relative; top:-38px; left:140px;">
+           <table style="position:relative; top:-28px; left:140px;">
              <tr>
                <td>Length</td>
                <td><input type="text" name="" value=""></td>

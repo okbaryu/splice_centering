@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: sans-serif;
   position: absolute;
   margin: 0;
   padding: 0;
@@ -22,6 +21,7 @@ body{
   grid-area: 1/1/2/2;
 }
 .mainTitle{
+  font-family: "NanumSquare";
   height: 48px;
   line-height: 54px;
   font-size: 30px;
@@ -147,5 +147,4 @@ body{
   grid-area: 16/3/17/15;
 }
 .footLogo{
-    grid-area: 16/15/17/17;
-}
+    grid-area: 

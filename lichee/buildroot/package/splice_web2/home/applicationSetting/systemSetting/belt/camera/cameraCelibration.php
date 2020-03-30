@@ -4,7 +4,8 @@
 <html>
   <head>
     <title></title>
-    <link rel="stylesheet" href="./cameraCelibration.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/camera/cameraCelibration.css">
   </head>
   <body>
     <div class="container">

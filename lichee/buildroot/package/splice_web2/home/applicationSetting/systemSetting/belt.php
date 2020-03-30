@@ -6,7 +6,8 @@ include('../../../loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>Belt</title>
-    <link rel="stylesheet" href="belt.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt.css">
   </head>
   <body>
     <div class="wrap">
@@ -100,5 +101,8 @@ include('../../../loginChek.php');
       </div>
     </div>
     <script src="../../../subPageControl.js"></script>
+    <script>
+      changePage('sCenteringParam');
+    </script>
   </body>
 </html>

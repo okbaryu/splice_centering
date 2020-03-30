@@ -5,8 +5,10 @@ include('../loginChek.php');
 <html>
   <head>
     <meta charset="utf-8">
+    <meta name="format-detection" content="telephone=no">
     <title>Information</title>
-    <link rel="stylesheet" href="information.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/information.css">
   </head>
   <body>
     <div class="wrap">
@@ -21,20 +23,28 @@ include('../loginChek.php');
       <div class="container1">
         <table class="info">
           <tr>
-            <td class="tableTag">S/W Version</td>
-            <td></td>
+            <td class="tableTag">Web version</td>
+            <td id="webversion"></td>
           </tr>
           <tr>
-            <td class="tableTag">Runtime Data</td>
-            <td></td>
+            <td class="tableTag">Splice centring version</td>
+            <td id="spliceversion"></td>
           </tr>
           <tr>
-            <td class="tableTag">Network Information</td>
-            <td></td>
+            <td class="tableTag">Camera version</td>
+            <td id=cameraversion></td>
           </tr>
           <tr>
-            <td class="tableTag">System Status</td>
-            <td></td>
+            <td class="tableTag">Kernel version</td>
+            <td id="UNAME"></td>
+          </tr>
+          <tr>
+            <td class="tableTag">Server IP</td>
+            <td id="serverip"></td>
+          </tr>
+          <tr>
+            <td class="tableTag">Server time</td>
+            <td id="splicetime"></td>
           </tr>
         </table>
       </div>
@@ -55,5 +65,11 @@ include('../loginChek.php');
       </div>
     </div>
     <script src="../subPageControl.js"></script>
+    <script src="../splice.js" ></script>
+    <script>
+      MyLoad()
+      GetSysInfo.Value = 1;
+      GetTime.Value = 1;
+    </script>
   </body>
 </html>

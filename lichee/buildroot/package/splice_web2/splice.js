@@ -601,6 +601,34 @@ function SliderCB(event, ui)
 {
 	var url = "";
 	var org_val = document.getElementById("origin_val").value;
+	var pos_val = document.getElementById("position_val");
+	var left_limit_val = document.getElementById("left_limit_val");
+	var right_limit_val = document.getElementById("right_limit_val");
+
+	if(left_limit_val.value > 5000){
+		alert("Left Limit : Input integer between 100 ~ 5000");
+		left_limit_val.value = 5000;
+	}else if(left_limit_val.value < 100){
+		alert("Left Limit : Input integer between 100 ~ 5000");
+		left_limit_val.value = 100;
+	}
+
+	if(right_limit_val.value > 5000){
+		alert("Right Limit : Input integer between 100 ~ 5000");
+		right_limit_val.value = 5000;
+	}else if(right_limit_val.value < 100){
+		alert("Right Limit : Input integer between 100 ~ 5000");
+		right_limit_val.value = 100;
+	}
+
+	if(ui.value > right_limit_val.value / 100){
+		ui.value = right_limit_val.value / 100;
+	}
+	if(-ui.value > left_limit_val.value / 100){
+		ui.value = -(left_limit_val.value / 100);
+	}
+
+	pos_val.value = ui.value;
 
 	if(ui.value != org_val)
 	{
@@ -631,7 +659,7 @@ function GetACTStatus()
 function GetIPfromFile()
 {
 	var rawFile = new XMLHttpRequest(); // XMLHttpRequest (often abbreviated as XHR) is a browser object accessible in JavaScript that provides data in XML, JSON, but also HTML format, or even a simple text using HTTP requests.
-	rawFile.open("GET", "ipaddr", false); // open with method GET the file with the link file ,  false (synchronous)
+	rawFile.open("GET", "../../../../ipaddr", false); // open with method GET the file with the link file ,  false (synchronous)
 	rawFile.onreadystatechange = function ()
 	{
 		if(rawFile.readyState === 4) // readyState = 4: request finished and response is ready
@@ -648,6 +676,52 @@ function GetIPfromFile()
 
 function SetACTStatus()
 {
+	var act_stroke = document.getElementById("stroke_val");
+	var act_speed = document.getElementById("speed_val");
+	var act_leftL_val = document.getElementById("left_limit_val");
+	var act_rightL_lval = document.getElementById("right_limit_val");
+	var act_origin_val = document.getElementById("origin_val");
+
+	if(act_stroke.value > 100){
+		alert("MAX STROKE : Input integer between 50 ~ 100");
+		act_stroke.value = 100;
+	}else if(act_stroke.value < 50){
+		alert("MAX STROKE : Input integer between 50 ~ 100");
+		act_stroke.value = 50;
+	}
+
+	if(act_speed.value > 100){
+		alert("SPEED : Input integer between 50 ~ 100");
+		act_speed.value = 100;
+	}else if(act_speed.value < 50){
+		alert("SPEED : Input integer between 50 ~ 100");
+		act_speed.value = 50;
+	}
+
+	if(act_leftL_val.value > 5000){
+		alert("Left Limit : Input integer between 100 ~ 5000");
+		act_leftL_val.value = 5000;
+	}else if(act_leftL_val.value < 100){
+		alert("Left Limit : Input integer between 100 ~ 5000");
+		act_leftL_val.value = 100;
+	}
+
+	if(act_rightL_lval.value > 5000){
+		alert("Right Limit : Input integer between 100 ~ 5000");
+		act_rightL_lval.value = 5000;
+	}else if(act_rightL_lval.value < 100){
+		alert("Right Limit : Input integer between 100 ~ 5000");
+		act_rightL_lval.value = 100;
+	}
+
+	if(act_origin_val.value > 2500){
+		alert("ORIGIN : Input integer between -2500 ~ 2500");
+		act_origin_val.value = 2500;
+	}else if(act_origin_val.value < -2500){
+		alert("ORIGIN : Input integer between -2500 ~ 2500");
+		act_origin_val.value = -2500;
+	}
+
 	ActStatus.ACTDIR = document.getElementById("direction_val").value;
 	ActStatus.ACTSTROKE = document.getElementById("stroke_val").value;
 	ActStatus.ACTSPEED = document.getElementById("speed_val").value;
@@ -721,9 +795,18 @@ function Act_right_button(event)
 function Act_origin_button(event)
 {
 	var url = "";
-	var value = document.getElementById("origin_val").value;
-	$( "#Slider1" ).slider( "option", "value", value / 100 );
-	$("#calibar_val").val(value / 100);
+	var input_value = document.getElementById("origin_val");
+
+	if(input_value.value > 2500){
+		alert("ORIGIN : Input integer between -2500 ~ 2500");
+		input_value.value = 2500;
+	}else if(input_value.value < -2500){
+		alert("ORIGIN : Input integer between -2500 ~ 2500");
+		input_value.value = -2500;
+	}
+
+	$( "#Slider1" ).slider( "option", "value", input_value.value / 100 );
+	$("#calibar_val").val(input_value.value / 100);
 
 	url = "/cgi/splice.cgi?";
 	url += "&actPosOrg=" + 1;
@@ -3224,6 +3307,17 @@ function ProcessResponses ( oResponses )
             var obj = document.getElementById("direction_val");
             if (obj) {
                 obj.value = oResponses[i+1];
+
+								var act_direct_checkbox = document.getElementsByName('actCheck');
+								if(act_direct_checkbox){
+									if (obj.value == 0) {
+										act_direct_checkbox[0].checked = true;
+										act_direct_checkbox[1].checked = false;
+									}else{
+										act_direct_checkbox[0].checked = false;
+										act_direct_checkbox[1].checked = true;
+									}
+								}
             }
             i++;
         } else if (entry == "ACTSTROKE") {

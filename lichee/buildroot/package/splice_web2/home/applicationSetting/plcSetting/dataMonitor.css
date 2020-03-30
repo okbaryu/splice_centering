@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: sans-serif;
   width: 744px;
   height: 620px;
   background-color: rgba(0, 0, 0, 0.3);
@@ -28,7 +27,7 @@ span{
 .labelU{
   margin: 0;
   padding: 0;
-  width: 330px;
+  width: 350px;
   height: 27px;
   list-style: none;
 }
@@ -44,7 +43,7 @@ span{
   height:27px;
 }
 .labelValue{
-  width: 222px;
+  width: 232px;
   height: 27px;
 }
 .line{

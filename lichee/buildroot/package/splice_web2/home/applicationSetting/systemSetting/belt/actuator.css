@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: sans-serif;
   width: 744px;
   height: 620px;
   background-color: rgba(0, 0, 0, 0.3);
@@ -12,6 +11,9 @@ li{
   width: 694px;
   background-color: #131315;
   margin-bottom: 3px;
+}
+.imgButton{
+  cursor: pointer;
 }
 .actuatorBox1{
   height: 231px;
@@ -28,7 +30,7 @@ li{
 }
 .actTable{
   position: relative;
-  top: -285px;
+  top: -345px;
   left: 450px;
   width: 115px;
   height: 90px;
@@ -59,39 +61,23 @@ li{
   padding-top: 5px;
   padding-left:5px;
 }
-.slidecontainer {
-  width: 510px;
-  height:28px; /* Width of the outside container */
+#Slider1.ui-slider-horizontal
+{
+   height: 14px;
+   width: 501px;
 }
-
-/* The slider itself */
-.slider {
-  -webkit-appearance: none;  /* Override default CSS styles */
-  appearance: none;
-  width: 500px; /* Full-width */
-  height: 20px; /* Specified height */
-  background: #292e32; /* Grey background */
-  outline: none; /* Remove outline */
-  opacity: 1; /* Set transparency (for mouse-over effects on hover) */
-  -webkit-transition: .2s; /* 0.2 seconds transition on hover */
-  transition: opacity .2s;
-  border-radius: 0;
+.ui-slider-horizontal .ui-slider-handle
+{
+   top: -2px;
+   margin-left: -10px;
 }
-
-/* The slider handle (use -webkit- (Chrome, Opera, Safari, Edge) and -moz- (Firefox) to override default look) */
-.slider::-webkit-slider-thumb {
-  -webkit-appearance: none; /* Override default look */
-  appearance: none;
-  width: 10px; /* Set a specific slider handle width */
-  height: 30px; /* Slider handle height */
-  background: #e72f31; /* Green background */
-  cursor: pointer; /* Cursor on hover */
-  border-radius: 0;
+.ui-slider .ui-slider-handle
+{
+   height: 18px;
+   width: 9px;
+   background-color: #e72f31;
 }
-.slider::-moz-range-thumb {
-  width: 10px; /* Set a specific slider handle width */
-  height: 30px; /* Slider handle height */
-  background: #e72f31; /* Green background */
-  cursor: pointer; /* Cursor on hover */
-  border-radius: 0;
+#Slider1, #Slider1 .ui-corner-all
+{
+   border-radius: 0px;
 }

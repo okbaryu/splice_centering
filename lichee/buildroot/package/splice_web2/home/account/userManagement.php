@@ -79,13 +79,14 @@
   <head>
     <meta charset="utf-8">
     <title>User Management</title>
-    <link rel="stylesheet" href="./userManagement.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" href="/home/account/userManagement.css">
   </head>
   <body>
     <div class="wrap">
       <?php include('../../topMenu1.php') ?>
       <div class="menuTitle homeToolBar" style="position:relative; left:2%;">
-        <img src="../../images/web_GUI/icon/account.png"  width="32" height="32" style="position:relative;top:1.5%;left:-1%;">
+        <img src="../../images/web_GUI/icon/account.png"  width="32" height="32" style="position:relative;top:10%;left:-1%;">
         USER MANAGEMENT</div>
       <?php include('../../topMenu2.php') ?>
       <div class="container"></div>

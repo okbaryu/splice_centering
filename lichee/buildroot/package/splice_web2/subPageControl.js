@@ -212,26 +212,48 @@ function changePage(tag){
 }
 
 function historyBack(){
-  var cnt;
-  var browser = navigator.userAgent.toLowerCase();
+  var url = document.location.href;
+  var url_array = url.split("/");
+  var dest = "";
 
-  if(localStorage.iFrameCnt){
-    cnt = parseInt(localStorage.iFrameCnt, 10)
-    cnt = -(1 + cnt);
-    history.go(cnt);
-    localStorage.removeItem("iFrameCnt");
-  }else{
-    if(browser.indexOf("chrome") != -1){
-      var link = document.location.href;
-      if(link.indexOf("#") != -1){
-        history.go(-2);
-      }else{
-        history.back();
-      }
-    }else{
-      history.back();
+  if(url.indexOf("home.php") != -1){
+    for(var i = 0; i < 5; i++){
+      dest += url_array[i];
+      dest += '/';
     }
+
+    dest += "login.php";
+  }else{
+    for(var i = 0; i < (url_array.length - 2); i++){
+      dest += url_array[i];
+      dest += '/';
+    }
+
+    dest += url_array[url_array.length - 2] + ".php";
   }
+
+  location.href = dest;
+
+  // var cnt;
+  // var browser = navigator.userAgent.toLowerCase();
+  //
+  // if(localStorage.iFrameCnt){
+  //   cnt = parseInt(localStorage.iFrameCnt, 10)
+  //   cnt = -(1 + cnt);
+  //   history.go(cnt);
+  //   localStorage.removeItem("iFrameCnt");
+  // }else{
+  //   if(browser.indexOf("chrome") != -1){
+  //     var link = document.location.href;
+  //     if(link.indexOf("#") != -1){
+  //       history.go(-2);
+  //     }else{
+  //       history.back();
+  //     }
+  //   }else{
+  //     history.back();
+  //   }
+  // }
 }
 
 function getCookie(c_name){

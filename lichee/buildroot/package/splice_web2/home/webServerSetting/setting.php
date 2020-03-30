@@ -4,7 +4,8 @@
  <html>
    <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="./setting.css">
+     <link href="https://fonts.googleapis.com/css?family=Noto+Sans+KR&display=swap" rel="stylesheet">
+     <link rel="stylesheet" type="text/css" href="/home/webServerSetting/setting.css">
      <title></title>
    </head>
    <body>

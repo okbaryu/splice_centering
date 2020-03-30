@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: sans-serif;
   position: absolute;
   background-image: url('images/web_GUI/web_GUI/Background.jpg');
   background-repeat: no-repeat;
@@ -16,6 +15,7 @@ body{
   grid-gap: 0px;
 }
 .homeTitle{
+  font-family: "NanumSquare";
   grid-area: 4/1/5/17;
   font-size: 42px;
   font-style: normal;
