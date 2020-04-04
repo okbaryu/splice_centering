@@ -44,7 +44,8 @@
         echo "<title>Account Register</title>";
       }
      ?>
-    <link rel="stylesheet" href="./registerForm.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" href="/home/account/registerForm.css">
   </head>
   <body>
     <div class="mainTitle">SPWGC</div>
@@ -111,7 +112,7 @@
           <tr>
             <td class="tag">Role</td>
             <td>
-              <select class="inputGroup" name = "reg_roleSelect">
+              <select class="inputGroup" name = "reg_roleSelect" style="width:206px;">
                 <?php
                   if($userindex >= 0){
                     switch($permission){

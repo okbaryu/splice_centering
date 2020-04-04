@@ -1,5 +1,5 @@
-<span id="cal" style="font-size: 12px;color:gray;"></span>
-<span id="clock" style="font-size: 17px;color:gray;"></span>
+<input id="cal" style="padding-left: 20px; font-size: 12px; color:gray; border: 0; background-color:transparent;" type="text" value="0" disabled>
+<input id="clock" style="padding-left: 22px; font-size: 17px;color:gray; border: 0; background-color:transparent;" type="text" value="0" disabled>
 
 <script type="text/javascript">
   var clockTarget = document.getElementById("clock");
@@ -14,8 +14,8 @@
     var hours = date.getHours();
     var minutes = date.getMinutes();
     var seconds = date.getSeconds();
-    calTarget . innerText =  `${year} - ${(month+1) < 10 ? `0${month+1}` : month} - ${clockDate < 10 ? `0${clockDate}` : clockDate}`;
-    clockTarget .innerText = `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes }`  : minutes }:${seconds < 10 ? `0${seconds }`  : seconds }`;
+    calTarget.value =  `${year} - ${(month+1) < 10 ? `0${month+1}` : month} - ${clockDate < 10 ? `0${clockDate}` : clockDate}`;
+    clockTarget.value = `${hours < 10 ? `0${hours}` : hours}:${minutes < 10 ? `0${minutes }`  : minutes }:${seconds < 10 ? `0${seconds }`  : seconds }`;
   }
 
   function init() {

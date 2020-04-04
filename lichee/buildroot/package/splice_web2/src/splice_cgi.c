@@ -380,8 +380,121 @@ int main(
 
 	if(readCmdPLC)
 	{
+		//create log file
 		rc = send_request_read_response((unsigned char*) &request, sizeof(request), (unsigned char*) &response, sizeof(response), SPLICE_SERVER_PORT, SPLICE_CMD_GET_RREGISTER_PLC);
+		FILE* fd = fopen("/mnt/extsd/logFile.txt", "a+");
 
+		PLC_BIN_to_LONG(&response.data[0], &tmp);
+		fprintf(fd, "%s : %ld\n", "MWIDTH", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~MWIDTH~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[4], &tmp);
+		fprintf(fd, "%s : %ld\n", "SWIDTHIN", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~SWIDTHIN~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[8], &tmp);
+		fprintf(fd, "%s : %ld\n", "OFFSETIN", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~OFFSETIN~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[12], &tmp);
+		fprintf(fd, "%s : %ld\n", "GETSWIDTH", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~GETSWIDTH~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[16], &tmp);
+		fprintf(fd, "%s : %ld\n", "TOLPOS", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TOLPOS~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[20], &tmp);
+		fprintf(fd, "%s : %ld\n", "TOLNEG", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TOLNEG~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[24], &tmp);
+		fprintf(fd, "%s : %ld\n", "SWIDTHOUT", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~SWIDTHOUT~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[28], &tmp);
+		fprintf(fd, "%s : %ld\n", "OFFSETOUT", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~OFFSETOUT~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[32], &tmp);
+		fprintf(fd, "%s : %ld\n", "POFFSET", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~POFFSET~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[36], &tmp);
+		fprintf(fd, "%s : %ld\n", "MOFFSET", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~MOFFSET~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[40], &tmp);
+		fprintf(fd, "%s : %ld\n", "LOENABLE", tmp);
+		PrintHTML("~LOENABLE~%ld~", tmp);
+
+		PLC_BIN_to_LONG(&response.data[44], &tmp);
+		fprintf(fd, "%s : %ld\n", "TOENABLE", tmp);
+		PrintHTML("~TOENABLE~%ld~", tmp);
+
+		PLC_BIN_to_LONG(&response.data[48], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO0", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO0~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[52], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO1", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO1~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[56], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO2", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO2~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[60], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO3", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO3~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[64], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO4", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO4~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[68], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO5", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO5~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[72], &tmp);
+		fprintf(fd, "%s : %ld\n", "LO6", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~LO6~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[76], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO0", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO0~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[80], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO1", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO1~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[84], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO2", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO2~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[88], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO3", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO3~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[92], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO4", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO4~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[96], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO5", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO5~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[100], &tmp);
+		fprintf(fd, "%s : %ld\n", "TO6", tmp/EEP_Scale_Num_for_PLC);
+		PrintHTML("~TO6~%ld~", tmp/EEP_Scale_Num_for_PLC);
+
+		PLC_BIN_to_LONG(&response.data[104], &tmp);
+		fprintf(fd, "%s : %ld\n", "ACTRESET", tmp);
+		PrintHTML("~ACTRESET~%ld~", tmp);
+
+		fclose(fd);
+
+/* original
 		PLC_BIN_to_LONG(&response.data[0], &tmp);
 		PrintHTML("~MWIDTH~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[4], &tmp);
@@ -436,6 +549,8 @@ int main(
 		PrintHTML("~TO6~%ld~", tmp/EEP_Scale_Num_for_PLC);
 		PLC_BIN_to_LONG(&response.data[104], &tmp);
 		PrintHTML("~ACTRESET~%ld~", tmp);
+
+*/
 	}
 
 	if(getActStatus)

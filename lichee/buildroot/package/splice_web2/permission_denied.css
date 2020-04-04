@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: "NanumSquare", sans-serif;
   position: absolute;
   background-image: url('images/web_GUI/web_GUI/Background.jpg');
   background-repeat: no-repeat;

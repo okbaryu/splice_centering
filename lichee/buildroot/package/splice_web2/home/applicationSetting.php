@@ -6,7 +6,8 @@ include('../loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>Application Setting</title>
-    <link rel="stylesheet" href="./applicationSetting.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting.css">
   </head>
   <body>
     <div class="wrap">

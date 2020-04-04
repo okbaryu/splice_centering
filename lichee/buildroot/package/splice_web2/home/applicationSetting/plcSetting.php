@@ -6,7 +6,8 @@ include('../../loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>PLC Setting</title>
-    <link rel="stylesheet" href="plcSetting.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/plcSetting.css">
   </head>
   <body>
     <div class="wrap">
@@ -65,5 +66,8 @@ include('../../loginChek.php');
       </div>
     </div>
     <script src="../../subPageControl.js"></script>
+    <script>
+      changePage('sConnection');
+    </script>
   </body>
 </html>

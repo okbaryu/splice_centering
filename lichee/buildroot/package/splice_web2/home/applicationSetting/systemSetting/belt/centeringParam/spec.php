@@ -2,22 +2,23 @@
 <html>
   <head>
     <title></title>
-    <link rel="stylesheet" href="./spec.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/centeringParam/spec.css">
   </head>
   <body>
     <div class="container"><br>
       <img src="../../../../../images/web_GUI/web_GUI/06_background img.gif" width="710px" height="540px" style="position:relative; top: -30px;">
       <ul style="position:relative; top: -520px; left: 230px;">
         <li class="label">Conveyor Offset (M)</li>
-        <li class="value_box">0.0 mm</li>
+        <li><input class="value_box" id="M_Offset_val" type="text" name="" value="" disabled></li>
       </ul>
       <ul style="position:relative; top: -400px; left: 230px;">
         <li class="label">Belt Width</li>
-        <li class="value_box">0.0 mm</li>
+        <li><input class="value_box" id="GetSWidth_val" type="text" name="" value="" disabled></li>
         <li class="label">Belt Width Tolerance (+)</li>
-        <li class="value_box">0.0 mm</li>
+        <li><input class="value_box" id="TolPos_val" type="text" name="" value="" disabled></li>
         <li class="label">Belt Width Tolerance (-)</li>
-        <li class="value_box">0.0 mm</li>
+        <li><input class="value_box" id="TolNeg_val" type="text" name="" value="" disabled></li>
       </ul>
       <div class="direction box" style="position:relative; top:-750px; left: 440px;">
         <div style="color:white; font-size:18px; position:relative; left:40px; top:20px;">Leading Tip Direction</div>
@@ -82,5 +83,14 @@
         </table>
       </div>
     </div>
+    <script src="../../../../../splice.js"></script>
+    <script>
+      function init(){
+        readCmdPLC();
+        setInterval(readCmdPLC, 1000);
+      }
+
+      init();
+    </script>
   </body>
 </html>

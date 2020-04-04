@@ -1,4 +1,5 @@
 body{
+  font-family: sans-serif;
   width: 720px;
   height: 550px;
   margin: 0;
@@ -12,7 +13,7 @@ body{
   width: 500px;
   height: 500px;
   position: relative;
-  top:-570px;
+  top:-550px;
   left: 300px;
 }
 ul{
@@ -22,6 +23,7 @@ ul{
 ul li{
   overflow: auto;
   float: left;
+  margin-bottom: 1px;
 }
 .label{
   font-size: 14px;
@@ -31,7 +33,8 @@ ul li{
 .value_box{
   text-align: center;
   color: white;
-  width: 110px;
-  height: 22px;
+  width: 108px;
+  height: 20px;
   background-color: #272727;
+  border:0;
 }

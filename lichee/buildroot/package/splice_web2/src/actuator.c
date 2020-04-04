@@ -11,10 +11,10 @@
 #define MAX_IP_LENGTH 20
 #define IP_FILE "/data/ipaddr"
 
-#define STANDALONE
-#define RX_DUMP
-#define TX_DUMP
-#define STATUS_DUMP
+//#define STANDALONE
+//#define RX_DUMP
+//#define TX_DUMP
+//#define STATUS_DUMP
 
 int socket_fd;
 static char ip_addr[MAX_IP_LENGTH];
@@ -133,12 +133,12 @@ static int send_receive_packet(unsigned char *buf, unsigned char *ack)
 			return -1;
 		}
 	}
+
 	return 0;
 }
 
 int actuator_get_status(act_status *p)
 {
-
 	unsigned char buf[MAX_PACKET_LENGTH];
 	unsigned char ack[MAX_PACKET_LENGTH];
 
@@ -165,7 +165,7 @@ int actuator_get_status(act_status *p)
 	p->act_origin_offset_msb = ack[ACK_ACT_ORG_OFFSET_MSB];
 	p->act_origin_offset_lsb = ack[ACK_ACT_ORG_OFFSET_LSB];
 
-// #ifdef STATUS_DUMP
+#ifdef STATUS_DUMP
 	printf("ACTUATOR DIRECTION : %d\n", ack[ACK_ACT_DIRECTION]);
 	printf("ACTUATOR MAX STROKE : %d\n", ack[ACK_ACT_MAX_STROKE]);
 	printf("ACTUATOR SPEED : %d\n", ack[ACK_ACT_SPEED]);
@@ -173,7 +173,7 @@ int actuator_get_status(act_status *p)
 	printf("ACTUATOR RIGHT LIMIT : %d\n", ack[ACK_ACT_R_LIMIT]);
 	printf("ACTUATOR ORG OFFSET MSB : %d\n", ack[ACK_ACT_ORG_OFFSET_MSB]);
 	printf("ACTUATOR ORG OFFSET LSB : %d\n", ack[ACK_ACT_ORG_OFFSET_LSB]);
-// #endif
+#endif
 
 	return 0;
 }
@@ -183,7 +183,7 @@ int actuator_set_status(act_status *p)
 	unsigned char buf[MAX_PACKET_LENGTH];
 	unsigned char ack[MAX_PACKET_LENGTH];
 	unsigned char param[MAX_STATUS_PARAM];
-	int i, j, k, cmd2 = 0;
+	int i, j, cmd2 = 0;
 	act_status cur_p;
 
 	if(p == NULL)
@@ -228,16 +228,9 @@ int actuator_set_status(act_status *p)
 			if(i == CMD2_ACT_ORG_OFFSET) buf[ACT_DATA2] = param[j+1];
 			buf[CHECKSUM] = make_checksum(buf);
 			printf("set status : cmd 0x%x\n", i);
-			printf("====== Set Data Start ======\n");
-			for(k = 0; k < MAX_PACKET_LENGTH; k++){
-				printf("%x ", buf[k]);
-			}
-			printf("====== Set Data End ======\n");
 			if(send_receive_packet(buf, ack) != 0) return -1;
 		}
 	}
-
-
 
 
 	return 0;
@@ -245,7 +238,6 @@ int actuator_set_status(act_status *p)
 
 int actuator_get_current_postion(act_position *p)
 {
-
 	unsigned char buf[MAX_PACKET_LENGTH];
 	unsigned char ack[MAX_PACKET_LENGTH];
 
@@ -271,7 +263,6 @@ int actuator_get_current_postion(act_position *p)
 
 int actuator_set_current_position(act_position *p, int cmd)
 {
-
 	unsigned char buf[MAX_PACKET_LENGTH];
 	unsigned char ack[MAX_PACKET_LENGTH];
 

@@ -4,7 +4,8 @@
  <html>
    <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="./dataMonitor.css">
+     <link rel="stylesheet" type="text/css" href="/font.css">
+     <link rel="stylesheet" href="/home/applicationSetting/plcSetting/dataMonitor.css">
      <title></title>
    </head>
    <body>
@@ -16,12 +17,12 @@
              <li class="labelData label">Data</li>
              <li class="labelValue label">Value</li>
            </ul>
-           <ul class="label2 labelU" style="position:relative; left: 361px; top:-23px;">
+           <ul class="label2 labelU" style="position:relative; left: 351px; top:-23px;">
              <li class="labelData label">Data</li>
              <li class="labelValue label">Value</li>
            </ul>
            <div class="line1 line" style="position:relative; top:-15px; left:107px;"></div>
-           <div class="line2 line" style="position:relative; top:-375px; left:464.5px;"></div>
+           <div class="line2 line" style="position:relative; top:-375px; left:454.5px;"></div>
            <ul class="tableLabel1" style="position:absolute; top:30px;left:80px;">
              <li class="tableLi" style="margin-right:20px;">hex</li>
              <li class="tableLi">dec</li>
@@ -36,54 +37,273 @@
              <li class="tableLi">bin</li>
              <li class="tableLi">low</li>
            </ul>
-           <table style="position:absolute; top:75px; left: -6px;">
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-           </table>
-           <table style="position:absolute; top:75px; left: 350px;">
-             <tr>
-               <td class="dataCell">INT 0:</td>
-               <td class="hexCell">0000</td>
-               <td class="decCell">0</td>
-               <td class="binCell">0000000000000000</td>
-             </tr>
-           </table>
+           <div style="position:absolute; top:75px; left: 5px; overflow:auto; height:310px;">
+             <table>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 0:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 5:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+             </table>
+           </div>
+           <div style="position:absolute; top:75px; left: 352px; overflow:auto; height:310px;">
+             <table>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+               <tr>
+                 <td class="dataCell">INT 10:</td>
+                 <td class="hexCell">0000</td>
+                 <td class="decCell">0</td>
+                 <td class="binCell">0000000000000000</td>
+               </tr>
+             </table>
+           </div>
          </div>
-
        </div>
      </div>
    </body>

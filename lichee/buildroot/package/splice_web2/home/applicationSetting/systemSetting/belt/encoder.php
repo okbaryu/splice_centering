@@ -4,7 +4,8 @@
  <html>
    <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="./encoder.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+     <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/encoder.css">
      <title></title>
    </head>
    <body>

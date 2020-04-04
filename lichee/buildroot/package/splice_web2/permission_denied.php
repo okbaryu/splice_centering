@@ -3,12 +3,13 @@
   <head>
     <meta charset="utf-8">
     <title>Permission Denied</title>
-    <link rel="stylesheet" href="permission_denied.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/permission_denied.css">
     </script>
   </head>
   <body>
     <div class="wrap">
-      <img src="images/web_GUI/icon/alert.png"  width="32px" height="32px" style="position:absolute; top: 21%; left: 27%;">
+      <img src="images/web_GUI/icon/alert.png"  width="32px" height="32px" style="position:absolute; top: 20%; left: 28%;">
       <div class="homeTitle">
         Permission Denied<br>Please contact your administrator.
       </div>
@@ -19,7 +20,7 @@
       <div class="footMenu foot">
       </div>
       <div class="footLogo foot">
-        <?php include("footlogo.html") ?>
+        <?php include("footlogo.php") ?>
       </div>
     </div>
   </body>

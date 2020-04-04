@@ -4,7 +4,8 @@
  <html>
    <head>
      <meta charset="utf-8">
-     <link rel="stylesheet" href="./systemOverview.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+     <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/systemOverview.css">
      <title></title>
    </head>
    <body>
@@ -171,13 +172,13 @@
            <td width="102px" height="30px" style="background-color: #e03420; color:white; text-align:center; line-height:30px;">0.0 mm</td>
          </tr>
        </table>
-       <table style="position:relative; top:-227px; left: 500px;">
+       <table style="position:relative; top:-219px; left: 500px;">
          <tr>
            <td>Motor Pos.</td>
            <td width="102px" height="30px" style="background-color: #353535; color:white; text-align:center; line-height:30px;">0.0 mm</td>
          </tr>
        </table>
-       <div class="" style="position:relative; top:-263px; left:30px; width: 90px; height: 35px; background-color: #131315;">
+       <div class="" style="position:relative; top:-256px; left:30px; width: 90px; height: 35px; background-color: #131315;">
          <img src="../../../../images/web_GUI/icon/14_motor.png">
        </div>
      </div>

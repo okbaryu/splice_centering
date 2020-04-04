@@ -6,7 +6,8 @@ include('../loginChek.php');
   <head>
     <meta charset="utf-8">
     <title>Web Server Setting</title>
-    <link rel="stylesheet" href="webServerSetting.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/webServerSetting.css">
   </head>
   <body>
     <div class="wrap">
@@ -58,5 +59,8 @@ include('../loginChek.php');
       </div>
     </div>
     <script src="../subPageControl.js"></script>
+    <script>
+      changePage('sSetting');
+    </script>
   </body>
 </html>

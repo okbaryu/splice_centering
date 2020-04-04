@@ -83,13 +83,16 @@ function encoderCheckbox(set){
 
 function actuatorCheckbox(set){
   var aChecked = document.getElementsByName('actCheck');
+  var aValue = document.getElementById('direction_val');
 
   if(set == 'forward'){
     aChecked[0].checked = true;
     aChecked[1].checked = false;
+    aValue.value = 0;
   }else{
     aChecked[0].checked = false;
     aChecked[1].checked = true;
+    aValue.value = 1;
   }
 }
 

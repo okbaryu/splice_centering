@@ -12,7 +12,7 @@
   }
   if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['form_name']) && $_POST['form_name'] == 'loginform')
   {
-     $success_page = './homeMenu.php';
+     $success_page = './home.php';
      $error_page = './access_denied.php';
      $database = './usersdb.php';
      $crypt_pass = md5($_POST['password']);
@@ -57,8 +57,9 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>1SPWGC Home</title>
-    <link rel="stylesheet" href="login.css">
+    <title>SPWGC Home</title>
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/login.css">
   </head>
   <body>
     <div class="wrap">
@@ -77,7 +78,7 @@
                <td class="header"></td>
             </tr>
             <tr>
-               <td class="label"><img src="./images/web_GUI/icon2/account2.png" height="15"width="15" style="margin-right:3px;"><label for="username">User Name</label></td>
+               <td class="label"><img src="./images/web_GUI/icon2/account2.png" height="15" width="15" style="margin-right:3px;"><label for="username">User Name</label></td>
             </tr>
             <tr>
                <td class="row"><input class="input" name="username" type="text" id="username" value=""></td>
@@ -96,8 +97,6 @@
             </ul>
           </div>
         </form>
-        <input type="button" value="hello" onclick="location.href='../../mnt/extsd/hello.html'">
-        <input type="button" value="offsset" onclick="location.href='../../mnt/extsd/7offset.php'">
       </div>
         <div class="footClock foot">
           <?php include("clock.html") ?>

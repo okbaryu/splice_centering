@@ -4,7 +4,8 @@
   <head>
     <meta charset="utf-8">
     <title></title>
-    <link rel="stylesheet" href="./camera.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/camera.css">
   </head>
   <body>
     <div class="button">
@@ -25,5 +26,8 @@
 
     </div>
     <script src="../../../../subPageControl.js"></script>
+    <script>
+      changePage('sCalibration');
+    </script>
   </body>
 </html>

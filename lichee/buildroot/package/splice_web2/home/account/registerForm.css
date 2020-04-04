@@ -1,6 +1,5 @@
-@import url(//fonts.googleapis.com/earlyaccess/notosanskr.css);
 body{
-  font-family: "Noto Sans KR", sans-serif;
+  font-family: sans-serif;
   position: absolute;
   margin: 0;
   padding: 0;
@@ -8,16 +7,18 @@ body{
   background-repeat: no-repeat;
 }
 .mainTitle{
-  /* padding-left: 10px; */
-  line-height: 48px;
-  font-size: 36px;
-  color: #d2d2d2;
+  font-family: "NanumSquare", sans-serif;
+  padding-left: 10px;
+  line-height: 54px;
+  font-size: 30px;
+  color: #636468;
   font-weight: bold;
   height:48px;
   width: 450px;
   background-color:#1d1e21;
 }
 .subTitle{
+  font-family: "NanumSquare", sans-serif;
   line-height: 48px;
   font-size: 32px;
   height: 48px;

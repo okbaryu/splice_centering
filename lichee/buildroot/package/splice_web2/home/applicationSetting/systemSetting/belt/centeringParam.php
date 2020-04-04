@@ -4,7 +4,8 @@
   <head>
     <meta charset="utf-8">
     <title></title>
-    <link rel="stylesheet" href="./centeringParam.css">
+    <link rel="stylesheet" type="text/css" href="/font.css">
+    <link rel="stylesheet" type="text/css" href="/home/applicationSetting/systemSetting/belt/centeringParam.css">
   </head>
   <body>
     <div class="button">
@@ -35,5 +36,8 @@
 
     </div>
     <script src="../../../../subPageControl.js"></script>
+    <script>
+      changePage('sSpec');
+    </script>
   </body>
 </html>
