@@ -74,21 +74,6 @@ s32 fb_draw_colorbar(u32 base, u32 width, u32 height, struct fb_var_screeninfo *
 			u32 offset = 0;
 
 			if(var->bits_per_pixel == 32)	{
-
-
-					offset = width * i + j;
-					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) );
-
-					offset = width * i + j + width/4;
-					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) );
-
-					offset = width * i + j + width/4*2;
-					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) );
-
-					offset = width * i + j + width/4*3;
-					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) );
-
-/*
 					offset = width * i + j;
 					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) | (((1<<var->red.length)-1)<<var->red.offset));
 
@@ -100,7 +85,6 @@ s32 fb_draw_colorbar(u32 base, u32 width, u32 height, struct fb_var_screeninfo *
 
 					offset = width * i + j + width/4*3;
 					sys_put_wvalue(base + offset*4, (((1<<var->transp.length)-1)<<var->transp.offset) | (((1<<var->red.length)-1)<<var->red.offset) | (((1<<var->green.length)-1)<<var->green.offset));
-*/
 				}
 #if 0
 				else if(var->bits_per_pixel == 16) {
@@ -119,7 +103,6 @@ s32 fb_draw_colorbar(u32 base, u32 width, u32 height, struct fb_var_screeninfo *
 #endif
 		}
 	}
-
 
 	return 0;
 }
