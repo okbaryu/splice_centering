@@ -182,5 +182,9 @@
          <img src="../../../../images/web_GUI/icon/14_motor.png">
        </div>
      </div>
+     <script src="../../../../splice.js"></script>
+     <script>
+       caliSelect('nomal');
+     </script>
    </body>
  </html>

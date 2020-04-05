@@ -36,8 +36,10 @@
 
     </div>
     <script src="../../../../subPageControl.js"></script>
+    <script src="../../../../splice.js"></script>
     <script>
       changePage('sSpec');
+      caliSelect('nomal');
     </script>
   </body>
 </html>

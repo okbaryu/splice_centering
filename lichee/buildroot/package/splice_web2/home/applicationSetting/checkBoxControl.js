@@ -117,3 +117,14 @@ function protocolSelect(set){
       break;
   }
 }
+function TipDirctionSelect(set){
+  var tChecked = document.getElementsByName('tipDirCheck');
+
+  if(set == 'left'){
+    tChecked[0].checked = true;
+    tChecked[1].checked = false;
+  }else{
+    tChecked[0].checked = false;
+    tChecked[1].checked = true;
+  }
+}

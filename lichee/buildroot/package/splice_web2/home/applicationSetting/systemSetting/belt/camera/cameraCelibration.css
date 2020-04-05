@@ -14,3 +14,36 @@ body{
 .container table tr td{
   color: white;
 }
+.cb{
+  display: none;
+}
+.cb + label{
+  margin: auto;
+  display: inline-block;
+  width: 17px;
+  height: 17px;
+  background: #45464d;
+  cursor:pointer;
+  border: 1px solid white;
+}
+.cb:checked +label{
+  background: #D63E2E;
+}
+.saveButton{
+  background-color: black;
+  border: 0;
+  color: white;
+  width:128px;
+  height: 40px;
+  font-weight: bold;
+}
+.cam0{
+  position: relative;
+  top: 150px;
+  left: 500px;
+}
+.cam1{
+  position: relative;
+  top: 150px;
+  left: 500px;
+}
