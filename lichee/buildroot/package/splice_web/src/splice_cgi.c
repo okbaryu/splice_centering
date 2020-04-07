@@ -301,7 +301,7 @@ int main(
 	int   ACTRLIMIT        = 0;
 	int   ACTORG           = 0;
 	int   setTipDirection  = 0;
-	int		firmwareSet			 = 0;
+	int		setLcd			 = 0;
 	char  strUuid[MYUUID_LEN*2+1];
 
 	struct utsname uname_info;
@@ -312,8 +312,6 @@ int main(
 	memset( &response, 0, sizeof( response ));
 	memset( strUuid, 0, sizeof(strUuid) );
 	memset( &uname_info, 0, sizeof(uname_info));
-
-	printf("run cgi");
 
 	queryString   = getenv( "QUERY_STRING" );
 
@@ -337,7 +335,7 @@ int main(
 		scanForInt( queryString, "ACTRLIMIT=", &ACTRLIMIT);
 		scanForInt( queryString, "ACTORG=", &ACTORG);
 		scanForInt( queryString, "setTipDirection=", &setTipDirection);
-		scanForInt( queryString, "firmwareSet=", &firmwareSet);
+		scanForInt( queryString, "setLcd=", &setLcd);
 		scanForInt( queryString, "isAlive=", &isAlive);
 	}
 	else
@@ -530,7 +528,6 @@ int main(
 	PrintHTML( "~ALLDONE~" );
 
 	if(setTipDirection != 0){
-		printf("set tip");
 		FILE* fd = fopen("/data/tip_direction", "w");
 
 		char* left = "left";
@@ -547,13 +544,10 @@ int main(
 			fwrite(right, strlen(right), 1, fd);
 		}
 		fclose(fd);
-
-			printf("end setting tip");
 	}
 
-	if(firmwareSet != 0){
-		printf("run  firmware setting");
-		switch (firmwareSet) {
+	if(setLcd != 0){
+		switch (setLcd) {
 			case 1:	// calibration mode
 				system("./client_1104_1656 cal.txt");
 				break;
@@ -576,7 +570,6 @@ int main(
 				system("./client_1104_1656 saveCal.txt");
 				break;
 		}
-			printf("end  firmware setting");
 	}
 
 	return( 0 );
