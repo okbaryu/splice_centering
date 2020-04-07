@@ -233,27 +233,6 @@ function historyBack(){
   }
 
   location.href = dest;
-
-  // var cnt;
-  // var browser = navigator.userAgent.toLowerCase();
-  //
-  // if(localStorage.iFrameCnt){
-  //   cnt = parseInt(localStorage.iFrameCnt, 10)
-  //   cnt = -(1 + cnt);
-  //   history.go(cnt);
-  //   localStorage.removeItem("iFrameCnt");
-  // }else{
-  //   if(browser.indexOf("chrome") != -1){
-  //     var link = document.location.href;
-  //     if(link.indexOf("#") != -1){
-  //       history.go(-2);
-  //     }else{
-  //       history.back();
-  //     }
-  //   }else{
-  //     history.back();
-  //   }
-  // }
 }
 
 function getCookie(c_name){

@@ -14,9 +14,10 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include "datatypes.h"
 #include "splice_libs.h"
-#include "osal_msg.h"
 #include "plc.h"
+#include "sys_trace.h"
 
 //#define STANDALONE
 //#define RX_DUMP

@@ -264,6 +264,7 @@
      <script>
       GetIPfromFile();
       GetACTStatus();
+      caliSelect('nomal');
      </script>
    </body>
  </html>

@@ -25,7 +25,7 @@
         <table style="position:relative; top:60px; left:8px; z-index:5">
           <tr>
             <td>
-              <input type="checkbox" id="left" name="leftCheck" class="cb" value="left" disabled="disabled">
+              <input type="checkbox" id="left" name="tipDirCheck" class="cb" value="left" onclick="TipDirctionSelect('left')">
               <label for="left"></label>
             </td>
             <td class="cb_label">
@@ -36,7 +36,7 @@
         <table style="position:relative; top:31px; left:158px; z-index:5">
           <tr>
             <td>
-              <input type="checkbox" id="right" name="righttCheck" class="cb" value="right" disabled="disabled">
+              <input type="checkbox" id="right" name="tipDirCheck" class="cb" value="right" onclick="TipDirctionSelect('right')" checked="checked">
               <label for="right"></label>
             </td>
             <td class="cb_label">
@@ -82,14 +82,17 @@
           </tr>
         </table>
       </div>
+      <input type="button" class="spec_apply" value="Apply" onclick="setTipDirection()" style="width: 128px;height: 34px;position: relative;top: -680px;left: 525px;color: white;background-color: black;border: 0;">
     </div>
     <script src="../../../../../splice.js"></script>
+    <script src="../../../checkBoxControl.js">
+    </script>
     <script>
       function init(){
         readCmdPLC();
         setInterval(readCmdPLC, 1000);
       }
-
+      getTipDirection()
       init();
     </script>
   </body>

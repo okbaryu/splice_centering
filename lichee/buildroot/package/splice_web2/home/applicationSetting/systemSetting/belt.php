@@ -101,8 +101,12 @@ include('../../../loginChek.php');
       </div>
     </div>
     <script src="../../../subPageControl.js"></script>
+    <script src="../../../splice.js"></script>
     <script>
       changePage('sCenteringParam');
+      window.onbeforeunload = function() {
+        caliSelect('nomal');
+      }
     </script>
   </body>
 </html>

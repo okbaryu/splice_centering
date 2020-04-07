@@ -26,8 +26,14 @@
 
     </div>
     <script src="../../../../subPageControl.js"></script>
+    <script src="../../../../splice.js"></script>
     <script>
       changePage('sCalibration');
+    </script>
+    <script type="text/javascript">
+      window.onbeforeunload = function() {
+      caliSelect('nomal');
+    }
     </script>
   </body>
 </html>

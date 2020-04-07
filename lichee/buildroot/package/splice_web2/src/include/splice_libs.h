@@ -23,15 +23,6 @@
 #define true 1
 
 //#define DEBUG
-#ifdef DEBUG
-#define PrintError(fmt, ...) printf("[%s():%d] Error: " fmt,__FUNCTION__, __LINE__, ## __VA_ARGS__)
-#define PrintInfo(fmt, ...) printf("[%s():%d] Info: " fmt,__FUNCTION__, __LINE__, ## __VA_ARGS__)
-#define PrintResult(fmt, ...) printf("[%s():%d] Result: " fmt,__FUNCTION__, __LINE__, ## __VA_ARGS__)
-#else
-#define PrintError(fmt, ...) do { (void)(fmt); } while (0)
-#define PrintInfo(fmt, ...) do { (void)(fmt); } while (0)
-#define PrintResult(fmt, ...) do { (void)(fmt); } while (0)
-#endif
 #define PrintHTML printf
 
 typedef unsigned char bool;

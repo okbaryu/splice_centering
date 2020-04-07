@@ -19,14 +19,14 @@
 int socket_fd;
 static char ip_addr[MAX_IP_LENGTH];
 
-int actuator_init(const char *p)
+int actuator_init(void)
 {
 	int fd;
 	ssize_t rc;
 	struct sockaddr_in server;
 
 	fd = open(IP_FILE, O_RDWR);
-	if(fd < 0 && p == NULL)
+	if(fd < 0)
 	{
 		perror("failed to open");
 		return -1;
@@ -252,10 +252,12 @@ int actuator_get_current_postion(act_position *p)
 	p->act_prev_position_lsb = ack[ACK_ACT_PREV_POSITION_LSB];
 
 #ifdef STATUS_DUMP
-	printf("ACTUATOR CURRENT POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_MSB], ack[ACK_ACT_CUR_POSITION_MSB]);
-	printf("ACTUATOR CURRENT POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_LSB], ack[ACK_ACT_CUR_POSITION_LSB]);
-	printf("ACTUATOR PREV POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_MSB], ack[ACK_ACT_PREV_POSITION_MSB]);
-	printf("ACTUATOR PREV POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_LSB], ack[ACK_ACT_PREV_POSITION_LSB]);
+	//printf("ACTUATOR CURRENT POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_MSB], ack[ACK_ACT_CUR_POSITION_MSB]);
+	//printf("ACTUATOR CURRENT POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_CUR_POSITION_LSB], ack[ACK_ACT_CUR_POSITION_LSB]);
+	//printf("ACTUATOR PREV POSTION MSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_MSB], ack[ACK_ACT_PREV_POSITION_MSB]);
+	//printf("ACTUATOR PREV POSTION LSB = 0x%x(%d)\n",ack[ACK_ACT_PREV_POSITION_LSB], ack[ACK_ACT_PREV_POSITION_LSB]);
+	printf("ACTUATOR CUR POS = %d\n", (int)(((ack[ACK_ACT_CUR_POSITION_MSB] & 0x0F) << 8) | ack[ACK_ACT_CUR_POSITION_LSB]));
+	printf("ACTUATOR PREV POS = %d\n",(int)(((ack[ACK_ACT_PREV_POSITION_MSB] & 0x0F) << 8) | ack[ACK_ACT_PREV_POSITION_LSB]));
 #endif
 
 	return 0;
@@ -295,22 +297,22 @@ int main(int argc , char *argv[])
 {
 	act_status status;
 	act_position pos;
-	int i;
+	int i, p;
 
 	if(argc != 2)
 	{
-		printf("Usage : act ip_addr\n");
+		printf("Usage : act postion\n");
 		return -1;
 	}
 
-	if(actuator_init(argv[1]) != 0)
-	{
-		printf("Initialize actuator failed\n");
-		return -1;
-	}
+	p = atoi(argv[1]);
+	printf("p = %d\n", p);
+	p *= 0x64;
 
-	actuator_get_status(&status);
-	//actuator_get_current_postion(&pos);
+	actuator_init();
+
+	//actuator_get_status(&status);
+	actuator_get_current_postion(&pos);
 
 	status.act_direction = 0;
 	status.act_max_stroke = 50;
@@ -318,9 +320,26 @@ int main(int argc , char *argv[])
 	status.act_origin_offset_lsb = 0xb0;
 	//actuator_set_status(&status);
 
-	pos.act_cur_position_msb = 0x00;
-	pos.act_cur_position_lsb = 0x00;
-	actuator_set_current_position(&pos, CMD2_ACT_MOVE_ORG);
+	if(p == 0)
+	{
+		actuator_set_current_position(NULL, CMD2_ACT_MOVE_ORG);
+	}
+	else if(p<0)
+	{
+		pos.act_cur_position_msb = 0x80;
+		pos.act_cur_position_msb |= (p >> 8) & 0xF;
+		pos.act_cur_position_lsb = p & 0xFF;
+		printf("actpos- 0x%x:0x%x\n", pos.act_cur_position_msb, pos.act_cur_position_lsb);
+		actuator_set_current_position(&pos, CMD2_ACT_MOVE);
+	}
+	else if(p>0)
+	{
+		pos.act_cur_position_msb = 0x00;
+		pos.act_cur_position_msb |= (p >> 8) & 0xF;
+		pos.act_cur_position_lsb = p & 0xFF;
+		printf("actpos 0x%x:0x%x\n", pos.act_cur_position_msb, pos.act_cur_position_lsb);
+		actuator_set_current_position(&pos, CMD2_ACT_MOVE);
+	}
 
 	close(socket_fd);
 

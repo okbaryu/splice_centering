@@ -35,5 +35,9 @@
         </tr>
       </table>
     </div>
+    <script src="../../../../../splice.js"></script>\
+    <script>
+       caliSelect('nomal');
+    </script>
   </body>
 </html>

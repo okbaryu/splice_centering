@@ -1,4 +1,0 @@
-admin|21232f297a57a5a743894a0e4a801fc3|admin|admin|1
-asdaf|6a204bd89f3c8348afd5c77c717a097a|asdfasdasd|asdfasdf|0
-test2|098f6bcd4621d373cade4e832627b4f6|test|test|0
-

@@ -40,5 +40,9 @@
      </div>
      <input type="submit" id="applyButton" name="encoderApply" value="Apply">
      <script src="../../checkBoxControl.js"></script>
+     <script src="../../../../splice.js"></script>
+     <script>
+       caliSelect('nomal');
+     </script>
    </body>
  </html>

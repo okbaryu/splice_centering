@@ -21,5 +21,9 @@
        <div class="icon"><img src="../../../../images/web_GUI/icon/15_download_to_pc.png"></div>
        <div class="text">Download <br>To PC</div>
      </div>
+     <script src="../../../../splice.js"></script>
+     <script>
+        caliSelect('nomal');
+      </script>
    </body>
  </html>

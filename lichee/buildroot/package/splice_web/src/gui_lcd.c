@@ -661,6 +661,55 @@ void drawLine(Uint8 * fb, int x1, int y1, int x2, int y2, int pitch, char red, c
 
 }
 
+int getrightPosition(int xrightposition)
+{
+	int i = 0;
+
+	for(i=3839; i>0; i--)
+	{
+		double len = gCalibrationData.pixelLen[i];
+		if(len > 0)
+		{
+			xrightposition = i+1;
+			return xrightposition;
+		}
+	}
+	return 0;
+}
+
+int getleftPosition(int xleftposition)
+{
+	int i = 0;
+
+	for(i=0; i<3840; i++)
+	{
+		double len = gCalibrationData.pixelLen[i];
+		if( len > 0)
+		{
+			xleftposition = i;
+			return xleftposition;
+		} 
+	} 
+	return 0;
+}
+/*
+int getRealWidth(int realwidth)
+{
+	int i = 0;
+	int counter = 0;
+
+	for(i=0; i<3840; i++)
+	{
+		double len = gCalibrationData.pixelLen[i];
+		if( len < 0 ) counter++;
+	}
+	
+	realwidth = 3839-counter-1;
+
+	return realwidth;		
+}
+*/
+
 void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 {
 //	printf("(i) render called~~\n");
@@ -689,15 +738,40 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	int risingEdge=0;
 	int maxRisingEdge=0;
 	int maxFallingEdge=0;
+	int xleftposition=0;
+	int xrightposition=0;
 
-	for(x=0; x<WIDTH_SCREEN; x++)
+	xleftposition = getleftPosition(xleftposition); // on 3840
+	xrightposition = getrightPosition(xrightposition); // on 3840
+	int realwidth = xrightposition-xleftposition;	// on 3840
+
+	xleftposition /= 2; // on 1920 
+	xrightposition /= 2; // on 1920 
+	realwidth /=2; // on 1920
+
+	double scale = realwidth/272.0;
+	//printf("scale = %lf  leftpo = %d  right %d  realwidth = %d\n", scale, xleftposition, xrightposition, realwidth);
+
+	for(x=0; x<WIDTH_SCREEN; x++) // WIDTH_SCREEN == 272 pixels
 	{
-		int index = (int)(x*7.0588);
+		char runaverage = 0;
+
+		int index = (int)(x*7.0588); // on 1920
 		if(index+1>=size) break;
 
 		char value1 = buf[index];
 		char value2 = buf[index+1];
 		char average = (value1+value2)/2;
+
+		if(gMode==MODE_RUNNING)	
+		{
+			int runindex = (int)(x*scale)+xleftposition+1;
+			if(runindex+1>=size) break;
+
+			char runvalue1 = buf[runindex];
+			char runvalue2 = buf[runindex+1];
+			runaverage = (runvalue1+runvalue2)/2;
+		}
 
 		if(gMode==MODE_CALIBRATION)
 		{
@@ -717,17 +791,17 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 		}
 		else // running mode screen rendering
 		{
-			if(x!=0 && prev != average) // draw an edge line
+			if(x!=0 && prev != runaverage) // draw an edge line
 			{
 				for(y=baseLine; y>baseLine-80; y--) {
 					putPixel(framebuffer, x, y, pitch, 0xFF);
 				}
 				
 			}
-			else if(average>128) // draw bottom line
+			else if(runaverage>128) // draw bottom line
 			{
 				for(y=baseLine; y>baseLine-80; y--) {
-					if(y==baseLine) putPixel(framebuffer, x, y, pitch, 0xFF);
+					if(y==baseLine) putPixel(framebuffer, x, y, pitch, 0xFF); 
 					else putPixel(framebuffer, x, y, pitch, 0x0);
 				}
 			}
@@ -739,14 +813,14 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 				}
 			}
 			if(x==0) {} // do nothing
-			else if(prev>average) // rising(light has to be bottom line)
+			else if(prev>runaverage) // rising(light has to be bottom line)
 			{
 				//printf("risingEdge = %d, counter = %d\n", risingEdge, counter);
 				risingEdge = x; 
 				counter=1;
 			}
 
-			else if(prev==average)
+			else if(prev==runaverage)
 				counter++;
 			else // falling edge
 			{
@@ -759,7 +833,7 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 				}
 				counter = 0;
 			}
-			prev = average;
+			prev = runaverage;
 		}
 	}
 
@@ -859,11 +933,11 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	{
 	    if(gSetCam==SET_CAM_0)
 	    {
-		x = (int)(gLeftTrim0/7.0588);
-		drawVLine(framebuffer, x, pitch, 0, 0, 255);
+		//x = (int)(gLeftTrim0/7.0588);
+		//drawVLine(framebuffer, x, pitch, 0, 0, 255);
 
-		x = (int)(gRightTrim0/7.0588);
-		drawVLine(framebuffer, x, pitch, 0, 0, 255);
+		//x = (int)(gRightTrim0/7.0588);
+		//drawVLine(framebuffer, x, pitch, 0, 0, 255);
 
 		gCalibrationData.cam0Center = center;
 		gCalibrationData.cam0LeftTrim = gLeftTrim0;
@@ -892,11 +966,11 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	    }
 	    else if(gSetCam==SET_CAM_1)
 	    {
-		x = (int)(gLeftTrim1/7.0588);
-		drawVLine(framebuffer, x, pitch, 0, 0, 255);
+//		x = (int)(gLeftTrim1/7.0588);
+//		drawVLine(framebuffer, x, pitch, 0, 0, 255);
 
-		x = (int)(gRightTrim1/7.0588);
-		drawVLine(framebuffer, x, pitch, 0, 0, 255);
+//		x = (int)(gRightTrim1/7.0588);
+//		drawVLine(framebuffer, x, pitch, 0, 0, 255);
 
 		gCalibrationData.cam1Center = center;
 		gCalibrationData.cam1LeftTrim = gLeftTrim1;
@@ -928,7 +1002,8 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	    x = (int)(center/7.0588);
 	   	drawVLine(framebuffer, x, pitch, 255, 0, 0);
 	}
-	/*		
+
+	/*			
 	if(gMode==MODE_CALIBRATION)
 	{
 		if(gSetCam == SET_CAM_ALL || gSetCam==SET_CAM_0) {
@@ -1315,6 +1390,10 @@ void getTextout(HDC hdc, HDC vdc)
 		sprintf(buf_widthmaterial,"%.3lfmm", gwidthMaterial);
 		SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0x00, 0xFF));
 		TextOut(vdc, gcenterArrow-30, garrowY, buf_widthmaterial);
+
+		SetTextColor(vdc, RGBA2Pixel(hdc, 0xFF, 0xFF, 0xFF, 0xFF));
+		TextOut(vdc, 10, 75, bufIp);
+		TextOut(vdc, 200, 75, "cam:all");
 
 		SetTextColor(vdc, RGBA2Pixel(hdc, 0x00, 0x00, 0x00, 0xFF));
 		current_Time(buff);
@@ -1791,7 +1870,7 @@ void receiveFrame(HWND hWnd)
 			// resize to 1/2 scale
 			for(i=0; i<1920; i++)
 				vfResized[i] = (vfCombined[i*2] + vfCombined[i*2+1])/2.0;
-
+			
 			//printf("(i) vf resized\n");
 			
 			//gCount0 = countBar(vfResized, 1920/2 + center0, 1919, gThreshold0);
