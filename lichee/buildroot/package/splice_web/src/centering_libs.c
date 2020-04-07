@@ -15,6 +15,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#include <math.h>
 
 #include "json-c/json.h"
 #include "centering_libs.h"
@@ -29,8 +30,9 @@
 
 #define MAX_TIP_DIRECTION_STRING 10
 #define FILE_TIP_DIRECTION "/data/tip_direction"
-#define FILE_WHOLE_PROFILE "/mnt/extsd/whole_area_profile"
-#define FILE_LEADING_PROFILE "/mnt/extsd/leading_area_profile"
+#define FILE_WHOLE_PROFILE "/data/whole_area_profile"
+#define FILE_LEADING_PROFILE "/data/leading_area_profile"
+#define FILE_TRAILING_PROFILE "/data/trailing_area_profile"
 //#define VIEW_POS
 
 static int centering_fd;
@@ -41,11 +43,25 @@ static volatile int cnt_enc;
 static act_status ACT;
 float rWidth[4];
 
-static struct leadingProfile lp[MAX_LEADING_PROFILE];
+static struct tipProfile lp[MAX_TIP_PROFILE];
+static struct tipProfile tp[MAX_TIP_PROFILE];
 static struct wholeProfile wp[MAX_WHOLE_PROFILE];
 static int leadingProfileCnt;
+static int trailingProfileCnt;
 static int wholeProfileCnt;
 static int profileOnOff=1;
+
+static float first_width[TIP_OFFSET_DIVIDE_COUNT], last_width[TIP_OFFSET_DIVIDE_COUNT];
+static int first_enc_cnt[TIP_OFFSET_DIVIDE_COUNT], last_enc_cnt[TIP_OFFSET_DIVIDE_COUNT];
+static char flag[TIP_OFFSET_DIVIDE_COUNT];
+
+const char section_name[5][21] = {
+	"LEADING_TIP_SECTION\0",
+	"LEADING_EPC_SECTION\0",
+	"CPC_SECTION\0",
+	"TRAILING_EPC_SECTION\0",
+	"TRAILING_TIP_SECTION\0"
+};
 
 int getIsCentering(void)
 {
@@ -102,17 +118,28 @@ int isProfileOn(void)
 
 void resetProfile(void)
 {
-	memset(lp, 0, sizeof(struct leadingProfile) * MAX_LEADING_PROFILE);
+	int i;
+
+	memset(lp, 0, sizeof(struct tipProfile) * MAX_TIP_PROFILE);
+	memset(tp, 0, sizeof(struct tipProfile) * MAX_TIP_PROFILE);
 	memset(wp, 0, sizeof(struct wholeProfile) * MAX_WHOLE_PROFILE);
 	leadingProfileCnt = 0;
+	trailingProfileCnt = 0;
 	wholeProfileCnt = 0;
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		first_width[i] = 0;
+		last_width[i] = 0;
+		first_enc_cnt[i] = 0;
+		last_enc_cnt[i] = 0;
+		flag[i] = 0;
+	}
 }
 
 void saveProfile(void)
 {
-	int fd_wp, fd_lp;
-
-	if(isProfileOn() == FALSE) return;
+	int fd_wp, fd_lp, fd_tp;
 
 	fd_wp = open(FILE_WHOLE_PROFILE, O_CREAT|O_RDWR);
 	if(fd_wp < 0)
@@ -128,27 +155,32 @@ void saveProfile(void)
 		return;
 	}
 
+	fd_tp = open(FILE_TRAILING_PROFILE, O_CREAT|O_RDWR);
+	if(fd_tp < 0)
+	{
+		perror("open trailing profile error\n");
+		return;
+	}
+
 	write(fd_wp, (void *)&wholeProfileCnt, sizeof(int));
 	write(fd_wp, (void *)wp, sizeof(struct wholeProfile) * wholeProfileCnt);
 	write(fd_lp, (void *)&leadingProfileCnt, sizeof(int));
-	write(fd_lp, (void *)lp, sizeof(struct leadingProfile) * leadingProfileCnt);
+	write(fd_lp, (void *)lp, sizeof(struct tipProfile) * leadingProfileCnt);
+	write(fd_tp, (void *)&trailingProfileCnt, sizeof(int));
+	write(fd_tp, (void *)tp, sizeof(struct tipProfile) * trailingProfileCnt);
 
 	close(fd_wp);
 	close(fd_lp);
+	close(fd_tp);
 }
 
 void viewProfile(char area)
 {
-	int fd_wp, fd_lp, cnt, i;
+	int fd_wp, fd_lp, fd_tp, cnt, i;
 	float width = 0, prev_enc_cnt = 0, a_tangent;
-	struct leadingProfile p;
+	struct tipProfile p, t;
+	struct wholeProfile w;
 	RRegister R;
-
-	if(isProfileOn() == FALSE)
-	{
-		printf("No profiling data to show\n");
-		return;
-	}
 
 	fd_wp = open(FILE_WHOLE_PROFILE, O_RDONLY);
 	if(fd_wp < 0)
@@ -164,15 +196,22 @@ void viewProfile(char area)
 		return;
 	}
 
+	fd_tp = open(FILE_TRAILING_PROFILE, O_RDONLY);
+	if(fd_tp < 0)
+	{
+		perror("open trailing profile error\n");
+		return;
+	}
+
 	readRRegister(FALSE, &R);
 
-	if(area == PROFILE_AREA_LEADING_DIVIDED && getAlgorithm() > ALGORITHM1)
+	if(area == PROFILE_AREA_LEADING_DIVIDED && getAlgorithm(LEADING_TIP_SECTION) > ALGORITHM1)
 	{
 		read(fd_lp, (void *)&cnt, sizeof(int));
 		printf("total cnt=%d\n", cnt);
 		for(i=0; i<cnt; i++)
 		{
-			read(fd_lp, (void *)&p, sizeof(struct leadingProfile));
+			read(fd_lp, (void *)&p, sizeof(struct tipProfile));
 			if(width != p.RWidth)
 			{
 				a_tangent = atanf((p.RWidth - width) / ((p.enc_cnt - prev_enc_cnt) * R.mm_per_pulse));
@@ -182,14 +221,45 @@ void viewProfile(char area)
 			}
 		}
 	}
+	else if(area == PROFILE_AERA_WHOLE)
+	{
+		read(fd_wp, (void *)&cnt, sizeof(int));
+		printf("total cnt=%d\n", cnt);
+		for(i=0; i<cnt; i++)
+		{
+			read(fd_wp, (void *)&w, sizeof(struct wholeProfile));
+			if(width != w.RWidth)
+			{
+				printf("cnt %d : %f : %s : %d\n", i, w.RWidth, section_name[w.current_section], w.encoder);
+				width = w.RWidth;
+			}
+		}
+	}
+	else if(area == PROFILE_AREA_TRAILING_DIVIDED && getAlgorithm(TRAILING_TIP_SECTION) > ALGORITHM1)
+	{
+		read(fd_tp, (void *)&cnt, sizeof(int));
+		printf("total cnt=%d\n", cnt);
+		for(i=0; i<cnt; i++)
+		{
+			read(fd_tp, (void *)&t, sizeof(struct tipProfile));
+			if(width != t.RWidth)
+			{
+				a_tangent = atanf((width - t.RWidth) / ((t.enc_cnt - prev_enc_cnt) * R.mm_per_pulse));
+				printf("Area %d : %f : %d : %f : %f\n", t.area, t.RWidth, t.enc_cnt, a_tangent, a_tangent * (180/3.14));
+				width = t.RWidth;
+				prev_enc_cnt = t.enc_cnt;
+			}
+		}
+	}
 
 	close(fd_wp);
 	close(fd_lp);
+	close(fd_tp);
 }
 
 void wholeAreaProfile(char section, float RWidth, float *rWidth)
 {
-	if(section && wholeProfileCnt < MAX_WHOLE_PROFILE)
+	if(wholeProfileCnt < MAX_WHOLE_PROFILE)
 	{
 		wp[wholeProfileCnt].rWidth[LPos02] = rWidth[LPos02];
 		wp[wholeProfileCnt].rWidth[LPos01] = rWidth[LPos01];
@@ -202,33 +272,151 @@ void wholeAreaProfile(char section, float RWidth, float *rWidth)
 	}
 }
 
+void calLeadingProfile(int *offset)
+{
+	int i;
+	float angle[TIP_OFFSET_DIVIDE_COUNT], average_angle = 0;
+	RRegister R;
+
+	readRRegister(FALSE, &R);
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		angle[i] = atanf((last_width[i] - first_width[i]) / ((last_enc_cnt[i] - first_enc_cnt[i]) * R.mm_per_pulse)) * (180/3.14);
+		average_angle += angle[i];
+		PrintDebug("area %d : %f, %f, %d, %f\n", i, first_width[i], last_width[i], last_enc_cnt[i] - first_enc_cnt[i], angle[i]);
+	}
+
+	average_angle /= TIP_OFFSET_DIVIDE_COUNT;
+	PrintDebug("Average angle for whole area : %f\n", average_angle);
+
+	for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+	{
+		if(angle[i] < average_angle)
+		{
+			offset[i] = 1;
+		}
+		else if(angle[i] > average_angle)
+		{
+			offset[i] = -1;
+		}
+		else
+		{
+			offset[i] = 0;
+		}
+	}
+}
+
 void leadingOffsetProfile(float RWidth, float *leading_tip_width)
 {
-	if(leadingProfileCnt > MAX_LEADING_PROFILE) return;
+	int area;
 
-	if(leading_tip_width[0] <= RWidth && RWidth < leading_tip_width[1])
+	if(leadingProfileCnt > MAX_TIP_PROFILE) return;
+
+	if(RWidth < leading_tip_width[0])
+	{
+		lp[leadingProfileCnt].area = 0;
+		area = 0;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
+	}
+	else if(leading_tip_width[0] <= RWidth && RWidth < leading_tip_width[1])
 	{
 		lp[leadingProfileCnt].area = 1;
+		area = 1;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[1] <= RWidth  && RWidth < leading_tip_width[2])
 	{
 		lp[leadingProfileCnt].area = 2;
+		area = 2;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[2] <= RWidth && RWidth < leading_tip_width[3])
 	{
 		lp[leadingProfileCnt].area = 3;
+		area = 3;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[3] <= RWidth && RWidth < leading_tip_width[4])
 	{
 		lp[leadingProfileCnt].area = 4;
+		area = 4;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[4] <= RWidth && RWidth < leading_tip_width[5])
 	{
 		lp[leadingProfileCnt].area = 5;
+		area = 5;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 	else if(leading_tip_width[5] <= RWidth && RWidth < leading_tip_width[6])
 	{
 		lp[leadingProfileCnt].area = 6;
+		area = 6;
+
+		if(flag[area] == FALSE)
+		{
+			first_width[area] = RWidth;
+			first_enc_cnt[area] = getEncoderCnt();
+			flag[area] = TRUE;
+		}
+
+		last_width[area] = RWidth;
+		last_enc_cnt[area] = getEncoderCnt();
 	}
 
 	lp[leadingProfileCnt].RWidth = RWidth;
@@ -236,18 +424,64 @@ void leadingOffsetProfile(float RWidth, float *leading_tip_width)
 	leadingProfileCnt++;
 }
 
-int getAlgorithm(void)
+void trailingOffsetProfile(float RWidth, float *trailing_tip_width)
+{
+	if(trailingProfileCnt > MAX_TIP_PROFILE) return;
+
+	if(trailing_tip_width[0] >= RWidth && RWidth > trailing_tip_width[1])
+	{
+		tp[trailingProfileCnt].area = 0;
+	}
+	else if(trailing_tip_width[1] >= RWidth  && RWidth > trailing_tip_width[2])
+	{
+		tp[trailingProfileCnt].area = 1;
+	}
+	else if(trailing_tip_width[2] >= RWidth && RWidth > trailing_tip_width[3])
+	{
+		tp[trailingProfileCnt].area = 2;
+	}
+	else if(trailing_tip_width[3] >= RWidth && RWidth > trailing_tip_width[4])
+	{
+		tp[trailingProfileCnt].area = 3;
+	}
+	else if(trailing_tip_width[4] >= RWidth && RWidth > trailing_tip_width[5])
+	{
+		tp[trailingProfileCnt].area = 4;
+	}
+	else if(trailing_tip_width[5] >= RWidth && RWidth > trailing_tip_width[6])
+	{
+		tp[trailingProfileCnt].area = 5;
+	}
+	else if(trailing_tip_width[6] >= RWidth)
+	{
+		tp[trailingProfileCnt].area = 6;
+	}
+
+	tp[trailingProfileCnt].RWidth = RWidth;
+	tp[trailingProfileCnt].enc_cnt = getEncoderCnt();
+	trailingProfileCnt++;
+}
+
+int getAlgorithm(unsigned char section)
 {
 	int i;
 	RRegister R;
 
 	readRRegister(FALSE, &R);
 
-	if(R.LeadingOffsetEnable)
+	if(section == LEADING_TIP_SECTION && R.LeadingOffsetEnable)
 	{
 		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
 		{
 			if(R.LeadingOffset[i]) return ALGORITHM2;
+		}
+		return ALGORITHM3;
+	}
+	else if(section == TRAILING_TIP_SECTION && R.TrailingOffsetEnable)
+	{
+		for(i=0; i<TIP_OFFSET_DIVIDE_COUNT; i++)
+		{
+			if(R.TrailingOffset[i]) return ALGORITHM2;
 		}
 		return ALGORITHM3;
 	}
@@ -417,6 +651,21 @@ void act_move(char direction, int pos)
 	{
 		PrintError("actuator set wrong direction\n");
 	}
+}
+
+int width_check(float width, RRegister *r)
+{
+	if(r->TolPos == 0 && r->TolNeg == 0)
+	{
+		return 0;
+	}
+
+	if(width > r->TolPos || width < r->TolNeg)
+	{
+		return 1;
+	}
+
+	return 0;
 }
 
 void readRRegister(char dump, RRegister *R)
