@@ -225,6 +225,25 @@ int sendPlc(unsigned int r_head_address, char *head_data_address, char size, cha
 	return parseBuf(buf, head_data_address, cnt);
 }
 
+void sendPlcError(int error, float width)
+{
+	unsigned char Send_Data_Array[10] = {0,};
+
+	if(error == PLC_ERR_WIDTH_ERROR)
+	{
+		LONG_to_PLC_BIN_ARRAY(((int)width)/EEP_Scale_Num_for_PLC, Send_Data_Array);
+		sendPlc(EEP_Err_Bit_R_Register, Send_Data_Array, 1, FALSE);
+		LONG_to_PLC_BIN_ARRAY(error, Send_Data_Array);
+		sendPlc(EEP_Err_Bit_R_Register, Send_Data_Array, 1, FALSE);
+	}
+	else
+	{
+		LONG_to_PLC_BIN_ARRAY(error, Send_Data_Array);
+		sendPlc(EEP_Err_Bit_R_Register, Send_Data_Array, 1, FALSE);
+	}
+}
+
+
 void sendPlcIO(int data)
 {
 	char buf[3] = {0, };

@@ -24,20 +24,27 @@
 #define CAM1             1
 #define CAMALL           2
 
-#define DEFAULT_CPC_RATIO 90
+#define DEFAULT_CPC_RATIO 95
 
 #define PROFILE_AREA_LEADING_DIVIDED 0
 #define PROFILE_AERA_WHOLE 1
+#define PROFILE_AREA_TRAILING_DIVIDED 2
 
-#define MAX_LEADING_PROFILE 1000
+#define LEADING_TIP_SECTION  0
+#define LEADING_EPC_SECTION  1
+#define CPC_SECTION          2
+#define TRAILING_EPC_SECTION 3
+#define TRAILING_TIP_SECTION 4
+
+#define MAX_TIP_PROFILE 3000
 #define MAX_WHOLE_PROFILE 3000
 
-struct leadingProfile
+struct tipProfile
 {
 	char area;
 	float RWidth;
 	int enc_cnt;
-}leadingProfile;
+}tipProfile;
 
 struct wholeProfile{
 	float rWidth[4];
@@ -59,7 +66,8 @@ int setOffsetCoeff(int coeff);
 int setCPCRatio(int ratio);
 int getCPCRatio(void);
 void setIsCentering(char status);
-int getAlgorithm(void);
+int getAlgorithm(unsigned char section);
+int width_check(float width, RRegister *r);
 
 int startProfile(char onOff);
 int isProfileOn(void);
@@ -68,6 +76,8 @@ void saveProfile(void);
 void viewProfile(char area);
 void wholeAreaProfile(char section, float RWidth, float *rWidth);
 void leadingOffsetProfile(float RWidth, float *leading_tip_width);
+void trailingOffsetProfile(float RWidth, float *trailing_tip_width);
+void calLeadingProfile(int *offset);
 
 /* Calibraion function */
 void calibrationSetMode(unsigned char mode);

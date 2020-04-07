@@ -25,12 +25,6 @@
 #include "plc.h"
 #include "sys_trace.h"
 
-#define LEADING_TIP_SECTION  0xAA
-#define LEADING_EPC_SECTION  0xAB
-#define CPC_SECTION          0xAC
-#define TRAILING_EPC_SECTION 0xAD
-#define TRAILING_TIP_SECTION 0xAE
-
 #define LPos02_R_FLAG 0x1
 #define LPos01_R_FLAG 0x2
 #define RPos01_R_FLAG 0x4
@@ -42,14 +36,16 @@
 #define PLC_RD_EPC (!(PLCIO & 0x2))
 #define PLC_RD_CPC (isCPC && (PLCIO & 0x2))
 
+#define WIDTH_ERR_CNT_THRESHOLD 100 // depends on CPCRatio
 //#define VIEW_ENCODER_CNT
 
 extern unsigned char PLCIO;
 extern float rWidth[4];
 static RRegister R;
-static int tip_offset_cnt, tip_offset_flag;
+static int ltip_offset_cnt, ttip_offset_cnt, tip_offset_flag;
 static char tip_direction;
 static char current_section;
+static char width_err_cnt;
 static int RWidth_FLAG;
 
 float getRWidth(char tip_direction, char section)
@@ -77,6 +73,7 @@ float getRWidth(char tip_direction, char section)
 			{
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == CPC_SECTION)
@@ -91,6 +88,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == TRAILING_TIP_SECTION || section == TRAILING_EPC_SECTION)
@@ -110,6 +108,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 	}
@@ -137,6 +136,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == CPC_SECTION)
@@ -151,6 +151,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 		else if(section == TRAILING_TIP_SECTION || section == TRAILING_EPC_SECTION)
@@ -170,6 +171,7 @@ float getRWidth(char tip_direction, char section)
 				RWidth_FLAG = 0;
 				PrintError("Error on getRWidth, %d:%d, %f:%f:%f:%f\n", tip_direction, section, rWidth[LPos02], rWidth[LPos01], rWidth[RPos01], rWidth[RPos02]);
 				//send dust error to PLC
+				sendPlcError(PLC_ERR_DUST_DETECT, 0);
 			}
 		}
 	}
@@ -436,103 +438,76 @@ static void tip_offset_divide(float RWidth, float *leading_tip_width, float *tra
 
 static void leading_tip_guide(float RWidth, float *leading_tip_width, int *leading_tip_offset)
 {
-	if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
+	if(ltip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
 	{
-		if(leading_tip_width[tip_offset_cnt] > RWidth)
+		if(leading_tip_width[ltip_offset_cnt] > RWidth)
 		{
-			if(tip_direction == TIP_LEFT && tip_offset_flag && R.OffsetIn != 0)
+			if(tip_direction == TIP_LEFT && tip_offset_flag)
 			{
-				if(R.OffsetIn > 0)
-					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+				if(leading_tip_offset[ltip_offset_cnt] > 0)
+					act_move(ACT_MOVE_LEFT, leading_tip_offset[ltip_offset_cnt] * ACT_MOVE_1MM_HALF);
 				else
-					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+					act_move(ACT_MOVE_RIGHT, leading_tip_offset[ltip_offset_cnt] * -1 * ACT_MOVE_1MM_HALF);
 
-				tip_offset_flag = FALSE;
-				PrintDebug("ltol %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], RWidth);
+				if(ltip_offset_cnt == 0) tip_offset_flag = FALSE;
+				//PrintDebug("ltol %d, %f:%d\n", ltip_offset_cnt, leading_tip_width[ltip_offset_cnt], leading_tip_offset[ltip_offset_cnt]);
 			}
-			else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetIn != 0)
+			else if(tip_direction == TIP_RIGHT && tip_offset_flag)
 			{
-				if(R.OffsetIn > 0)
-					act_move(ACT_MOVE_RIGHT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+				if(leading_tip_offset[ltip_offset_cnt] > 0)
+					act_move(ACT_MOVE_RIGHT, leading_tip_offset[ltip_offset_cnt] * ACT_MOVE_1MM_HALF);
 				else
-					act_move(ACT_MOVE_LEFT, leading_tip_offset[tip_offset_cnt] * ACT_MOVE_1MM_HALF);
+					act_move(ACT_MOVE_LEFT, leading_tip_offset[ltip_offset_cnt] * -1 * ACT_MOVE_1MM_HALF);
 
-				//tip_offset_flag = FALSE;
-				PrintDebug("ltor %d, %f:%f\n", tip_offset_cnt, leading_tip_width[tip_offset_cnt], RWidth);
-			}
-			else if(tip_offset_flag && R.OffsetIn == 0)//If R.OffsetIn is 0, apply edge centering
-			{
-				tipEdgeCentering(TRUE, R.OffsetIn);
-				//tip_offset_flag = FALSE;
-				//printf("ledge\n");
+				if(ltip_offset_cnt == 0) tip_offset_flag = FALSE;
+				//PrintDebug("ltor %d, %f:%d\n", ltip_offset_cnt, leading_tip_width[ltip_offset_cnt], leading_tip_offset[ltip_offset_cnt]);
 			}
 		}
 		else
 		{
-			tip_offset_cnt++;
-			tip_offset_flag = TRUE; //Used for move actuator once per each leading_tip_width
+			ltip_offset_cnt++;
+			tip_offset_flag = TRUE; //Used for move actuator once when section is in leading_tip_width[0]
 		}
-	}
-	else
-	{
-		tipEdgeCentering(FALSE, 0);
 	}
 }
 
-static void trailing_epc_tip_guide(float EPCWidth, float avgWidth, float *trailing_tip_width, int *trailing_tip_offset)
+static void trailing_tip_guide(float RWidth, float *trailing_tip_width, int *trailing_tip_offset)
 {
-	if(EPCWidth >= R.SWidthOut)
+	if(ttip_offset_cnt+1 < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
 	{
-		trailingEPCCentering(avgWidth);
-		tip_offset_cnt = 0;
-		tip_offset_flag = TRUE;
-	}
-	else
-	{
-		if(tip_offset_cnt < TIP_OFFSET_DIVIDE_COUNT) //leading tip offset guide
+		if(RWidth < trailing_tip_width[ttip_offset_cnt] && RWidth > trailing_tip_width[ttip_offset_cnt + 1])
 		{
-			if(trailing_tip_width[tip_offset_cnt] <= EPCWidth)
+			if(tip_direction == TIP_LEFT)
 			{
-				if(tip_direction == TIP_LEFT && tip_offset_flag && R.OffsetOut != 0)
-				{
-					if(R.OffsetOut > 0)
-						act_move(ACT_MOVE_LEFT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
-					else
-						act_move(ACT_MOVE_RIGHT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
+				if(trailing_tip_offset[ttip_offset_cnt] > 0)
+					act_move(ACT_MOVE_LEFT, trailing_tip_offset[ttip_offset_cnt] * ACT_MOVE_1MM);
+				else
+					act_move(ACT_MOVE_RIGHT, trailing_tip_offset[ttip_offset_cnt] * -1 * ACT_MOVE_1MM);
 
-					tip_offset_flag = FALSE;
-					PrintDebug("ttol %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
-				}
-				else if(tip_direction == TIP_RIGHT && tip_offset_flag && R.OffsetOut != 0)
-				{
-					if(R.OffsetOut > 0)
-						act_move(ACT_MOVE_RIGHT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
-					else
-						act_move(ACT_MOVE_LEFT, trailing_tip_offset[tip_offset_cnt] * ACT_MOVE_2MM);
-
-					tip_offset_flag = FALSE;
-					PrintDebug("ttor %d, %f:%f\n", tip_offset_cnt, trailing_tip_width[tip_offset_cnt], EPCWidth);
-				}
-				else if(tip_offset_flag && R.OffsetOut == 0)
-				{
-					trailingEPCCentering(avgWidth);
-					tip_offset_flag = FALSE;
-					PrintDebug("epc\n");
-				}
+				//PrintDebug("ttol %d, %f:%f\n", ttip_offset_cnt, trailing_tip_width[ttip_offset_cnt], RWidth);
 			}
-			else
+			else if(tip_direction == TIP_RIGHT)
 			{
-				tip_offset_cnt++;
-				tip_offset_flag = TRUE;
+				if(trailing_tip_offset[ttip_offset_cnt] > 0)
+					act_move(ACT_MOVE_RIGHT, trailing_tip_offset[ttip_offset_cnt] * ACT_MOVE_1MM);
+				else
+					act_move(ACT_MOVE_LEFT, trailing_tip_offset[ttip_offset_cnt] * -1 * ACT_MOVE_1MM);
+
+				//PrintDebug("ttor %d, %f:%f\n", ttip_offset_cnt, trailing_tip_width[ttip_offset_cnt], RWidth);
 			}
+		}
+		else
+		{
+			ttip_offset_cnt++;
 		}
 	}
 }
+
 void *centeringTask(void *data)
 {
 	float RWidth, avgWidth = 0;
-	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE;
-	int isCPC = FALSE, avgWidthCnt = 1, alg;
+	char tip_detect = 0, act_need_reset_flag = TRUE, rregister_need_read_flag = TRUE, flag = TRUE;
+	int isCPC = FALSE, avgWidthCnt = 1, leading_alg, trailing_alg;
 	float leading_tip_width[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_width[TIP_OFFSET_DIVIDE_COUNT];
 	int leading_tip_offset[TIP_OFFSET_DIVIDE_COUNT], trailing_tip_offset[TIP_OFFSET_DIVIDE_COUNT];
 
@@ -547,10 +522,11 @@ void *centeringTask(void *data)
 				act_need_reset_flag = FALSE;
 
 				PrintDebug("Actuator reset!\n");
-				PrintDebug("enc = %d, avgWidth=%f, cnt=%d\n", getEncoderCnt(), avgWidth/(avgWidthCnt-1), avgWidthCnt-1);
+				PrintDebug("enc = %d, Trail EPC avgWidth=%f, width_err_cnt=%d\n", getEncoderCnt(), avgWidth/(avgWidthCnt-1), width_err_cnt);
 
 				avgWidthCnt = 1;
 				avgWidth = 0;
+				flag = TRUE;
 
 				enableReadPos(FALSE); //need to call only once per centering process
 				sendPlcIO(PLC_WR_RESET);
@@ -558,12 +534,10 @@ void *centeringTask(void *data)
 				rWidth[LPos02] = rWidth[LPos01] = rWidth[RPos01] = rWidth[RPos02] = 0;
 
 				current_section = 0;
+				width_err_cnt = 0;
 
-				if(isProfileOn())
-				{
-					saveProfile();
-					resetProfile();
-				}
+				saveProfile();
+				resetProfile();
 			}
 
 			isCPC = FALSE;
@@ -596,7 +570,6 @@ void *centeringTask(void *data)
 		if((rWidth[LPos01] + rWidth[RPos01]) > R.CPCStart)
 		{
 			isCPC = TRUE;
-			current_section = CPC_SECTION;
 		}
 
 		/* Check whether if SWidthIn is in boundary of RWidth or not*/
@@ -622,28 +595,30 @@ void *centeringTask(void *data)
 				sendPlcIO(PLC_WR_CENTERING);
 				tip_detect = TRUE;
 				resetEncoder();
-				tip_offset_cnt = 0;
+				ltip_offset_cnt = 0;
+				ttip_offset_cnt = 0;
 				current_section = LEADING_TIP_SECTION;
 
-				alg = getAlgorithm();
+				leading_alg = getAlgorithm(LEADING_TIP_SECTION);
+				trailing_alg = getAlgorithm(TRAILING_TIP_SECTION);
 
-				if(alg > ALGORITHM1)
+				if(leading_alg > ALGORITHM1 || trailing_alg > ALGORITHM1)
 				{
 					tip_offset_divide(RWidth, leading_tip_width, trailing_tip_width, leading_tip_offset, trailing_tip_offset);
 				}
 			}
 
-			//leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset); // alg1
+			if(leading_alg == ALGORITHM2)
+			{
+				current_section = LEADING_TIP_SECTION;
+				RWidth = getRWidth(tip_direction, current_section);
+				leading_tip_guide(RWidth, leading_tip_width, leading_tip_offset);
 
-			if(alg == ALGORITHM2)
-			{
-				if(isProfileOn())
-				{
-					leadingOffsetProfile(RWidth, leading_tip_width);
-				}
+				leadingOffsetProfile(RWidth, leading_tip_width);
 			}
-			else if(alg == ALGORITHM3)
+			else if(leading_alg == ALGORITHM3)
 			{
+				leadingOffsetProfile(RWidth, leading_tip_width);
 			}
 			else // ALGORITHM1
 			{
@@ -663,21 +638,74 @@ void *centeringTask(void *data)
 		{
 			current_section = CPC_SECTION;
 			RWidth = getRWidth(tip_direction, current_section);
+
+			if(width_check(RWidth, &R))
+			{
+				width_err_cnt++;
+			}
+
+			if(width_err_cnt > WIDTH_ERR_CNT_THRESHOLD)
+			{
+				PrintError("Width Error %f\n", RWidth);
+				sendPlcError(PLC_ERR_WIDTH_ERROR, RWidth);
+				width_err_cnt = 0;
+			}
+
 			CPCCentering(RWidth);
 		}
 		else if(PLC_RD_EPC)
 		{
-			if(RWidth >= R.SWidthOut)
-			{
-				current_section = TRAILING_EPC_SECTION;
-				RWidth = getRWidth(tip_direction, current_section);
-				trailingEPCCentering(avgWidth/avgWidthCnt);
-			}
-			else
+			RWidth = getRWidth(tip_direction, TRAILING_EPC_SECTION);
+
+			if(trailing_alg == ALGORITHM2)
 			{
 				current_section = TRAILING_TIP_SECTION;
 				RWidth = getRWidth(tip_direction, current_section);
-				trailingTipGuide(R.OffsetOut);
+				if(RWidth < trailing_tip_width[0])
+				{
+					trailing_tip_guide(RWidth, trailing_tip_width, trailing_tip_offset);
+
+					trailingOffsetProfile(RWidth, trailing_tip_width);
+				}
+				else
+				{
+					/* Since EPC transfer signal caught, it needs some time to make decision if RWidth
+					 * is smaller than trailing_tip_width[0] or not. If this time is too long, it needs
+					 * tune EPC transfer timing in PLC */
+				}
+
+			}
+			else if(trailing_alg == ALGORITHM3)
+			{
+				if(flag)
+				{
+					calLeadingProfile(trailing_tip_offset);
+					flag = FALSE;
+				}
+
+				current_section = TRAILING_TIP_SECTION;
+				RWidth = getRWidth(tip_direction, current_section);
+				if(RWidth < trailing_tip_width[0])
+				{
+					trailing_tip_guide(RWidth, trailing_tip_width, trailing_tip_offset);
+
+					trailingOffsetProfile(RWidth, trailing_tip_width);
+				}
+			}
+			else // ALGORITHM 1
+			{
+				if(RWidth >= R.SWidthOut)
+				{
+					current_section = TRAILING_EPC_SECTION;
+					RWidth = getRWidth(tip_direction, current_section);
+					trailingEPCCentering(avgWidth/avgWidthCnt);
+				}
+				else
+				{
+					current_section = TRAILING_TIP_SECTION;
+					RWidth = getRWidth(tip_direction, current_section);
+					trailingTipGuide(R.OffsetOut);
+				}
 			}
 		}
 
@@ -687,10 +715,7 @@ void *centeringTask(void *data)
 			avgWidthCnt++;
 		}
 
-		if(isProfileOn())
-		{
-			wholeAreaProfile(current_section, RWidth, rWidth);
-		}
+		wholeAreaProfile(current_section, RWidth, rWidth);
 
 		TASK_Sleep(10);
 	}
@@ -700,7 +725,7 @@ int centering_init(void)
 {
 	pthread_t centeringTaskId;
 
-	printf("Centering 0.70\n");
+	printf("Centering 0.71\n");
 
 	/* do not remove since CPCStart in centering task should be calculated R.GetSWidth. */
 	readRRegister(FALSE, &R);
