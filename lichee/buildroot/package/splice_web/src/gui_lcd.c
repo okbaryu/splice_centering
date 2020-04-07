@@ -740,6 +740,7 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	int maxFallingEdge=0;
 	int xleftposition=0;
 	int xrightposition=0;
+	int hunting=200;
 
 	xleftposition = getleftPosition(xleftposition); // on 3840
 	xrightposition = getrightPosition(xrightposition); // on 3840
@@ -748,6 +749,8 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 	xleftposition /= 2; // on 1920 
 	xrightposition /= 2; // on 1920 
 	realwidth /=2; // on 1920
+	
+	realwidth = realwidth - hunting;
 
 	double scale = realwidth/272.0;
 	//printf("scale = %lf  leftpo = %d  right %d  realwidth = %d\n", scale, xleftposition, xrightposition, realwidth);
@@ -765,8 +768,10 @@ void render(Uint8 * framebuffer, const char * buf, int size, int pitch)
 
 		if(gMode==MODE_RUNNING)	
 		{
-			int runindex = (int)(x*scale)+xleftposition+1;
+			int runindex = (int)(x*scale)+xleftposition+1+(hunting/2);
 			if(runindex+1>=size) break;
+		
+			//printf("runindex = %d\n", runindex);
 
 			char runvalue1 = buf[runindex];
 			char runvalue2 = buf[runindex+1];

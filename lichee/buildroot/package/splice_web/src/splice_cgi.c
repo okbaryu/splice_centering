@@ -300,6 +300,8 @@ int main(
 	int   ACTLLIMIT        = 0;
 	int   ACTRLIMIT        = 0;
 	int   ACTORG           = 0;
+	int   setTipDirection  = 0;
+	int		firmwareSet			 = 0;
 	char  strUuid[MYUUID_LEN*2+1];
 
 	struct utsname uname_info;
@@ -310,6 +312,8 @@ int main(
 	memset( &response, 0, sizeof( response ));
 	memset( strUuid, 0, sizeof(strUuid) );
 	memset( &uname_info, 0, sizeof(uname_info));
+
+	printf("run cgi");
 
 	queryString   = getenv( "QUERY_STRING" );
 
@@ -332,6 +336,8 @@ int main(
 		scanForInt( queryString, "ACTLLIMIT=", &ACTLLIMIT);
 		scanForInt( queryString, "ACTRLIMIT=", &ACTRLIMIT);
 		scanForInt( queryString, "ACTORG=", &ACTORG);
+		scanForInt( queryString, "setTipDirection=", &setTipDirection);
+		scanForInt( queryString, "firmwareSet=", &firmwareSet);
 		scanForInt( queryString, "isAlive=", &isAlive);
 	}
 	else
@@ -522,6 +528,56 @@ int main(
 		PrintHTML( "~SPLICETIME~%s~", DayMonDateYear( 0 ));
 
 	PrintHTML( "~ALLDONE~" );
+
+	if(setTipDirection != 0){
+		printf("set tip");
+		FILE* fd = fopen("/data/tip_direction", "w");
+
+		char* left = "left";
+		char* right = "right";
+
+		if(fd == NULL){
+			printf("(!) File Open Failed.");
+			return -1;
+		}
+
+		if(setTipDirection == 1){
+			fwrite(left, strlen(left), 1, fd);
+		}else if(setTipDirection == 2){
+			fwrite(right, strlen(right), 1, fd);
+		}
+		fclose(fd);
+
+			printf("end setting tip");
+	}
+
+	if(firmwareSet != 0){
+		printf("run  firmware setting");
+		switch (firmwareSet) {
+			case 1:	// calibration mode
+				system("./client_1104_1656 cal.txt");
+				break;
+			case 2: // cam 0 mode
+				system("./client_1104_1656 setCam0.txt");
+				system("./client_1104_1656 threshold0.txt");
+				break;
+			case 3: // cam 1 mode
+			system("./client_1104_1656 setCam1.txt");
+			system("./client_1104_1656 threshold1.txt");
+				break;
+			case 4: // nomal mode
+				system("./client_1104_1656 setCamAll.txt");
+				system("./client_1104_1656 run.txt");
+				break;
+			case 5: // save cam 0 calibration
+				system("./client_1104_1656 saveCal.txt");
+				break;
+			case 6: // save cam 1 calibration
+				system("./client_1104_1656 saveCal.txt");
+				break;
+		}
+			printf("end  firmware setting");
+	}
 
 	return( 0 );
 }

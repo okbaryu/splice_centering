@@ -304,7 +304,7 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 	}
 	else
@@ -319,7 +319,7 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 
 	}
@@ -349,7 +349,7 @@ void trailingEPCCentering(float avgWidth)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 	}
 	else
@@ -364,7 +364,7 @@ void trailingEPCCentering(float avgWidth)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 	}
 
@@ -393,7 +393,7 @@ void trailingTipGuide(long OffsetOut)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 	}
 	else
@@ -408,7 +408,7 @@ void trailingTipGuide(long OffsetOut)
 		}
 		else
 		{
-			PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
+			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
 		}
 	}
 
