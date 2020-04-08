@@ -251,7 +251,7 @@ void sendPlcIO(int data)
 	if(data == PLC_WR_TIP_DETECT)
 	{
 		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
-		buf[0] = '0';
+		buf[0] = '1';
 		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
 		close(plc_wr_fd[PLC_WR_TIP_DETECT]);
 	}
@@ -259,7 +259,7 @@ void sendPlcIO(int data)
 	{
 		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
 		plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
-		buf[0] = '0';
+		buf[0] = '1';
 		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
 		write(plc_wr_fd[PLC_WR_CENTERING], buf, sizeof(buf));
 		close(plc_wr_fd[PLC_WR_TIP_DETECT]);
@@ -269,7 +269,7 @@ void sendPlcIO(int data)
 	else if(data == PLC_WR_COMM_ERROR)
 	{
 		plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
-		buf[0] = '0';
+		buf[0] = '1';
 		write(plc_wr_fd[PLC_WR_COMM_ERROR], buf, sizeof(buf));
 		close(plc_wr_fd[PLC_WR_COMM_ERROR]);
 	}
@@ -278,7 +278,7 @@ void sendPlcIO(int data)
 		plc_wr_fd[PLC_WR_TIP_DETECT] = open("/sys/class/gpio/gpio137/value", O_RDWR);
 		plc_wr_fd[PLC_WR_CENTERING] = open("/sys/class/gpio/gpio138/value", O_RDWR);
 		plc_wr_fd[PLC_WR_COMM_ERROR] = open("/sys/class/gpio/gpio139/value", O_RDWR);
-		buf[0] = '1';
+		buf[0] = '0';
 		write(plc_wr_fd[PLC_WR_TIP_DETECT], buf, sizeof(buf));
 		write(plc_wr_fd[PLC_WR_CENTERING], buf, sizeof(buf));
 		write(plc_wr_fd[PLC_WR_COMM_ERROR], buf, sizeof(buf));

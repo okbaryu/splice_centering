@@ -306,11 +306,8 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 	}
 	else
@@ -325,11 +322,8 @@ void tipEdgeCentering(char tip_edge_guide, long OffsetIn)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 
 	}
@@ -359,11 +353,8 @@ void trailingEPCCentering(float avgWidth)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 	}
 	else
@@ -378,11 +369,8 @@ void trailingEPCCentering(float avgWidth)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 	}
 
@@ -411,11 +399,8 @@ void trailingTipGuide(long OffsetOut)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 	}
 	else
@@ -430,11 +415,8 @@ void trailingTipGuide(long OffsetOut)
 		}
 		else
 		{
-<<<<<<< HEAD
 			// PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
-=======
 			 PrintError("Abnormal RWidth_FLAG 0x%x\n", RWidth_FLAG);
->>>>>>> 049f8372e2bb5db237e1f6aba025a4c9841573f0
 		}
 	}
 

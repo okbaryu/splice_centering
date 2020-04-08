@@ -42,10 +42,10 @@ echo out > /sys/class/gpio/gpio142/direction
 echo 143 > /sys/class/gpio/export
 echo out > /sys/class/gpio/gpio143/direction
 
-echo 0 > /sys/class/gpio/gpio136/value
-echo 1 > /sys/class/gpio/gpio137/value
-echo 1 > /sys/class/gpio/gpio138/value
-echo 1 > /sys/class/gpio/gpio139/value
+echo 1 > /sys/class/gpio/gpio136/value
+echo 0 > /sys/class/gpio/gpio137/value
+echo 0 > /sys/class/gpio/gpio138/value
+echo 0 > /sys/class/gpio/gpio139/value
 
 echo "(i) app start"
 cd /var/splice_web/
